@@ -1,0 +1,10 @@
+{
+    "exec": "cd ../game-vir && npm run compile && cd - && virmator frontend",
+    "exitcrash": false,
+    "ext": "ts",
+    "ignore": [
+        "*.test.ts",
+        "dist/**"
+    ],
+    "watch": ["../game-vir/src"]
+}
