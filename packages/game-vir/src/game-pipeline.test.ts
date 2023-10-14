@@ -42,6 +42,7 @@ describe(GamePipeline.name, () => {
 
         const gamePipeline = setupTestGamePipeline();
         gamePipeline.addStateListener(
+            false,
             [
                 'enemies',
                 'position',
@@ -71,6 +72,7 @@ describe(GamePipeline.name, () => {
 
         const gamePipeline = setupTestGamePipeline();
         gamePipeline.addStateListener(
+            false,
             [
                 'enemies',
                 'position',
@@ -82,6 +84,7 @@ describe(GamePipeline.name, () => {
             },
         );
         gamePipeline.addStateListener(
+            false,
             [
                 'enemies',
                 'position',

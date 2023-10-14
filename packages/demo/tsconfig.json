@@ -1,12 +1,12 @@
 {
     "compilerOptions": {
-        "outDir": "./dist",
+        "outDir": "./ts.out",
         "rootDir": "./src"
     },
     "exclude": [
         "./configs",
         "./coverage",
-        "./dist",
+        "./ts.out",
         "./node_modules",
         "./test-files"
     ],

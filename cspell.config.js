@@ -4,6 +4,7 @@ module.exports = {
     ...baseConfig,
     ignorePaths: [
         'tsconfig.tsbuildinfo',
+        '/ts.out/',
         ...baseConfig.ignorePaths,
     ],
     words: [

@@ -94,8 +94,6 @@ export async function callListeners(
         new Map(),
     );
 
-    console.dir(listenersToCall);
-
     listenersToCall.forEach((valueInfo, listeners) => {
         if (listeners?.size) {
             allPromises.push(

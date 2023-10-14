@@ -11,7 +11,7 @@ export type GameModuleRunnerOutput<GameState extends GameStateBase> =
 /** Input for game module execution. */
 export type GameModuleRunnerInput<GameState extends GameStateBase> = Readonly<{
     gameState: Readonly<GameState>;
-    millisecondsSinceLastFrame: number | undefined;
+    millisecondsSinceLastFrame: number;
 }>;
 
 /** The function inside a game module which is executed during each frame. */
