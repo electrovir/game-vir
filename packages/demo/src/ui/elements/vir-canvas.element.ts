@@ -17,8 +17,9 @@ export const VirCanvas = defineElementNoInputs({
     },
     styles: css`
         :host {
-            display: block;
+            display: flex;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .canvas-wrapper {

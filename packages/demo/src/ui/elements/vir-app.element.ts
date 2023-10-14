@@ -15,6 +15,8 @@ export const VirApp = defineElementNoInputs({
             padding: 16px;
             overflow: hidden;
             gap: 32px;
+            max-width: 100%;
+            max-height: 100%;
         }
 
         ${VirCanvas} {
