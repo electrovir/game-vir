@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>GamePipeline | game-vir - v0.0.1</title><meta name="description" content="Documentation for game-vir"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css?cache=1697317267440"/><link rel="stylesheet" href="../assets/highlight.css?cache=1697317267440"/><script defer src="../assets/main.js?cache=1697317267440"></script><script async src="../assets/search.js?cache=1697317267440" id="tsd-search-script"></script><script async src="../assets/navigation.js?cache=1697317267440" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>GamePipeline | game-vir - v1.0.0</title><meta name="description" content="Documentation for game-vir"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css?cache=1697405177928"/><link rel="stylesheet" href="../assets/highlight.css?cache=1697405177928"/><script defer src="../assets/main.js?cache=1697405177928"></script><script async src="../assets/search.js?cache=1697405177928" id="tsd-search-script"></script><script async src="../assets/navigation.js?cache=1697405177928" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
 <div class="tsd-toolbar-contents container">
 <div class="table-cell" id="tsd-search" data-base="..">
 <div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="#icon-search"></use></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
@@ -6,7 +6,7 @@
 <div id="tsd-toolbar-links"></div></div>
 <ul class="results">
 <li class="state loading">Preparing search index...</li>
-<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">game-vir - v0.0.1</a></div>
+<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">game-vir - v1.0.0</a></div>
 <div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget tsd-toolbar-icon menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="#icon-menu"></use></svg></a></div></div></header>
 <div class="container container-main">
 <div class="col-content">
@@ -14,7 +14,7 @@
 <ul class="tsd-breadcrumb">
 <li><a href="../modules.html">game-vir</a></li>
 <li><a href="GamePipeline.html">GamePipeline</a></li></ul>
-<h1>Class GamePipeline&lt;GameState&gt;</h1></div>
+<h1>Class GamePipeline&lt;GameState, ExecutionContext&gt;</h1></div>
 <section class="tsd-panel tsd-comment">
 <div class="tsd-comment tsd-typography"><p>An instance of the GamePipeline, including loop control and the array of game modules (the
 &quot;pipeline&quot; itself).</p>
@@ -24,13 +24,15 @@
 <h4>Type Parameters</h4>
 <ul class="tsd-type-parameter-list">
 <li>
-<h4><span class="tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol"> extends </span><a href="../types/GameStateBase.html" class="tsd-signature-type tsd-kind-type-alias">GameStateBase</a></h4></li></ul></section> 
+<h4>const <span class="tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol"> extends </span><a href="../types/GameStateBase.html" class="tsd-signature-type tsd-kind-type-alias">GameStateBase</a></h4></li>
+<li>
+<h4>const <span class="tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol"> extends </span><a href="../types/ExecutionContextBase.html" class="tsd-signature-type tsd-kind-type-alias">ExecutionContextBase</a> = <span class="tsd-signature-symbol">{}</span></h4></li></ul></section> 
 <section class="tsd-panel tsd-hierarchy">
 <h4>Hierarchy</h4>
 <ul class="tsd-hierarchy">
 <li><span class="target">GamePipeline</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L55">game-pipeline.ts:55</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L56">game-pipeline.ts:56</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -42,7 +44,8 @@
 </div></section>
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading">Properties</h3>
-<div class="tsd-index-list"><a href="GamePipeline.html#currentState" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>current<wbr/>State</span></a>
+<div class="tsd-index-list"><a href="GamePipeline.html#currentExecutionContext" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>current<wbr/>Execution<wbr/>Context</span></a>
+<a href="GamePipeline.html#currentState" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>current<wbr/>State</span></a>
 <a href="GamePipeline.html#frameHistory" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>frame<wbr/>History</span></a>
 <a href="GamePipeline.html#gameModuleIds" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>game<wbr/>Module<wbr/>Ids</span></a>
 <a href="GamePipeline.html#lastFrameCount" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>last<wbr/>Frame<wbr/>Count</span></a>
@@ -61,32 +64,42 @@
 <a href="GamePipeline.html#startPipelineLoop" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>start<wbr/>Pipeline<wbr/>Loop</span></a>
 <a href="GamePipeline.html#stopPipelineLoop" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>stop<wbr/>Pipeline<wbr/>Loop</span></a>
 <a href="GamePipeline.html#triggerSingleFrame" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>trigger<wbr/>Single<wbr/>Frame</span></a>
-<a href="GamePipeline.html#updateState" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>update<wbr/>State</span></a>
+<a href="GamePipeline.html#update" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>update</span></a>
 </div></section></div></details></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Constructors</h2>
 <section class="tsd-panel tsd-member"><a id="constructor" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>constructor</span><a href="#constructor" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
-<li class="tsd-signature tsd-anchor-link" id="constructor.new_GamePipeline"><span class="tsd-kind-constructor-signature">new <wbr/>Game<wbr/>Pipeline</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">modulePipeline</span>, <span class="tsd-kind-parameter">initialState</span>, <span class="tsd-kind-parameter">options</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="GamePipeline.html" class="tsd-signature-type tsd-kind-class">GamePipeline</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><a href="#constructor.new_GamePipeline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="constructor.new_GamePipeline"><span class="tsd-kind-constructor-signature">new <wbr/>Game<wbr/>Pipeline</span><span class="tsd-signature-symbol">&lt;</span>const <span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span>const <span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">modulePipeline</span>, <span class="tsd-kind-parameter">initialState</span>, <span class="tsd-kind-parameter">initialExecutionContext</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">options</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="GamePipeline.html" class="tsd-signature-type tsd-kind-class">GamePipeline</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><a href="#constructor.new_GamePipeline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
 <section class="tsd-panel">
 <h4>Type Parameters</h4>
 <ul class="tsd-type-parameter-list">
 <li>
-<h4><span class="tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol"> extends </span><a href="../types/GameStateBase.html" class="tsd-signature-type tsd-kind-type-alias">GameStateBase</a></h4></li></ul></section>
+<h4>const <span class="tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol"> extends </span><a href="../types/GameStateBase.html" class="tsd-signature-type tsd-kind-type-alias">GameStateBase</a></h4></li>
+<li>
+<h4>const <span class="tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol"> extends </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">PropertyKey</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span> = <span class="tsd-signature-symbol">{}</span></h4></li></ul></section>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">modulePipeline</span>: <span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">moduleId</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">runModule</span><span class="tsd-signature-symbol">: </span><a href="../types/GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span></h5>
+<h5><span class="tsd-kind-parameter">modulePipeline</span>: <span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">moduleId</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">runModule</span><span class="tsd-signature-symbol">: </span><a href="../types/GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span></h5>
 <div class="tsd-comment tsd-typography"><p>The list of game modules to run through in each frame. Note that order matters here:
 earlier modules will be executed and their state updates will be applied first.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li>
 <li>
 <h5><span class="tsd-kind-parameter">initialState</span>: <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span></h5>
-<div class="tsd-comment tsd-typography"><p>The pipeline&#39;s initial state.</p>
+<div class="tsd-comment tsd-typography"><p>The pipeline&#39;s initial state. This state must be JSON serializable. For non-serializable
+state or assets, use instead the execution context input.</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li>
+<li>
+<h5><span class="tsd-kind-parameter">initialExecutionContext</span>: <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></h5>
+<div class="tsd-comment tsd-typography"><p>The pipeline&#39;s initial execution context. Use this to store run-time only items (that
+won&#39;t persist through game save states) like references to Canvas rendering contexts or
+ThreeJS.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li>
 <li>
@@ -95,16 +108,21 @@ earlier modules will be executed and their state updates will be applied first.<
 at any time with overrideOptions.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li></ul></div>
-<h4 class="tsd-returns-title">Returns <a href="GamePipeline.html" class="tsd-signature-type tsd-kind-class">GamePipeline</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<h4 class="tsd-returns-title">Returns <a href="GamePipeline.html" class="tsd-signature-type tsd-kind-class">GamePipeline</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L61">game-pipeline.ts:61</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L68">game-pipeline.ts:68</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
+<section class="tsd-panel tsd-member"><a id="currentExecutionContext" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>current<wbr/>Execution<wbr/>Context</span><a href="#currentExecutionContext" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">current<wbr/>Execution<wbr/>Context</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span></div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L66">game-pipeline.ts:66</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="currentState" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>current<wbr/>State</span><a href="#currentState" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">current<wbr/>State</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type tsd-kind-type-parameter">GameState</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L59">game-pipeline.ts:59</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L65">game-pipeline.ts:65</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="frameHistory" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>frame<wbr/>History</span><a href="#frameHistory" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">frame<wbr/>History</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">orderedStateUpdates</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/GameStateUpdate.html" class="tsd-signature-type tsd-kind-type-alias">GameStateUpdate</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> = []</span></div>
@@ -113,7 +131,7 @@ enabled via debug options.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L180">game-pipeline.ts:180</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L197">game-pipeline.ts:197</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="gameModuleIds" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>game<wbr/>Module<wbr/>Ids</span><a href="#gameModuleIds" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">game<wbr/>Module<wbr/>Ids</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span></div>
@@ -121,7 +139,7 @@ enabled via debug options.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L57">game-pipeline.ts:57</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L61">game-pipeline.ts:61</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="lastFrameCount" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>last<wbr/>Frame<wbr/>Count</span><a href="#lastFrameCount" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">last<wbr/>Frame<wbr/>Count</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = -1</span></div>
@@ -130,7 +148,7 @@ debugging purposes.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L175">game-pipeline.ts:175</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L192">game-pipeline.ts:192</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="lastFrameTimestamp" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>last<wbr/>Frame<wbr/>Timestamp</span><a href="#lastFrameTimestamp" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">last<wbr/>Frame<wbr/>Timestamp</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></div>
@@ -140,16 +158,16 @@ will get updated very frequently.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L170">game-pipeline.ts:170</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L187">game-pipeline.ts:187</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="modulePipeline" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>module<wbr/>Pipeline</span><a href="#modulePipeline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">module<wbr/>Pipeline</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">moduleId</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">runModule</span><span class="tsd-signature-symbol">: </span><a href="../types/GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span></div>
+<div class="tsd-signature"><span class="tsd-kind-property">module<wbr/>Pipeline</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">readonly </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">moduleId</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">runModule</span><span class="tsd-signature-symbol">: </span><a href="../types/GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">[]</span></div>
 <div class="tsd-comment tsd-typography"><p>The list of game modules to run through in each frame. Note that order matters here:
 earlier modules will be executed and their state updates will be applied first.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L66">game-pipeline.ts:66</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L73">game-pipeline.ts:73</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="options" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagReadonly">Readonly</code> <span>options</span><a href="#options" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">options</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type ">PartialAndUndefined</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">debug</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">PartialAndUndefined</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">enableFrameHistory_Expensive</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">init</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">allowDuplicateModuleNames</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">startLoopImmediately</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = {}</span></div>
@@ -182,7 +200,7 @@ at any time with overrideOptions.</p>
 <div class="tsd-comment tsd-typography"></div></li></ul></li></ul></div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L73">game-pipeline.ts:73</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L89">game-pipeline.ts:89</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member"><a id="addPauseListener" class="tsd-anchor"></a>
@@ -209,7 +227,7 @@ callback that, upon being called, will remove the listener.</p>
 <h4 class="tsd-returns-title">Returns <a href="../types/RemoveListenerCallback.html" class="tsd-signature-type tsd-kind-type-alias">RemoveListenerCallback</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L196">game-pipeline.ts:196</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L213">game-pipeline.ts:213</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="addStateListener" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>add<wbr/>State<wbr/>Listener</span><a href="#addStateListener" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -235,7 +253,7 @@ called, will remove the listener.</p>
 <h4 class="tsd-returns-title">Returns <a href="../types/RemoveListenerCallback.html" class="tsd-signature-type tsd-kind-type-alias">RemoveListenerCallback</a></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L228">game-pipeline.ts:228</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L245">game-pipeline.ts:245</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="isLoopPaused" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>is<wbr/>Loop<wbr/>Paused</span><a href="#isLoopPaused" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -246,7 +264,7 @@ called, will remove the listener.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L117">game-pipeline.ts:117</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L134">game-pipeline.ts:134</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="overrideOptions" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>override<wbr/>Options</span><a href="#overrideOptions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -262,7 +280,7 @@ called, will remove the listener.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L160">game-pipeline.ts:160</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L177">game-pipeline.ts:177</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="removePauseListener" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>remove<wbr/>Pause<wbr/>Listener</span><a href="#removePauseListener" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -279,7 +297,7 @@ indicating whether or not the listener was removed.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L215">game-pipeline.ts:215</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L232">game-pipeline.ts:232</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="removeStateListener" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>remove<wbr/>State<wbr/>Listener</span><a href="#removeStateListener" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -303,7 +321,7 @@ whether the listener was removed or not.</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L265">game-pipeline.ts:265</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L282">game-pipeline.ts:282</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="startPipelineLoop" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>start<wbr/>Pipeline<wbr/>Loop</span><a href="#startPipelineLoop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -316,7 +334,7 @@ when this was called.)</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L139">game-pipeline.ts:139</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L156">game-pipeline.ts:156</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="stopPipelineLoop" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>stop<wbr/>Pipeline<wbr/>Loop</span><a href="#stopPipelineLoop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -328,7 +346,7 @@ would, for example, not be stopped if it was already stopped when this was calle
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L125">game-pipeline.ts:125</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L142">game-pipeline.ts:142</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member"><a id="triggerSingleFrame" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>trigger<wbr/>Single<wbr/>Frame</span><a href="#triggerSingleFrame" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -340,24 +358,25 @@ running doesn&#39;t really make sense, but you still can if you, for whatever re
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L186">game-pipeline.ts:186</a></li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member"><a id="updateState" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>update<wbr/>State</span><a href="#updateState" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L203">game-pipeline.ts:203</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member"><a id="update" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>update</span><a href="#update" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
-<li class="tsd-signature tsd-anchor-link" id="updateState.updateState-1"><span class="tsd-kind-call-signature">update<wbr/>State</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">update</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#updateState.updateState-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="update.update-1"><span class="tsd-kind-call-signature">update</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">update</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#update.update-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></li>
 <li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Update any part of the state by providing a deeply partial state with the changes. None of
-the rest of the state need be provided besides the parts that will change.</p>
+<div class="tsd-comment tsd-typography"><p>Update any part of the game state or execution context by providing a deeply partial state
+with the changes. Only the parts that will change need be provided, the rest of these objects
+can be omitted.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">update</span>: <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">PartialDeep</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">recurseIntoArrays</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">update</span>: <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">PartialAndUndefined</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">executionContextChange</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">Partial</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">stateChange</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type ">PartialDeep</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">recurseIntoArrays</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">true</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-pipeline.ts#L301">game-pipeline.ts:301</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-pipeline.ts#L319">game-pipeline.ts:319</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -376,6 +395,7 @@ the rest of the state need be provided besides the parts that will change.</p>
 <div class="tsd-accordion-details">
 <ul>
 <li><a href="#constructor" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-512"></use></svg><span>constructor</span></a></li>
+<li><a href="#currentExecutionContext" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>current<wbr/>Execution<wbr/>Context</span></a></li>
 <li><a href="#currentState" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>current<wbr/>State</span></a></li>
 <li><a href="#frameHistory" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>frame<wbr/>History</span></a></li>
 <li><a href="#gameModuleIds" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1024"></use></svg><span>game<wbr/>Module<wbr/>Ids</span></a></li>
@@ -392,11 +412,12 @@ the rest of the state need be provided besides the parts that will change.</p>
 <li><a href="#startPipelineLoop" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>start<wbr/>Pipeline<wbr/>Loop</span></a></li>
 <li><a href="#stopPipelineLoop" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>stop<wbr/>Pipeline<wbr/>Loop</span></a></li>
 <li><a href="#triggerSingleFrame" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>trigger<wbr/>Single<wbr/>Frame</span></a></li>
-<li><a href="#updateState" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>update<wbr/>State</span></a></li></ul></div></details></div>
+<li><a href="#update" class=""><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2048"></use></svg><span>update</span></a></li></ul></div></details></div>
 <div class="site-menu">
-<nav class="tsd-navigation"><a href="../modules.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1"></use></svg><span>game-vir - v0.0.1</span></a>
+<nav class="tsd-navigation"><a href="../modules.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1"></use></svg><span>game-vir - v1.0.0</span></a>
 <ul class="tsd-small-nested-navigation" id="tsd-nav-container" data-base="..">
 <li><a href="GamePipeline.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg>GamePipeline</a></li>
+<li><a href="../types/ExecutionContextBase.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>ExecutionContextBase</a></li>
 <li><a href="../types/GameFrame.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>GameFrame</a></li>
 <li><a href="../types/GameModule.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>GameModule</a></li>
 <li><a href="../types/GameModuleRunner.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>GameModuleRunner</a></li>

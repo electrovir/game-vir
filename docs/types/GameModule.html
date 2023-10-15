@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>GameModule | game-vir - v0.0.1</title><meta name="description" content="Documentation for game-vir"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css?cache=1697317267440"/><link rel="stylesheet" href="../assets/highlight.css?cache=1697317267440"/><script defer src="../assets/main.js?cache=1697317267440"></script><script async src="../assets/search.js?cache=1697317267440" id="tsd-search-script"></script><script async src="../assets/navigation.js?cache=1697317267440" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>GameModule | game-vir - v1.0.0</title><meta name="description" content="Documentation for game-vir"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css?cache=1697405177928"/><link rel="stylesheet" href="../assets/highlight.css?cache=1697405177928"/><script defer src="../assets/main.js?cache=1697405177928"></script><script async src="../assets/search.js?cache=1697405177928" id="tsd-search-script"></script><script async src="../assets/navigation.js?cache=1697405177928" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
 <div class="tsd-toolbar-contents container">
 <div class="table-cell" id="tsd-search" data-base="..">
 <div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="#icon-search"></use></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
@@ -6,7 +6,7 @@
 <div id="tsd-toolbar-links"></div></div>
 <ul class="results">
 <li class="state loading">Preparing search index...</li>
-<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">game-vir - v0.0.1</a></div>
+<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">game-vir - v1.0.0</a></div>
 <div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget tsd-toolbar-icon menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="#icon-menu"></use></svg></a></div></div></header>
 <div class="container container-main">
 <div class="col-content">
@@ -14,15 +14,17 @@
 <ul class="tsd-breadcrumb">
 <li><a href="../modules.html">game-vir</a></li>
 <li><a href="GameModule.html">GameModule</a></li></ul>
-<h1>Type alias GameModule&lt;GameState&gt;</h1></div>
-<div class="tsd-signature"><span class="tsd-kind-type-alias">Game<wbr/>Module</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">moduleId</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">runModule</span><span class="tsd-signature-symbol">: </span><a href="GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span></div>
+<h1>Type alias GameModule&lt;GameState, ExecutionContext&gt;</h1></div>
+<div class="tsd-signature"><span class="tsd-kind-type-alias">Game<wbr/>Module</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">moduleId</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Readonly</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span><br/><span>        </span><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>        </span><span class="tsd-kind-property">version</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">runModule</span><span class="tsd-signature-symbol">: </span><a href="GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span><span class="tsd-signature-symbol">&gt;</span></div>
 <div class="tsd-comment tsd-typography"><p>The heart of the game pipeline; the pipeline is simply an array of GameModules.</p>
 </div>
 <section class="tsd-panel">
 <h4>Type Parameters</h4>
 <ul class="tsd-type-parameter-list">
 <li>
-<h4><span class="tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol"> extends </span><a href="GameStateBase.html" class="tsd-signature-type tsd-kind-type-alias">GameStateBase</a></h4></li></ul></section>
+<h4><span class="tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol"> extends </span><a href="GameStateBase.html" class="tsd-signature-type tsd-kind-type-alias">GameStateBase</a></h4></li>
+<li>
+<h4><span class="tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol"> extends </span><a href="ExecutionContextBase.html" class="tsd-signature-type tsd-kind-type-alias">ExecutionContextBase</a> = <span class="tsd-signature-symbol">{}</span></h4></li></ul></section>
 <div class="tsd-type-declaration">
 <h4>Type declaration</h4>
 <ul class="tsd-parameters">
@@ -33,13 +35,13 @@ purposes for human legibility and debugging.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li>
 <li class="tsd-parameter">
-<h5><span class="tsd-kind-property">run<wbr/>Module</span><span class="tsd-signature-symbol">: </span><a href="GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">&gt;</span></h5>
+<h5><span class="tsd-kind-property">run<wbr/>Module</span><span class="tsd-signature-symbol">: </span><a href="GameModuleRunner.html" class="tsd-signature-type tsd-kind-type-alias">GameModuleRunner</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type tsd-kind-type-parameter">GameState</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type tsd-kind-type-parameter">ExecutionContext</span><span class="tsd-signature-symbol">&gt;</span></h5>
 <div class="tsd-comment tsd-typography"><p>The function that will be called on each frame.</p>
 </div>
 <div class="tsd-comment tsd-typography"></div></li></ul></div>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/6044401/packages/game-vir/src/game-module.ts#L23">game-module.ts:23</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/electrovir/game-vir/blob/8d80d3e/packages/game-vir/src/game-module.ts#L35">game-module.ts:35</a></li></ul></aside></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -54,9 +56,10 @@ purposes for human legibility and debugging.</p>
 <div class="tsd-theme-toggle">
 <h4 class="uppercase">Theme</h4><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div></div>
 <div class="site-menu">
-<nav class="tsd-navigation"><a href="../modules.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1"></use></svg><span>game-vir - v0.0.1</span></a>
+<nav class="tsd-navigation"><a href="../modules.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-1"></use></svg><span>game-vir - v1.0.0</span></a>
 <ul class="tsd-small-nested-navigation" id="tsd-nav-container" data-base="..">
 <li><a href="../classes/GamePipeline.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-128"></use></svg>GamePipeline</a></li>
+<li><a href="ExecutionContextBase.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>ExecutionContextBase</a></li>
 <li><a href="GameFrame.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>GameFrame</a></li>
 <li><a href="GameModule.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>GameModule</a></li>
 <li><a href="GameModuleRunner.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-2097152"></use></svg>GameModuleRunner</a></li>
