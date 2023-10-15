@@ -1,6 +1,6 @@
 import {PartialDeep} from 'type-fest';
+import {GameStateBase} from './base-pipeline-types';
 import {GameModule} from './game-module';
-import {GameStateBase} from './game-state';
 
 /**
  * The updates from a single pipeline execution are stored in these update objects for easier

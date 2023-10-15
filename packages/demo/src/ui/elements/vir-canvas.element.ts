@@ -8,12 +8,11 @@ import {
     onResize,
 } from 'element-vir';
 import {assertInstanceOf} from 'run-time-assertions';
-import {DemoPipelineInputs} from '../../demo-pipeline';
 
 export const VirCanvas = defineElementNoInputs({
     tagName: 'vir-canvas',
     events: {
-        canvasContextCreate: defineElementEvent<DemoPipelineInputs>(),
+        canvasCreate: defineElementEvent<HTMLCanvasElement>(),
     },
     styles: css`
         :host {
@@ -60,13 +59,7 @@ export const VirCanvas = defineElementNoInputs({
                     ${onDomCreated((element) => {
                         try {
                             assertInstanceOf(element, HTMLCanvasElement);
-                            const renderContext = element.getContext('2d');
-                            if (!renderContext) {
-                                throw new Error('Failed to extract 2d render context from canvas.');
-                            }
-                            dispatch(
-                                new events.canvasContextCreate({renderContext, canvas: element}),
-                            );
+                            dispatch(new events.canvasCreate(element));
                         } catch (caught) {
                             updateState({canvasError: ensureError(caught)});
                         }

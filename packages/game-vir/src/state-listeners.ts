@@ -1,5 +1,5 @@
 import {MaybePromise, callAsynchronously, isRuntimeTypeOf} from '@augment-vir/common';
-import {GameStateBase} from './game-state';
+import {GameStateBase} from './base-pipeline-types';
 
 type GenericListener = (partialState: any) => MaybePromise<void>;
 

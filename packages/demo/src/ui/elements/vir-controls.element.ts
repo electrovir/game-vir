@@ -1,7 +1,6 @@
 import {getEnumTypedValues, wrapNumber} from '@augment-vir/common';
-import {css, defineElement, html} from 'element-vir';
-import {RemoveListenerCallback} from 'game-vir';
-import {DemoGamePipeline, DemoShapeTypeEnum} from '../../demo-pipeline';
+import {css, defineElement, defineElementEvent, html} from 'element-vir';
+import {DemoShapeTypeEnum} from '../../demo-pipeline/demo-game-state';
 
 const allPossibleShapeTypes = getEnumTypedValues(DemoShapeTypeEnum);
 function getNextShape(currentShape: DemoShapeTypeEnum): DemoShapeTypeEnum {
@@ -15,74 +14,41 @@ function getNextShape(currentShape: DemoShapeTypeEnum): DemoShapeTypeEnum {
     return allPossibleShapeTypes[nextIndex] ?? allPossibleShapeTypes[0]!;
 }
 
-export const VirControls = defineElement<{pipeline: DemoGamePipeline | undefined}>()({
-    hostClasses: {
-        'vir-controls-disabled': ({inputs}) => !inputs.pipeline,
-    },
+export const VirControls = defineElement<{
+    isPaused: boolean;
+    currentShapeType: DemoShapeTypeEnum;
+}>()({
     tagName: 'vir-controls',
-    styles: ({hostClasses}) => css`
+    events: {
+        playPipeline: defineElementEvent<boolean>(),
+        newShape: defineElementEvent<DemoShapeTypeEnum>(),
+    },
+    styles: css`
         :host {
             display: flex;
             gap: 16px;
         }
-
-        ${hostClasses['vir-controls-disabled'].selector} {
-            pointer-events: none;
-            opacity: 0.5;
-        }
     `,
-    stateInitStatic: {
-        listenerRemovers: [] as RemoveListenerCallback[],
-        isPaused: false,
-        currentShapeType: DemoShapeTypeEnum.Circle,
-    },
-    cleanupCallback({state, updateState}) {
-        state.listenerRemovers.forEach((removeListener) => removeListener());
-        updateState({listenerRemovers: []});
-    },
-    renderCallback({inputs, state, updateState}) {
-        if (inputs.pipeline && !state.listenerRemovers.length) {
-            updateState({
-                listenerRemovers: [
-                    inputs.pipeline.addPauseListener(true, (isPaused) => {
-                        updateState({isPaused});
-                    }),
-                    inputs.pipeline.addStateListener(
-                        true,
-                        [
-                            'shape',
-                            'type',
-                        ],
-                        (shapeType) => {
-                            console.info('state changed shape');
-                            updateState({currentShapeType: shapeType});
-                        },
-                    ),
-                ],
-            });
-        }
-
+    renderCallback({inputs, dispatch, events}) {
         const buttons = [
             {
-                text: state.isPaused ? 'Play' : 'Pause',
+                text: inputs.isPaused ? 'Play' : 'Pause',
                 action() {
-                    if (state.isPaused) {
+                    if (inputs.isPaused) {
                         console.log('starting');
-                        inputs.pipeline?.startPipelineLoop();
+                        dispatch(new events.playPipeline(true));
                     } else {
                         console.log('stopping');
-                        inputs.pipeline?.stopPipelineLoop();
+                        dispatch(new events.playPipeline(false));
                     }
                 },
             },
             {
                 text: 'Change shape',
                 action() {
-                    const nextShape = getNextShape(state.currentShapeType);
+                    const nextShape = getNextShape(inputs.currentShapeType);
                     console.info(`Changing shape to ${nextShape}`);
-                    inputs.pipeline?.updateState({
-                        shape: {type: nextShape},
-                    });
+                    dispatch(new events.newShape(nextShape));
                 },
             },
         ];

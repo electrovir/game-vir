@@ -6,12 +6,13 @@ import {
     callAsynchronously,
     copyThroughJson,
     getValueFromNestedKeys,
+    isTruthy,
     mergeDeep,
 } from '@augment-vir/common';
 import {PartialDeep, Writable} from 'type-fest';
+import {ExecutionContextBase, GameStateBase} from './base-pipeline-types';
 import {GameFrame, GameStateUpdate} from './game-frame';
 import {GameModule, GameModuleRunnerInput, GameModuleRunnerOutput} from './game-module';
-import {GameStateBase} from './game-state';
 import {NestedStateListeners, callListeners} from './state-listeners';
 
 /** Listeners for game state changes on specific properties. */
@@ -52,20 +53,35 @@ export type GamePipelineOptions = PartialAndUndefined<{
  * An instance of the GamePipeline, including loop control and the array of game modules (the
  * "pipeline" itself).
  */
-export class GamePipeline<GameState extends GameStateBase> {
+export class GamePipeline<
+    const GameState extends GameStateBase,
+    const ExecutionContext extends ExecutionContextBase = {},
+> {
     /** Ids of all the game modules that this pipeline was initialized with. */
-    public readonly gameModuleIds: ReadonlyArray<GameModule<GameState>['moduleId']>;
+    public readonly gameModuleIds: ReadonlyArray<
+        GameModule<GameState, ExecutionContext>['moduleId']
+    >;
 
     public readonly currentState: GameState;
+    public readonly currentExecutionContext: ExecutionContext;
 
     constructor(
         /**
          * The list of game modules to run through in each frame. Note that order matters here:
          * earlier modules will be executed and their state updates will be applied first.
          */
-        public readonly modulePipeline: ReadonlyArray<GameModule<GameState>>,
-        /** The pipeline's initial state. */
+        public readonly modulePipeline: ReadonlyArray<GameModule<GameState, ExecutionContext>>,
+        /**
+         * The pipeline's initial state. This state must be JSON serializable. For non-serializable
+         * state or assets, use instead the execution context input.
+         */
         initialState: Readonly<GameState>,
+        /**
+         * The pipeline's initial execution context. Use this to store run-time only items (that
+         * won't persist through game save states) like references to Canvas rendering contexts or
+         * ThreeJS.
+         */
+        initialExecutionContext: Readonly<ExecutionContext> = {} as ExecutionContext,
         /**
          * Optional options to control the pipeline's behavior. Non init options can be overridden
          * at any time with overrideOptions.
@@ -73,6 +89,7 @@ export class GamePipeline<GameState extends GameStateBase> {
         public readonly options: GamePipelineOptions = {},
     ) {
         this.currentState = copyThroughJson(initialState);
+        this.currentExecutionContext = initialExecutionContext;
         this.gameModuleIds = this.modulePipeline.map((gameModule) => gameModule.moduleId);
 
         if (!options?.init?.allowDuplicateModuleNames) {
@@ -295,32 +312,41 @@ export class GamePipeline<GameState extends GameStateBase> {
     }
 
     /**
-     * Update any part of the state by providing a deeply partial state with the changes. None of
-     * the rest of the state need be provided besides the parts that will change.
+     * Update any part of the game state or execution context by providing a deeply partial state
+     * with the changes. Only the parts that will change need be provided, the rest of these objects
+     * can be omitted.
      */
-    public updateState(
-        update: NonNullable<GameModuleRunnerOutput<GameState>>['stateChanges'],
-    ): void {
-        this.updateStateInternally(update, true);
+    public update(update: GameModuleRunnerOutput<GameState, ExecutionContext>): void {
+        this.updateInternally(update, true);
     }
 
-    private updateStateInternally(
-        update: Readonly<NonNullable<GameModuleRunnerOutput<GameState>>['stateChanges']>,
+    private updateInternally(
+        update: GameModuleRunnerOutput<GameState, ExecutionContext>,
         fireListeners: boolean,
     ) {
-        (this.currentState as Writable<GameState>) = mergeDeep(
-            this.currentState,
-            update as Partial<GameState>,
-        );
+        if (update.stateChange) {
+            (this.currentState as Writable<GameState>) = mergeDeep<GameState>(
+                this.currentState,
+                update.stateChange,
+            );
 
-        if (fireListeners) {
-            this.triggerStateListeners([update]);
+            if (fireListeners) {
+                this.triggerStateListeners([update.stateChange]);
+            }
+        }
+        if (update.executionContextChange) {
+            (this.currentExecutionContext as Writable<ExecutionContext>) = {
+                ...this.currentExecutionContext,
+                ...update.executionContextChange,
+            };
         }
     }
 
     private triggerStateListeners(
         updates: ReadonlyArray<
-            Readonly<NonNullable<GameModuleRunnerOutput<GameState>>['stateChanges']>
+            Readonly<
+                NonNullable<GameModuleRunnerOutput<GameState, ExecutionContext>['stateChange']>
+            >
         >,
     ) {
         return callListeners(this.stateListeners, mergeDeep(...updates), this.currentState);
@@ -334,17 +360,18 @@ export class GamePipeline<GameState extends GameStateBase> {
         this.lastFrameCount++;
 
         this.modulePipeline.forEach((gameModule) => {
-            const moduleInput: GameModuleRunnerInput<GameState> = {
+            const moduleInput: GameModuleRunnerInput<GameState, ExecutionContext> = {
                 gameState: this.currentState,
+                executionContext: this.currentExecutionContext,
                 millisecondsSinceLastFrame,
             };
             const moduleOutput = gameModule.runModule(moduleInput);
             if (moduleOutput) {
-                this.updateStateInternally(moduleOutput.stateChanges, false);
+                this.updateInternally(moduleOutput, false);
             }
             orderedStateUpdates.push({
                 fromModule: gameModule.moduleId,
-                stateChanges: moduleOutput?.stateChanges,
+                stateChanges: moduleOutput?.stateChange,
             });
         });
 
@@ -355,12 +382,12 @@ export class GamePipeline<GameState extends GameStateBase> {
             this.frameHistory.push(gameFrame);
         }
 
-        const updates = orderedStateUpdates.map(
+        const stateUpdates = orderedStateUpdates.map(
             (stateUpdate) => stateUpdate.stateChanges,
         ) as ReadonlyArray<
-            Readonly<NonNullable<GameModuleRunnerOutput<GameState>>['stateChanges']>
+            Readonly<GameModuleRunnerOutput<GameState, ExecutionContext>>['stateChange']
         >;
 
-        return this.triggerStateListeners(updates);
+        return this.triggerStateListeners(stateUpdates.filter(isTruthy));
     }
 }
