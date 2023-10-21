@@ -1,6 +1,7 @@
 import {assert} from '@open-wc/testing';
 import {assertTypeOf} from 'run-time-assertions';
-import {GamePipeline} from './game-pipeline';
+import {GameModule} from './game-module';
+import {GamePipeline, GamePipelineStates} from './game-pipeline';
 import {initMockGameState, setupMockGamePipeline} from './game-pipeline.mock';
 
 describe(GamePipeline.name, () => {
@@ -15,9 +16,9 @@ describe(GamePipeline.name, () => {
         return gamePipeline;
     }
 
-    it('renders a new frame', () => {
+    it('renders a new frame', async () => {
         const gamePipeline = setupTestGamePipeline();
-        gamePipeline.triggerSingleFrame();
+        await gamePipeline.triggerSingleFrame();
 
         assert.deepStrictEqual(
             gamePipeline.currentState,
@@ -37,7 +38,7 @@ describe(GamePipeline.name, () => {
         );
     });
 
-    it.only('fires callbacks asynchronously', async () => {
+    it('fires callbacks asynchronously', async () => {
         const listenerData: number[][] = [];
 
         const gamePipeline = setupTestGamePipeline();
@@ -101,5 +102,100 @@ describe(GamePipeline.name, () => {
         await framePromise;
 
         assert.lengthOf(listenerData, 0, 'listener should not have been fired at all');
+    });
+
+    it('infers pipeline state from modules', () => {
+        const test1Module: GameModule<{prop1: string}, {prop2: number}> = {
+            moduleId: {
+                name: 'test-1',
+                version: 1,
+            },
+            runModule() {
+                return undefined;
+            },
+        };
+
+        const test2Module: GameModule<{prop3: string}, {prop4: boolean}> = {
+            moduleId: {
+                name: 'test-2',
+                version: 1,
+            },
+            runModule() {
+                return undefined;
+            },
+        };
+
+        new GamePipeline(
+            [
+                test1Module,
+                test2Module,
+            ],
+            {
+                prop1: 'hi',
+                prop3: 'bye',
+            },
+            {
+                prop2: 32,
+                prop4: true,
+                // this prop was not in any of the game modules
+                // @ts-expect-error
+                extraProp2: 'yo',
+            },
+        );
+
+        new GamePipeline(
+            [
+                test1Module,
+                test2Module,
+            ],
+            {
+                prop1: 'hi',
+                prop3: 'bye',
+            },
+            // missing prop
+            // @ts-expect-error
+            {
+                prop2: 32,
+            },
+        );
+
+        new GamePipeline(
+            [
+                test1Module,
+                test2Module,
+            ],
+            // missing prop
+            // @ts-expect-error
+            {
+                prop3: 'bye',
+            },
+            {
+                prop2: 32,
+                prop4: false,
+            },
+        );
+
+        const gamePipeline = new GamePipeline(
+            [
+                test1Module,
+                test2Module,
+            ],
+            {
+                prop1: 'hi',
+                prop3: 'bye',
+                // this prop was not in any of the game modules
+                // @ts-expect-error
+                extraProp1: 'yo',
+            },
+            {
+                prop2: 32,
+                prop4: true,
+            },
+        );
+
+        assertTypeOf<GamePipelineStates<typeof gamePipeline>>().toEqualTypeOf<{
+            state: Readonly<{prop1: string; prop3: string}>;
+            executionContext: Readonly<{prop2: number; prop4: boolean}>;
+        }>();
     });
 });

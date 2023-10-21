@@ -70,7 +70,7 @@ export const mockModules = [
 
 /** Setup a mock GamePipeline for testing purposes. */
 export function setupMockGamePipeline() {
-    const gamePipeline = new GamePipeline(mockModules, copyThroughJson(initMockGameState));
+    const gamePipeline = new GamePipeline(mockModules, copyThroughJson(initMockGameState), {});
 
     return gamePipeline;
 }
