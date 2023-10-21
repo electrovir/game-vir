@@ -6,8 +6,8 @@ import {createDemoPipeline} from '../../demo-pipeline/demo-pipeline';
 import {VirCanvas} from './vir-canvas.element';
 import {VirControls} from './vir-controls.element';
 
-export const VirApp = defineElementNoInputs({
-    tagName: 'vir-app',
+export const VirGameVirDemo = defineElementNoInputs({
+    tagName: 'vir-game-vir-demo',
     styles: css`
         :host {
             display: flex;
