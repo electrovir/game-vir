@@ -117,6 +117,11 @@ describe(callListeners.name, () => {
             expect: {},
         },
         {
+            it: 'calls nothing if an empty update was given',
+            input: [{}],
+            expect: {},
+        },
+        {
             it: 'only calls top level listeners',
             input: [
                 {

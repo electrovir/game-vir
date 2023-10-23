@@ -21,6 +21,7 @@
     "scripts": {
         "compile": "tsc -b",
         "docs": "virmator docs",
+        "start": "virmator frontend",
         "test": "virmator test-web",
         "test:all": "npm run test:coverage",
         "test:coverage": "npm run test coverage",
@@ -34,6 +35,7 @@
     },
     "devDependencies": {
         "@augment-vir/browser-testing": "^21.3.2",
+        "@augment-vir/node-js": "^20.0.1",
         "@open-wc/testing": "^3.2.0",
         "@types/mocha": "^10.0.2",
         "@web/dev-server-esbuild": "^0.4.1",
@@ -41,9 +43,12 @@
         "@web/test-runner-commands": "^0.8.1",
         "@web/test-runner-playwright": "^0.10.1",
         "@web/test-runner-visual-regression": "^0.8.2",
+        "esbuild": "^0.19.5",
         "istanbul-smart-text-reporter": "^1.1.2",
         "markdown-code-example-inserter": "^0.3.2",
         "typedoc": "^0.25.2",
-        "typescript": "^5.2.2"
+        "typescript": "^5.2.2",
+        "vite": "^4.5.0",
+        "vite-tsconfig-paths": "^4.2.1"
     }
 }

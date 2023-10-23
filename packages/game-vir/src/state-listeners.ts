@@ -17,6 +17,8 @@ type ListenersToCallMap = Map<
     {
         dataValues: (GameStateBase | undefined)[];
         isArray: boolean;
+        /** Indicates whether we're for sure that this listener should be fired. */
+        certain: boolean;
     }
 >;
 
@@ -26,58 +28,68 @@ function determineListenersToCall(
     newGameState: GameStateBase | undefined,
     listenerMap: ListenersToCallMap,
     isArray = false,
-): ListenersToCallMap {
+    certainFromParent = false,
+): boolean {
+    const certainList: boolean[] = Object.entries(stateListeners.children).map(
+        ([
+            key,
+            nestedListener,
+        ]): boolean => {
+            if (isRuntimeTypeOf(updates, 'array')) {
+                return updates
+                    .map((updateEntry, updateIndex) => {
+                        const nextNewGameState = newGameState?.[updateIndex] as GameStateBase;
+                        return determineListenersToCall(
+                            stateListeners,
+                            updateEntry,
+                            nextNewGameState,
+                            listenerMap,
+                            true,
+                        );
+                    })
+                    .some((certain) => certain);
+            } else {
+                if (!nestedListener || (!isArray && (!updates || !(key in updates)))) {
+                    return false;
+                }
+                const nextUpdates = updates?.[key] as GameStateBase;
+                const nextNewGameState = (
+                    newGameState ? newGameState[key] : ignoreSymbol
+                ) as GameStateBase;
+                return determineListenersToCall(
+                    nestedListener,
+                    nextUpdates,
+                    nextNewGameState,
+                    listenerMap,
+                    isArray,
+                    updates && key in updates,
+                );
+            }
+        },
+    );
+
+    const certain = certainFromParent || certainList.some((entry) => entry);
+
     const listeners = stateListeners.listeners;
     if (listeners?.size) {
         const currentMapEntry = listenerMap.get(listeners);
         if (isArray || (newGameState as any) !== ignoreSymbol) {
             if (currentMapEntry) {
                 currentMapEntry.dataValues.push(newGameState);
+                if (!currentMapEntry.certain && certain) {
+                    currentMapEntry.certain = true;
+                }
             } else {
                 listenerMap.set(listeners, {
                     dataValues: [newGameState],
                     isArray,
+                    certain,
                 });
             }
         }
     }
 
-    Object.entries(stateListeners.children).forEach(
-        ([
-            key,
-            nestedListener,
-        ]) => {
-            if (isRuntimeTypeOf(updates, 'array')) {
-                updates.forEach((updateEntry, updateIndex) => {
-                    const nextNewGameState = newGameState?.[updateIndex] as GameStateBase;
-                    determineListenersToCall(
-                        stateListeners,
-                        updateEntry,
-                        nextNewGameState,
-                        listenerMap,
-                        true,
-                    );
-                });
-            } else {
-                if (!nestedListener || (!isArray && (!updates || !(key in updates)))) {
-                    return;
-                }
-                const nextUpdates = updates?.[key] as GameStateBase;
-                const nextNewGameState = (
-                    newGameState ? newGameState[key] : ignoreSymbol
-                ) as GameStateBase;
-                determineListenersToCall(
-                    nestedListener,
-                    nextUpdates,
-                    nextNewGameState,
-                    listenerMap,
-                    isArray,
-                );
-            }
-        },
-    );
-
-    return listenerMap;
+    return certain;
 }
 
 export async function callListeners(
@@ -87,15 +99,18 @@ export async function callListeners(
 ): Promise<unknown> {
     const allPromises: Promise<unknown>[] = [];
 
-    const listenersToCall = determineListenersToCall(
-        stateListeners,
-        updates,
-        newGameState,
-        new Map(),
-    );
+    const listenersToCall: ListenersToCallMap = new Map();
+    if (Object.keys(updates).length) {
+        determineListenersToCall(
+            {children: {root: stateListeners}, listeners: undefined},
+            {root: updates},
+            {root: newGameState},
+            listenersToCall,
+        );
+    }
 
     listenersToCall.forEach((valueInfo, listeners) => {
-        if (listeners?.size) {
+        if (valueInfo.certain && listeners?.size) {
             allPromises.push(
                 callAsynchronously(() => {
                     const innerPromises: MaybePromise<unknown>[] = [];

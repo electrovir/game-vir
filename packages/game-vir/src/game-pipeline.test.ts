@@ -16,15 +16,18 @@ describe(GamePipeline.name, () => {
         return gamePipeline;
     }
 
-    it('renders a new frame', async () => {
+    it('renders a new frame', () => {
         const gamePipeline = setupTestGamePipeline();
-        await gamePipeline.triggerSingleFrame();
+        gamePipeline.triggerSingleFrame();
 
         assert.deepStrictEqual(
             gamePipeline.currentState,
             {
                 ...initMockGameState,
-                enemies: initMockGameState.enemies.map((enemy) => {
+                enemies: initMockGameState.enemies.map((enemy, index) => {
+                    if (index === 1) {
+                        return enemy;
+                    }
                     return {
                         ...enemy,
                         position: {
@@ -68,8 +71,8 @@ describe(GamePipeline.name, () => {
         ]);
     });
 
-    it('fires does not fire callbacks if no change to listened properties', async () => {
-        const listenerData: number[][] = [];
+    it('does not fire callbacks if no change to listened properties', async () => {
+        const listenerData: any[] = [];
 
         const gamePipeline = setupTestGamePipeline();
         gamePipeline.addStateListener(
@@ -87,12 +90,12 @@ describe(GamePipeline.name, () => {
         gamePipeline.addStateListener(
             false,
             [
-                'enemies',
+                'player',
                 'position',
                 'x',
             ],
             (newData) => {
-                assertTypeOf(newData).toEqualTypeOf<number[]>();
+                assertTypeOf(newData).toEqualTypeOf<number>();
                 listenerData.push(newData);
             },
         );
