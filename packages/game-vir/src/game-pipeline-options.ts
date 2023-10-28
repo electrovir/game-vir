@@ -17,6 +17,7 @@ export type GamePipelineOptions<
         startLoopImmediately: boolean;
         /** By default module names are checked for uniqueness. To turn that off, set this to true. */
         allowDuplicateModuleNames: boolean;
+        /** This callback is called when the GamePipeline's onDestroy method is called. */
         onDestroy(
             inputs: Omit<
                 GameModuleRunnerInput<GameState, ExecutionContext>,

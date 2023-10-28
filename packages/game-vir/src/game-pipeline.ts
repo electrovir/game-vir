@@ -257,6 +257,7 @@ export class GamePipeline<
         }
     }
 
+    /** Clean up all GamePipeline state and call onDestroy (set in options.init). */
     public destroy() {
         this.stopPipelineLoop();
         if (this.currentOptions.init?.onDestroy) {
@@ -390,6 +391,7 @@ export class GamePipeline<
         };
     }
 
+    /** Remove all current state listeners; */
     public removeAllStateListeners() {
         this.stateListeners = {
             children: {},
