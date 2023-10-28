@@ -7,7 +7,7 @@
         "packages/*"
     ],
     "scripts": {
-        "build": "npm run compile && npm run build --workspace @game-vir/demo && npm run docs --workspace game-vir && cp -r packages/game-vir/docs-dist packages/demo/dist/docs",
+        "build": "npm run compile && npm run build --workspace @game-vir/demo && npm run docs --workspace game-vir && cp -r packages/game-vir/dist-docs packages/demo/dist/docs",
         "compile": "mono-vir for-each tsc -b --pretty",
         "docs": "npm run docs --workspace game-vir",
         "format": "virmator format",
