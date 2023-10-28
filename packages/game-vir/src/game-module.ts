@@ -1,4 +1,4 @@
-import {PartialAndUndefined} from '@augment-vir/common';
+import {MaybePromise, PartialAndUndefined} from '@augment-vir/common';
 import {PartialDeep} from 'type-fest';
 import {ExecutionContextBase, GameStateBase} from './base-pipeline-types';
 
@@ -29,11 +29,15 @@ export type GameModuleRunner<
     ExecutionContext extends ExecutionContextBase,
 > = (
     GameModuleInput: GameModuleRunnerInput<GameState, ExecutionContext>,
-) => GameModuleRunnerOutput<GameState, ExecutionContext> | undefined;
+) => MaybePromise<GameModuleRunnerOutput<GameState, ExecutionContext> | undefined>;
 
-/** The heart of the game pipeline; the pipeline is simply an array of GameModules. */
+/**
+ * The heart of the game pipeline; the pipeline is simply an array of GameModules.
+ *
+ * @category Basic Use
+ */
 export type GameModule<
-    GameState extends GameStateBase,
+    GameState extends GameStateBase = {},
     ExecutionContext extends ExecutionContextBase = {},
 > = Readonly<{
     /**
