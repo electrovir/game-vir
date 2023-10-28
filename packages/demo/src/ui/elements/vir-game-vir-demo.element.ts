@@ -1,7 +1,8 @@
 import {ensureError, extractErrorMessage} from '@augment-vir/common';
 import {css, defineElementNoInputs, html, listen, perInstance} from 'element-vir';
 import {RemoveListenerCallback} from 'game-vir';
-import {DemoShapeTypeEnum} from '../../demo-pipeline/demo-game-state';
+import {PipelineFramerateEvent, PipelinePauseEvent} from 'game-vir/src/pipeline-events';
+import {DemoShapeTypeEnum} from '../../demo-pipeline/demo-game-modules';
 import {createDemoPipeline} from '../../demo-pipeline/demo-pipeline';
 import {VirCanvas} from './vir-canvas.element';
 import {VirControls} from './vir-controls.element';
@@ -10,6 +11,7 @@ export const VirGameVirDemo = defineElementNoInputs({
     tagName: 'vir-game-vir-demo',
     styles: css`
         :host {
+            font-family: sans-serif;
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -38,12 +40,16 @@ export const VirGameVirDemo = defineElementNoInputs({
         isPaused: true,
         currentShapeType: DemoShapeTypeEnum.Circle,
         error: undefined as Error | undefined,
+        framerate: 0,
     },
     initCallback({state, updateState}) {
         updateState({
             pipelineListenerRemovers: [
-                state.gamePipeline.addPauseListener(true, (isPaused) => {
-                    updateState({isPaused});
+                state.gamePipeline.addEventListener(PipelinePauseEvent.type, (event) => {
+                    updateState({isPaused: event.detail});
+                }),
+                state.gamePipeline.addEventListener(PipelineFramerateEvent.type, (event) => {
+                    updateState({framerate: event.detail});
                 }),
                 state.gamePipeline.addStateListener(
                     true,
@@ -59,7 +65,9 @@ export const VirGameVirDemo = defineElementNoInputs({
             ],
         });
     },
-    cleanupCallback() {},
+    cleanupCallback({state}) {
+        state.pipelineListenerRemovers.forEach((remover) => remover());
+    },
     renderCallback({state, updateState}) {
         if (state.error) {
             return html`
@@ -75,6 +83,9 @@ export const VirGameVirDemo = defineElementNoInputs({
                 ${listen(VirControls.events.newShape, (event) => {
                     state.gamePipeline.update({stateChange: {shape: {type: event.detail}}});
                 })}
+                ${listen(VirControls.events.stutter, () => {
+                    state.gamePipeline.update({stateChange: {shouldStutter: true}});
+                })}
                 ${listen(VirControls.events.playPipeline, (event) => {
                     if (event.detail) {
                         state.gamePipeline.startPipelineLoop();
@@ -83,6 +94,7 @@ export const VirGameVirDemo = defineElementNoInputs({
                     }
                 })}
             ></${VirControls}>
+            <p>FPS: ${state.framerate}</p>
             <${VirCanvas}
                 ${listen(VirCanvas.events.canvasCreate, (event) => {
                     try {

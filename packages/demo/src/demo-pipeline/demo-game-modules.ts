@@ -1,6 +1,11 @@
-import {addPercent, PickDeep, wrapNumber} from '@augment-vir/common';
+import {addPercent, wait, wrapNumber} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
-import {DemoGameState, DemoShapeTypeEnum} from './demo-game-state';
+
+export enum DemoShapeTypeEnum {
+    Circle = 'circle',
+    Square = 'square',
+    Triangle = 'triangle',
+}
 
 function calculateTrianglePoints(center: {x: number; y: number}, size: number) {
     const radius = size / 2;
@@ -26,7 +31,20 @@ function calculateTrianglePoints(center: {x: number; y: number}, size: number) {
 }
 
 export const renderShapeModule: GameModule<
-    PickDeep<DemoGameState, ['canvasSize' | 'shape', 'width' | 'height' | 'color' | 'type']>,
+    {
+        canvasSize: {
+            width: number;
+            height: number;
+        };
+        shape: {
+            color: {
+                h: number;
+                s: number;
+                l: number;
+            };
+            type: DemoShapeTypeEnum;
+        };
+    },
     {renderContext: CanvasRenderingContext2D | undefined}
 > = {
     moduleId: {
@@ -79,7 +97,6 @@ export const renderShapeModule: GameModule<
                 size / 2,
                 0,
                 Math.PI * 2,
-                true,
             );
             executionContext.renderContext.fill();
         } else if (gameState.shape.type === DemoShapeTypeEnum.Triangle) {
@@ -92,6 +109,27 @@ export const renderShapeModule: GameModule<
         }
 
         return undefined;
+    },
+};
+
+/** Intentionally cause a render stuff. */
+export const stutterModule: GameModule<{shouldStutter: boolean}> = {
+    moduleId: {
+        name: 'stutter',
+        version: 1,
+    },
+    async runModule({gameState}) {
+        if (!gameState.shouldStutter) {
+            return undefined;
+        }
+
+        await wait(1000);
+
+        return {
+            stateChange: {
+                shouldStutter: false,
+            },
+        };
     },
 };
 
@@ -119,7 +157,7 @@ export const canvasSizeModule: GameModule<
     },
 };
 
-export const debugModule: GameModule<DemoGameState> = {
+export const debugModule: GameModule = {
     moduleId: {
         name: 'debug',
         version: 1,
@@ -130,9 +168,16 @@ export const debugModule: GameModule<DemoGameState> = {
     },
 };
 
-export const rainbowModule: GameModule<
-    PickDeep<DemoGameState, ['shape', 'color' | 'huePerMillisecond']>
-> = {
+export const rainbowModule: GameModule<{
+    shape: {
+        color: {
+            h: number;
+            s: number;
+            l: number;
+        };
+        huePerMillisecond: number;
+    };
+}> = {
     moduleId: {
         name: 'rainbow',
         version: 1,
