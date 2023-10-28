@@ -17,6 +17,12 @@ export type GamePipelineOptions<
         startLoopImmediately: boolean;
         /** By default module names are checked for uniqueness. To turn that off, set this to true. */
         allowDuplicateModuleNames: boolean;
+        onDestroy(
+            inputs: Omit<
+                GameModuleRunnerInput<GameState, ExecutionContext>,
+                'millisecondsSinceLastFrame'
+            >,
+        ): MaybePromise<void>;
     }>;
     /**
      * How long to wait before recalculating framerate. Shorter times will cause
