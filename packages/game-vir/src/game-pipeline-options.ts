@@ -1,10 +1,16 @@
+import {MaybePromise} from '@augment-vir/common';
+import {ExecutionContextBase, GameStateBase} from './base-pipeline-types';
+import {GameModuleRunnerInput} from './game-module';
 /**
  * Optional options that can be provided to a pipeline. init options cannot be updated after
  * pipeline construction. All other options can be updated after pipeline construction.
  *
  * @category Basic Use
  */
-export type GamePipelineOptions = Partial<{
+export type GamePipelineOptions<
+    GameState extends GameStateBase,
+    ExecutionContext extends ExecutionContextBase,
+> = Partial<{
     /** These options can only be set on pipeline construction. */
     init: Partial<{
         /** Start the pipeline loop immediately. */
