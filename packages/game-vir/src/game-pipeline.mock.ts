@@ -2,7 +2,11 @@ import {copyThroughJson} from '@augment-vir/common';
 import {GameModule} from './game-module';
 import {GamePipeline} from './game-pipeline';
 
-/** Mock initial game state for testing purposes. */
+/**
+ * Mock initial game state for testing purposes.
+ *
+ * @category Mocks
+ */
 export const initMockGameState = {
     player: {
         position: {
@@ -35,11 +39,19 @@ export const initMockGameState = {
     }[],
 };
 
-/** Mock game state type for testing purposes. */
+/**
+ * Mock game state type for testing purposes.
+ *
+ * @category Mocks
+ */
 export type MockGameState = typeof initMockGameState;
 
-/** Mock modules for testing purposes. */
-export const mockModules = [
+/**
+ * Mock game modules for testing purposes.
+ *
+ * @category Mocks
+ */
+export const mockGameModules = [
     {
         moduleId: {
             name: 'move enemies',
@@ -68,9 +80,13 @@ export const mockModules = [
     },
 ] as const satisfies ReadonlyArray<GameModule<MockGameState>>;
 
-/** Setup a mock GamePipeline for testing purposes. */
+/**
+ * Setup a mock GamePipeline for testing purposes.
+ *
+ * @category Mocks
+ */
 export function setupMockGamePipeline() {
-    const gamePipeline = new GamePipeline(mockModules, copyThroughJson(initMockGameState), {});
+    const gamePipeline = new GamePipeline(mockGameModules, copyThroughJson(initMockGameState), {});
 
     return gamePipeline;
 }

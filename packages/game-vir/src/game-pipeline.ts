@@ -3,17 +3,28 @@ import {
     MaybePromise,
     NestedSequentialKeys,
     NestedValue,
-    PartialAndUndefined,
+    RequiredAndNotNullBy,
+    awaitedForEach,
     callAsynchronously,
     copyThroughJson,
+    extractErrorMessage,
     getValueFromNestedKeys,
     isTruthy,
     mergeDeep,
+    round,
 } from '@augment-vir/common';
-import {PartialDeep, UnionToIntersection, Writable} from 'type-fest';
+import {UnionToIntersection, Writable} from 'type-fest';
+import {
+    ExtractEventByType,
+    ExtractEventTypes,
+    TypedEventListenerOrEventListenerObject,
+    TypedEventTarget,
+} from 'typed-event-target';
 import {GameStateBase} from './base-pipeline-types';
 import {GameFrame, GameStateUpdate} from './game-frame';
 import {GameModule, GameModuleRunnerInput, GameModuleRunnerOutput} from './game-module';
+import {GamePipelineOptions} from './game-pipeline-options';
+import {PipelineFramerateEvent, PipelinePauseEvent} from './pipeline-events';
 import {NestedStateListeners, callListeners} from './state-listeners';
 
 /** Listeners for game state changes on specific properties. */
@@ -22,33 +33,8 @@ export type GameStateListener<
     Keys extends NestedSequentialKeys<GameState> = any,
 > = (PartialState: NestedValue<GameState, Keys>) => MaybePromise<void>;
 
-/** A listener for listening to pause events. */
-export type PauseListener = (isPaused: boolean) => MaybePromise<void>;
-
 /** A callback for removing listeners. */
 export type RemoveListenerCallback = () => void;
-
-/**
- * Optional options that can be provided to a pipeline. init options cannot be updated after
- * pipeline construction. All other options can be updated after pipeline construction.
- */
-export type GamePipelineOptions = PartialAndUndefined<{
-    /** These options can only be set on pipeline construction. */
-    init: {
-        /** Start the pipeline loop immediately. */
-        startLoopImmediately: boolean;
-        /** By default module names are checked for uniqueness. To turn that off, set this to true. */
-        allowDuplicateModuleNames: boolean;
-    };
-    /** Collection of options that should only be used for debugging. */
-    debug: PartialAndUndefined<{
-        /**
-         * Enable saving frame history. This can quickly become expensive to memory as each frame
-         * will be saved as well as each module's output.
-         */
-        enableFrameHistory_Expensive: boolean;
-    }>;
-}>;
 
 /**
  * Type helper that converts an array of game modules into their combined required game state and
@@ -66,8 +52,20 @@ export type ModulesToPipelineStates<GameModules extends ReadonlyArray<GameModule
 };
 
 /**
+ * A union of all possible events that the GamePipeline can emit. This does not include state change
+ * events, as the type of state change events vary depending on what part of the state was listened
+ * to.
+ */
+export type GamePipelineEvents = PipelinePauseEvent | PipelineFramerateEvent;
+
+/**
  * Type helper that extracts the needed game state and execution context types out of a game
  * pipeline.
+ *
+ * @category Basic Use
+ * @example
+ *     export type MyGameState = GamePipelineStates<MyGamePipeline>['gameState'];
+ *     export type MyExecutionContext = GamePipelineStates<MyGamePipeline>['executionContext'];
  */
 export type GamePipelineStates<SpecificPipeline extends GamePipeline<any>> =
     SpecificPipeline extends GamePipeline<infer GameModules>
@@ -77,13 +75,29 @@ export type GamePipelineStates<SpecificPipeline extends GamePipeline<any>> =
 /**
  * An instance of the GamePipeline, including loop control and the array of game modules (the
  * "pipeline" itself).
+ *
+ * @category Basic Use
  */
-export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any, any>>> {
+export class GamePipeline<
+    const GameModules extends ReadonlyArray<GameModule<any, any>>,
+> extends TypedEventTarget<GamePipelineEvents> {
     /** Ids of all the game modules that this pipeline was initialized with. */
     public readonly gameModuleIds: ReadonlyArray<ArrayElement<GameModules>['moduleId']>;
 
     public readonly currentState: ModulesToPipelineStates<GameModules>['state'];
     public readonly currentExecutionContext: ModulesToPipelineStates<GameModules>['executionContext'];
+
+    /** Latest calculated framerate in frames per second. */
+    public currentFramerate = 0;
+    private framerateOperands = {
+        totalDuration: 0,
+        frameCount: 0,
+    };
+    private isFrameExecuting = false;
+    private currentOptions: RequiredAndNotNullBy<GamePipelineOptions, 'framerateCalculationWait'> =
+        {
+            framerateCalculationWait: {milliseconds: 500},
+        };
 
     constructor(
         /**
@@ -106,16 +120,19 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
          * Optional options to control the pipeline's behavior. Non init options can be overridden
          * at any time with overrideOptions.
          */
-        public readonly options: GamePipelineOptions = {},
+        initOptions: GamePipelineOptions = {},
     ) {
+        super();
         this.currentState = copyThroughJson(initialState);
         this.currentExecutionContext = initialExecutionContext;
         this.gameModuleIds = this.gameModules.map((gameModule) => gameModule.moduleId);
 
-        if (!options?.init?.allowDuplicateModuleNames) {
+        this.internalOverrideOptions(initOptions);
+
+        if (!this.currentOptions?.init?.allowDuplicateModuleNames) {
             this.assertValidGameModules();
         }
-        if (options?.init?.startLoopImmediately) {
+        if (this.currentOptions?.init?.startLoopImmediately) {
             this.startPipelineLoop();
         }
     }
@@ -143,9 +160,7 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
     private _loopIsPaused = true;
     private set loopIsPaused(value: boolean) {
         this._loopIsPaused = value;
-        callAsynchronously(() =>
-            this.pauseListeners.forEach((pauseListener) => pauseListener(value)),
-        );
+        this.dispatchEvent(new PipelinePauseEvent({detail: value}));
     }
     private get loopIsPaused(): boolean {
         return this._loopIsPaused;
@@ -156,8 +171,11 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
     }
 
     /**
-     * Stops the pipeline loop. Return value indicates whether it was stopped or not. (The pipeline
-     * would, for example, not be stopped if it was already stopped when this was called.)
+     * Stops the pipeline loop.
+     *
+     * @returns Boolean that indicates whether the loop was stopped or not. The pipeline would, for
+     *   example, not be stopped if it was already stopped when this was called, resulting in a
+     *   no-op.
      */
     public stopPipelineLoop(): boolean {
         if (this.loopIsPaused) {
@@ -169,9 +187,12 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
     }
 
     /**
-     * Starts the pipeline loop using requestAnimationFrame. Return value indicates whether it was
-     * started or not. (The pipeline would, for example, not be started if it was already running
-     * when this was called.)
+     * Starts the pipeline loop using requestAnimationFrame, so it'll try to run at the screen's
+     * refresh rate.
+     *
+     * @returns Boolean that indicates whether the loop was started or not. The pipeline would, for
+     *   example, not be started if it was already running when this was called, resulting in a
+     *   no-op.
      */
     public startPipelineLoop(): boolean {
         if (this.loopIsPaused) {
@@ -193,9 +214,72 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
         });
     }
 
+    private calculateFramerate(millisecondsSinceLastFrame: number) {
+        this.framerateOperands.frameCount++;
+        this.framerateOperands.totalDuration += millisecondsSinceLastFrame;
+
+        if (
+            this.framerateOperands.totalDuration >=
+            this.currentOptions.framerateCalculationWait.milliseconds
+        ) {
+            this.currentFramerate = round({
+                number:
+                    (this.framerateOperands.frameCount / this.framerateOperands.totalDuration) *
+                    1000,
+                digits: 1,
+            });
+
+            if (
+                this.currentOptions.debug?.enableWarningLogging &&
+                this.currentOptions.debug.targetFramerate &&
+                this.currentFramerate + 1 < this.currentOptions.debug.targetFramerate
+            ) {
+                console.warn(`Framerate dropped to ${this.currentFramerate}`);
+            }
+
+            this.dispatchEvent(
+                new PipelineFramerateEvent({
+                    detail: this.currentFramerate,
+                }),
+            );
+            this.framerateOperands = {
+                frameCount: 0,
+                totalDuration: 0,
+            };
+        }
+    }
+
+    /**
+     * Add an event listener that is not a state change event listener. For listening to state
+     * change events, use .addStateListener() instead.
+     */
+    public override addEventListener<
+        const EventNameGeneric extends ExtractEventTypes<GamePipelineEvents>,
+    >(
+        type: EventNameGeneric,
+        callback: TypedEventListenerOrEventListenerObject<
+            ExtractEventByType<GamePipelineEvents, EventNameGeneric>
+        > | null,
+        options?: boolean | AddEventListenerOptions | undefined,
+    ): RemoveListenerCallback {
+        super.addEventListener(type, callback, options);
+        return () => {
+            super.removeEventListener(type, callback, options);
+        };
+    }
+
+    private internalOverrideOptions(newOptions: GamePipelineOptions) {
+        (this.currentOptions as GamePipelineOptions) = mergeDeep(this.currentOptions, newOptions);
+    }
+
     /** Manually update non-init options at any time. */
-    public overrideOptions(newOptions: PartialDeep<Omit<GamePipelineOptions, 'init'>>): void {
-        (this.options as Writable<GamePipelineOptions>) = mergeDeep(this.options, newOptions);
+    public overrideOptions(newOptions: Omit<GamePipelineOptions, 'init'>): void {
+        if ('init' in newOptions) {
+            throw new Error(
+                'Cannot override init options after the GamePipeline has already been constructed.',
+            );
+        }
+        this.internalOverrideOptions(newOptions);
     }
 
     /**
@@ -206,10 +290,10 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
      */
     public lastFrameTimestamp: number | undefined;
     /**
-     * Count of the last frame that was run. The first frame that runs is frame 0. This is just for
+     * Count of the last frame that was run. The first frame that runs is frame 1. This is just for
      * debugging purposes.
      */
-    public lastFrameCount: number = -1;
+    public lastFrameCount: number = 0;
     /**
      * History of all frames that have been executed. Will not populate by default, it must be
      * enabled via debug options.
@@ -217,40 +301,12 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
     public frameHistory: Readonly<GameFrame<ModulesToPipelineStates<GameModules>['state']>>[] = [];
 
     /**
-     * Trigger a single frame and do nothing else. Note that executing this while the loop is
-     * running doesn't really make sense, but you still can if you, for whatever reason, want to.
+     * Trigger a single frame and do nothing else. Note that executing this while the pipeline loop
+     * is running doesn't really make sense, but you still can if you, for whatever reason, want
+     * to.
      */
     public triggerSingleFrame(): Promise<unknown> {
         return this.internallyTriggerSingleFrame(performance.now());
-    }
-
-    private pauseListeners = new Set<PauseListener>();
-
-    /**
-     * Add a listener that triggers any time the pipeline loop is stopped or started. Returns a
-     * callback that, upon being called, will remove the listener.
-     */
-    public addPauseListener(
-        /** If true, the listener will immediately fire with whatever the current paused value is. */ fireImmediately: boolean,
-        /** The listener to call when the pipeline loop starts or pauses. */
-        listener: PauseListener,
-    ): RemoveListenerCallback {
-        this.pauseListeners.add(listener);
-        if (fireImmediately) {
-            listener(this.loopIsPaused);
-        }
-
-        return () => {
-            return this.removePauseListener(listener);
-        };
-    }
-
-    /**
-     * Add a listener that triggers any time the game loop is stopped or started. Returns a boolean
-     * indicating whether or not the listener was removed.
-     */
-    public removePauseListener(listener: PauseListener): boolean {
-        return this.pauseListeners.delete(listener);
     }
 
     private stateListeners: NestedStateListeners = {
@@ -393,52 +449,71 @@ export class GamePipeline<const GameModules extends ReadonlyArray<GameModule<any
         );
     }
 
-    private internallyTriggerSingleFrame(frameTimestampMs: number): Promise<unknown> {
-        const millisecondsSinceLastFrame: number =
-            this.lastFrameTimestamp == undefined ? 0 : frameTimestampMs - this.lastFrameTimestamp;
-        const orderedStateUpdates: Readonly<
-            GameStateUpdate<ModulesToPipelineStates<GameModules>['state']>
-        >[] = [];
-        this.lastFrameTimestamp = frameTimestampMs;
-        this.lastFrameCount++;
-
-        this.gameModules.forEach((gameModule) => {
-            const moduleInput: GameModuleRunnerInput<
-                ModulesToPipelineStates<GameModules>['state'],
-                ModulesToPipelineStates<GameModules>['executionContext']
-            > = {
-                gameState: this.currentState,
-                executionContext: this.currentExecutionContext,
-                millisecondsSinceLastFrame,
-            };
-            const moduleOutput = gameModule.runModule(moduleInput);
-            if (moduleOutput) {
-                this.updateInternally(moduleOutput, false);
+    private async internallyTriggerSingleFrame(frameTimestampMs: number): Promise<unknown> {
+        if (this.isFrameExecuting) {
+            if (this.currentOptions.debug?.enableWarningLogging) {
+                console.warn('frame skipped');
             }
-            orderedStateUpdates.push({
-                fromModule: gameModule.moduleId,
-                stateChanges: moduleOutput?.stateChange,
-            });
-        });
-
-        if (this.options.debug?.enableFrameHistory_Expensive) {
-            const gameFrame: GameFrame<ModulesToPipelineStates<GameModules>['state']> = {
-                orderedStateUpdates,
-            };
-            this.frameHistory.push(gameFrame);
+            return;
         }
+        this.isFrameExecuting = true;
 
-        const stateUpdates = orderedStateUpdates.map(
-            (stateUpdate) => stateUpdate.stateChanges,
-        ) as ReadonlyArray<
-            Readonly<
-                GameModuleRunnerOutput<
+        try {
+            const millisecondsSinceLastFrame: number =
+                this.lastFrameTimestamp == undefined
+                    ? 0
+                    : frameTimestampMs - this.lastFrameTimestamp;
+
+            this.calculateFramerate(millisecondsSinceLastFrame);
+
+            const orderedStateUpdates: Readonly<
+                GameStateUpdate<ModulesToPipelineStates<GameModules>['state']>
+            >[] = [];
+            this.lastFrameTimestamp = frameTimestampMs;
+            this.lastFrameCount++;
+
+            await awaitedForEach(this.gameModules, async (gameModule) => {
+                const moduleInput: GameModuleRunnerInput<
                     ModulesToPipelineStates<GameModules>['state'],
                     ModulesToPipelineStates<GameModules>['executionContext']
-                >
-            >['stateChange']
-        >;
+                > = {
+                    gameState: this.currentState,
+                    executionContext: this.currentExecutionContext,
+                    millisecondsSinceLastFrame,
+                };
+                const moduleOutput = await gameModule.runModule(moduleInput);
+                if (moduleOutput) {
+                    this.updateInternally(moduleOutput, false);
+                }
+                orderedStateUpdates.push({
+                    fromModule: gameModule.moduleId,
+                    stateChanges: moduleOutput?.stateChange,
+                });
+            });
 
-        return this.triggerStateListeners(stateUpdates.filter(isTruthy));
+            if (this.currentOptions.debug?.enableFrameHistory_Expensive) {
+                const gameFrame: GameFrame<ModulesToPipelineStates<GameModules>['state']> = {
+                    orderedStateUpdates,
+                };
+                this.frameHistory.push(gameFrame);
+            }
+
+            const stateUpdates = orderedStateUpdates.map(
+                (stateUpdate) => stateUpdate.stateChanges,
+            ) as ReadonlyArray<
+                Readonly<
+                    GameModuleRunnerOutput<
+                        ModulesToPipelineStates<GameModules>['state'],
+                        ModulesToPipelineStates<GameModules>['executionContext']
+                    >
+                >['stateChange']
+            >;
+            this.isFrameExecuting = false;
+
+            return this.triggerStateListeners(stateUpdates.filter(isTruthy));
+        } catch (caught) {
+            this.isFrameExecuting = false;
+            throw new Error(`Failed to render frame: ${extractErrorMessage(caught)}`);
+        }
     }
 }

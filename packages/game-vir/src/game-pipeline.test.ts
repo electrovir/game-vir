@@ -1,3 +1,4 @@
+import {createDeferredPromiseWrapper} from '@augment-vir/common';
 import {assert} from '@open-wc/testing';
 import {assertTypeOf} from 'run-time-assertions';
 import {GameModule} from './game-module';
@@ -16,9 +17,9 @@ describe(GamePipeline.name, () => {
         return gamePipeline;
     }
 
-    it('renders a new frame', () => {
+    it('renders a new frame', async () => {
         const gamePipeline = setupTestGamePipeline();
-        gamePipeline.triggerSingleFrame();
+        await gamePipeline.triggerSingleFrame();
 
         assert.deepStrictEqual(
             gamePipeline.currentState,
@@ -200,5 +201,49 @@ describe(GamePipeline.name, () => {
             state: Readonly<{prop1: string; prop3: string}>;
             executionContext: Readonly<{prop2: number; prop4: boolean}>;
         }>();
+    });
+
+    it('waits for async game modules', async () => {
+        const deferredAsyncModulePromise = createDeferredPromiseWrapper();
+        let nextModuleFired = false;
+
+        const testPipeline = new GamePipeline(
+            [
+                {
+                    moduleId: {
+                        name: 'async module',
+                        version: 1,
+                    },
+                    async runModule() {
+                        await deferredAsyncModulePromise.promise;
+                        return undefined;
+                    },
+                },
+                {
+                    moduleId: {
+                        name: 'next module',
+                        version: 1,
+                    },
+                    runModule() {
+                        nextModuleFired = true;
+                        return undefined;
+                    },
+                },
+            ],
+            {},
+            {},
+        );
+
+        const firstFrame = testPipeline.triggerSingleFrame();
+        assert.isFalse(nextModuleFired);
+        await testPipeline.triggerSingleFrame();
+        assert.isFalse(nextModuleFired);
+        assert.strictEqual(testPipeline.lastFrameCount, 1);
+
+        deferredAsyncModulePromise.resolve();
+        await firstFrame;
+        assert.isTrue(nextModuleFired);
+        await testPipeline.triggerSingleFrame();
+        assert.strictEqual(testPipeline.lastFrameCount, 2);
     });
 });

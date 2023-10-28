@@ -1,6 +1,6 @@
 {
     "name": "game-vir",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "",
     "keywords": [],
     "homepage": "https://github.com/electrovir/game-vir",
@@ -21,7 +21,6 @@
     "scripts": {
         "compile": "tsc -b",
         "docs": "virmator docs",
-        "start": "virmator frontend",
         "test": "virmator test-web",
         "test:all": "npm run test:coverage",
         "test:coverage": "npm run test coverage",
