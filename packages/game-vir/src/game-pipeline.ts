@@ -94,10 +94,15 @@ export class GamePipeline<
         frameCount: 0,
     };
     private isFrameExecuting = false;
-    private currentOptions: RequiredAndNotNullBy<GamePipelineOptions, 'framerateCalculationWait'> =
-        {
-            framerateCalculationWait: {milliseconds: 500},
-        };
+    private currentOptions: RequiredAndNotNullBy<
+        GamePipelineOptions<
+            ModulesToPipelineStates<GameModules>['state'],
+            ModulesToPipelineStates<GameModules>['executionContext']
+        >,
+        'framerateCalculationWait'
+    > = {
+        framerateCalculationWait: {milliseconds: 500},
+    };
 
     constructor(
         /**
@@ -120,7 +125,10 @@ export class GamePipeline<
          * Optional options to control the pipeline's behavior. Non init options can be overridden
          * at any time with overrideOptions.
          */
-        initOptions: GamePipelineOptions = {},
+        initOptions: GamePipelineOptions<
+            ModulesToPipelineStates<GameModules>['state'],
+            ModulesToPipelineStates<GameModules>['executionContext']
+        > = {},
     ) {
         super();
         this.currentState = copyThroughJson(initialState);
@@ -166,7 +174,7 @@ export class GamePipeline<
         return this._loopIsPaused;
     }
     /** Indicates if the pipeline loop is paused. */
-    public isLoopPaused(): boolean {
+    public isPipelineLoopPaused(): boolean {
         return this.loopIsPaused;
     }
 
@@ -249,6 +257,19 @@ export class GamePipeline<
         }
     }
 
+    public destroy() {
+        this.stopPipelineLoop();
+        if (this.currentOptions.init?.onDestroy) {
+            this.currentOptions.init.onDestroy({
+                gameState: this.currentState,
+                executionContext: this.currentExecutionContext,
+            });
+        }
+
+        this.removeAllEventListeners();
+        this.removeAllStateListeners();
+    }
+
     /**
      * Add an event listener that is not a state change event listener. For listening to state
      * change events, use .addStateListener() instead.
@@ -268,12 +289,28 @@ export class GamePipeline<
         };
     }
 
-    private internalOverrideOptions(newOptions: GamePipelineOptions) {
-        (this.currentOptions as GamePipelineOptions) = mergeDeep(this.currentOptions, newOptions);
+    private internalOverrideOptions(
+        newOptions: GamePipelineOptions<
+            ModulesToPipelineStates<GameModules>['state'],
+            ModulesToPipelineStates<GameModules>['executionContext']
+        >,
+    ) {
+        (this.currentOptions as GamePipelineOptions<
+            ModulesToPipelineStates<GameModules>['state'],
+            ModulesToPipelineStates<GameModules>['executionContext']
+        >) = mergeDeep(this.currentOptions, newOptions);
     }
 
     /** Manually update non-init options at any time. */
-    public overrideOptions(newOptions: Omit<GamePipelineOptions, 'init'>): void {
+    public overrideOptions(
+        newOptions: Omit<
+            GamePipelineOptions<
+                ModulesToPipelineStates<GameModules>['state'],
+                ModulesToPipelineStates<GameModules>['executionContext']
+            >,
+            'init'
+        >,
+    ): void {
         if ('init' in newOptions) {
             throw new Error(
                 'Cannot override init options after the GamePipeline has already been constructed.',
@@ -350,6 +387,13 @@ export class GamePipeline<
 
         return () => {
             return this.removeStateListener(keys, listener);
+        };
+    }
+
+    public removeAllStateListeners() {
+        this.stateListeners = {
+            children: {},
+            listeners: undefined,
         };
     }
 
