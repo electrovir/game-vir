@@ -7,6 +7,7 @@ import {
     awaitedForEach,
     callAsynchronously,
     copyThroughJson,
+    ensureError,
     extractErrorMessage,
     getValueFromNestedKeys,
     isTruthy,
@@ -559,7 +560,9 @@ export class GamePipeline<
             return this.triggerStateListeners(stateUpdates.filter(isTruthy));
         } catch (caught) {
             this.isFrameExecuting = false;
-            throw new Error(`Failed to render frame: ${extractErrorMessage(caught)}`);
+            const error = ensureError(caught);
+            error.message = `Failed to render frame: ${extractErrorMessage(error)}`;
+            throw error;
         }
     }
 }
