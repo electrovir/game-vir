@@ -197,10 +197,12 @@ describe(GamePipeline.name, () => {
             },
         );
 
-        assertTypeOf<GamePipelineStates<typeof gamePipeline>>().toEqualTypeOf<{
-            state: Readonly<{prop1: string; prop3: string}>;
-            executionContext: Readonly<{prop2: number; prop4: boolean}>;
-        }>();
+        assertTypeOf<GamePipelineStates<typeof gamePipeline>>().toEqualTypeOf<
+            Readonly<{
+                state: Readonly<{prop1: string; prop3: string}>;
+                executionContext: Readonly<{prop2: number; prop4: boolean}>;
+            }>
+        >();
     });
 
     it('waits for async game modules', async () => {

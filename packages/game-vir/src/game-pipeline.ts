@@ -41,16 +41,17 @@ export type RemoveListenerCallback = () => void;
  * Type helper that converts an array of game modules into their combined required game state and
  * execution context types.
  */
-export type ModulesToPipelineStates<GameModules extends ReadonlyArray<GameModule<any, any>>> = {
-    state: Readonly<
-        UnionToIntersection<Parameters<ArrayElement<GameModules>['runModule']>[0]['gameState']>
-    >;
-    executionContext: Readonly<
-        UnionToIntersection<
-            Parameters<ArrayElement<GameModules>['runModule']>[0]['executionContext']
-        >
-    >;
-};
+export type ModulesToPipelineStates<GameModules extends ReadonlyArray<GameModule<any, any>>> =
+    Readonly<{
+        state: Readonly<
+            UnionToIntersection<Parameters<ArrayElement<GameModules>['runModule']>[0]['gameState']>
+        >;
+        executionContext: Readonly<
+            UnionToIntersection<
+                Parameters<ArrayElement<GameModules>['runModule']>[0]['executionContext']
+            >
+        >;
+    }>;
 
 /**
  * A union of all possible events that the GamePipeline can emit. This does not include state change
@@ -468,9 +469,7 @@ export class GamePipeline<
             }
         }
         if (update.executionContextChange) {
-            (this.currentExecutionContext as Writable<
-                ModulesToPipelineStates<GameModules>['executionContext']
-            >) = {
+            (this.currentExecutionContext as typeof this.currentExecutionContext) = {
                 ...this.currentExecutionContext,
                 ...update.executionContextChange,
             };
