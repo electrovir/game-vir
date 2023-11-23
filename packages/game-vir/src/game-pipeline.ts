@@ -28,7 +28,7 @@ import {GamePipelineOptions} from './game-pipeline-options';
 import {PipelineFramerateEvent, PipelinePauseEvent} from './pipeline-events';
 import {NestedStateListeners, callListeners} from './state-listeners';
 
-/** Listeners for game state changes on specific properties. */
+/** Listeners for game state updates on specific properties. */
 export type GameStateListener<
     GameState extends GameStateBase = any,
     Keys extends NestedSequentialKeys<GameState> = any,
@@ -54,8 +54,8 @@ export type ModulesToPipelineStates<GameModules extends ReadonlyArray<GameModule
     }>;
 
 /**
- * A union of all possible events that the GamePipeline can emit. This does not include state change
- * events, as the type of state change events vary depending on what part of the state was listened
+ * A union of all possible events that the GamePipeline can emit. This does not include state update
+ * events, as the type of state update events vary depending on what part of the state was listened
  * to.
  */
 export type GamePipelineEvents = PipelinePauseEvent | PipelineFramerateEvent;
@@ -274,8 +274,8 @@ export class GamePipeline<
     }
 
     /**
-     * Add an event listener that is not a state change event listener. For listening to state
-     * change events, use .addStateListener() instead.
+     * Add an event listener that is not a state update event listener. For listening to state
+     * update events, use .addStateListener() instead.
      */
     public override addEventListener<
         const EventNameGeneric extends ExtractEventTypes<GamePipelineEvents>,
@@ -355,7 +355,7 @@ export class GamePipeline<
     };
 
     /**
-     * Listen to state changes on a specific sub property. Returns a callback that, upon being
+     * Listen to state updates on a specific sub property. Returns a callback that, upon being
      * called, will remove the listener.
      */
     public addStateListener<
@@ -441,7 +441,7 @@ export class GamePipeline<
 
     /**
      * Update any part of the game state or execution context by providing a deeply partial state
-     * with the changes. Only the parts that will change need be provided, the rest of these objects
+     * with the updates. Only the parts that will update need be provided, the rest of these objects
      * can be omitted.
      */
     public update(
@@ -460,18 +460,18 @@ export class GamePipeline<
         >,
         fireListeners: boolean,
     ) {
-        if (update.stateChange) {
+        if (update.stateUpdate) {
             (this.currentState as Writable<ModulesToPipelineStates<GameModules>['state']>) =
-                mergeDeep<any>(this.currentState, update.stateChange);
+                mergeDeep<any>(this.currentState, update.stateUpdate);
 
             if (fireListeners) {
-                this.triggerStateListeners([update.stateChange]);
+                this.triggerStateListeners([update.stateUpdate]);
             }
         }
-        if (update.executionContextChange) {
+        if (update.executionContextUpdate) {
             (this.currentExecutionContext as typeof this.currentExecutionContext) = {
                 ...this.currentExecutionContext,
-                ...update.executionContextChange,
+                ...update.executionContextUpdate,
             };
         }
     }
@@ -483,7 +483,7 @@ export class GamePipeline<
                     GameModuleRunnerOutput<
                         ModulesToPipelineStates<GameModules>['state'],
                         ModulesToPipelineStates<GameModules>['executionContext']
-                    >['stateChange']
+                    >['stateUpdate']
                 >
             >
         >,
@@ -533,7 +533,7 @@ export class GamePipeline<
                 }
                 orderedStateUpdates.push({
                     fromModule: gameModule.moduleId,
-                    stateChanges: moduleOutput?.stateChange,
+                    stateUpdates: moduleOutput?.stateUpdate,
                 });
             });
 
@@ -545,14 +545,14 @@ export class GamePipeline<
             }
 
             const stateUpdates = orderedStateUpdates.map(
-                (stateUpdate) => stateUpdate.stateChanges,
+                (stateUpdate) => stateUpdate.stateUpdates,
             ) as ReadonlyArray<
                 Readonly<
                     GameModuleRunnerOutput<
                         ModulesToPipelineStates<GameModules>['state'],
                         ModulesToPipelineStates<GameModules>['executionContext']
                     >
-                >['stateChange']
+                >['stateUpdate']
             >;
             this.isFrameExecuting = false;
 

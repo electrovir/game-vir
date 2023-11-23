@@ -126,7 +126,7 @@ export const stutterModule: GameModule<{shouldStutter: boolean}> = {
         await wait(1000);
 
         return {
-            stateChange: {
+            stateUpdate: {
                 shouldStutter: false,
             },
         };
@@ -147,7 +147,7 @@ export const canvasSizeModule: GameModule<
         }
 
         return {
-            stateChange: {
+            stateUpdate: {
                 canvasSize: {
                     width: executionContext.canvas.width,
                     height: executionContext.canvas.height,
@@ -192,7 +192,7 @@ export const rainbowModule: GameModule<{
         });
 
         return {
-            stateChange: {
+            stateUpdate: {
                 shape: {
                     color: {
                         h: newHue,

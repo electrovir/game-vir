@@ -22,7 +22,7 @@ const circleAndCounterModule: GameModule<
         drawCircle(executionContext.renderContext);
 
         return {
-            stateChange: {
+            stateUpdate: {
                 counter: gameState.counter + 1,
             },
         };

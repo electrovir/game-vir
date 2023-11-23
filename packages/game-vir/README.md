@@ -31,7 +31,7 @@ const counterModule: GameModule<{counter: number}> = {
     },
     runModule({gameState}) {
         return {
-            stateChange: {
+            stateUpdate: {
                 counter: gameState.counter + 1,
             },
         };
@@ -93,7 +93,7 @@ const circleAndCounterModule: GameModule<
         drawCircle(executionContext.renderContext);
 
         return {
-            stateChange: {
+            stateUpdate: {
                 counter: gameState.counter + 1,
             },
         };

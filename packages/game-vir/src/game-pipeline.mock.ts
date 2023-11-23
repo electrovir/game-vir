@@ -60,7 +60,7 @@ export const mockGameModules = [
         /** Run the mock module. */
         runModule({gameState}) {
             return {
-                stateChange: {
+                stateUpdate: {
                     enemies: [
                         {
                             position: {

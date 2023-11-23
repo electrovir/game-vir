@@ -8,8 +8,8 @@ export type GameModuleRunnerOutput<
     ExecutionContext extends ExecutionContextBase,
 > = Readonly<
     PartialAndUndefined<{
-        stateChange: Readonly<PartialDeep<GameState, {recurseIntoArrays: true}>>;
-        executionContextChange: Readonly<Partial<ExecutionContext>>;
+        stateUpdate: Readonly<PartialDeep<GameState, {recurseIntoArrays: true}>>;
+        executionContextUpdate: Readonly<Partial<ExecutionContext>>;
     }>
 >;
 

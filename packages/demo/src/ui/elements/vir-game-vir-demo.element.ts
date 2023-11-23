@@ -81,10 +81,10 @@ export const VirGameVirDemo = defineElementNoInputs({
                 isPaused: state.isPaused,
             })}
                 ${listen(VirControls.events.newShape, (event) => {
-                    state.gamePipeline.update({stateChange: {shape: {type: event.detail}}});
+                    state.gamePipeline.update({stateUpdate: {shape: {type: event.detail}}});
                 })}
                 ${listen(VirControls.events.stutter, () => {
-                    state.gamePipeline.update({stateChange: {shouldStutter: true}});
+                    state.gamePipeline.update({stateUpdate: {shouldStutter: true}});
                 })}
                 ${listen(VirControls.events.playPipeline, (event) => {
                     if (event.detail) {
@@ -104,7 +104,7 @@ export const VirGameVirDemo = defineElementNoInputs({
                             throw new Error('Failed to get 2d render context from canvas element.');
                         }
                         state.gamePipeline.update({
-                            executionContextChange: {canvas, renderContext},
+                            executionContextUpdate: {canvas, renderContext},
                         });
                         state.gamePipeline.startPipelineLoop();
                     } catch (caught) {

@@ -7,7 +7,7 @@ const counterModule: GameModule<{counter: number}> = {
     },
     runModule({gameState}) {
         return {
-            stateChange: {
+            stateUpdate: {
                 counter: gameState.counter + 1,
             },
         };

@@ -8,7 +8,7 @@ import {GameModule} from './game-module';
  */
 export type GameStateUpdate<GameState extends GameStateBase> = {
     fromModule: Readonly<GameModule<GameState>['moduleId']>;
-    stateChanges: Readonly<PartialDeep<GameState, {recurseIntoArrays: true}>> | undefined;
+    stateUpdates: Readonly<PartialDeep<GameState, {recurseIntoArrays: true}>> | undefined;
 };
 
 /** Used to store game frame history when that option is enabled. */
