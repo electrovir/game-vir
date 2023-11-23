@@ -8,15 +8,15 @@
         "test:all": "exit 0"
     },
     "dependencies": {
-        "@augment-vir/common": "^21.7.0",
-        "element-vir": "^17.0.0",
+        "@augment-vir/common": "^22.0.0",
+        "element-vir": "^17.0.3",
         "game-vir": "*",
-        "object-shape-tester": "^1.0.1",
-        "run-time-assertions": "^0.1.3"
+        "object-shape-tester": "^1.0.2",
+        "run-time-assertions": "^0.2.1"
     },
     "devDependencies": {
-        "@augment-vir/node-js": "^21.7.0",
-        "esbuild": "^0.19.5",
+        "@augment-vir/node-js": "^22.0.0",
+        "esbuild": "^0.19.7",
         "nodemon": "^3.0.1",
         "typescript": "^5.2.2",
         "vite": "^4.5.0",

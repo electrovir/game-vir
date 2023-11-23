@@ -1,4 +1,4 @@
-import {MaybePromise, callAsynchronously, isRuntimeTypeOf} from '@augment-vir/common';
+import {MaybePromise, callAsynchronously} from '@augment-vir/common';
 import {GameStateBase} from './base-pipeline-types';
 
 type GenericListener = (partialState: any) => MaybePromise<void>;
@@ -35,7 +35,7 @@ function determineListenersToCall(
             key,
             nestedListener,
         ]): boolean => {
-            if (isRuntimeTypeOf(updates, 'array')) {
+            if (Array.isArray(updates)) {
                 return updates
                     .map((updateEntry, updateIndex) => {
                         const nextNewGameState = newGameState?.[updateIndex] as GameStateBase;
