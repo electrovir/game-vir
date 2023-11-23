@@ -72,6 +72,57 @@ describe(GamePipeline.name, () => {
         ]);
     });
 
+    it('fires whole state listeners', async () => {
+        const listenerData: (typeof gamePipeline.currentState)[] = [];
+
+        const gamePipeline = setupTestGamePipeline();
+        gamePipeline.addWholeStateListener(false, (newData) => {
+            assertTypeOf(newData).toEqualTypeOf<typeof gamePipeline.currentState>();
+            listenerData.push(newData);
+        });
+        const framePromise = gamePipeline.triggerSingleFrame();
+        assert.lengthOf(listenerData, 0, 'listener should not have been called synchronously');
+
+        await framePromise;
+
+        assert.deepStrictEqual(listenerData, [
+            {
+                enemies: [
+                    {
+                        name: 'enemy 1',
+                        position: {
+                            x: 2,
+                            y: 1,
+                        },
+                    },
+                    {
+                        name: 'enemy 2',
+                        position: {
+                            x: 1,
+                            y: 1,
+                        },
+                    },
+                    {
+                        name: 'enemy 3',
+                        position: {
+                            x: 2,
+                            y: 1,
+                        },
+                    },
+                ],
+                player: {
+                    energy: 100,
+                    hp: 100,
+                    name: 'test player',
+                    position: {
+                        x: 0,
+                        y: 0,
+                    },
+                },
+            },
+        ]);
+    });
+
     it('does not fire callbacks if no change to listened properties', async () => {
         const listenerData: any[] = [];
 
@@ -203,6 +254,20 @@ describe(GamePipeline.name, () => {
                 executionContext: Readonly<{prop2: number; prop4: boolean}>;
             }>
         >();
+    });
+
+    it('detects incorrect state updates', () => {
+        const mockPipeline = setupMockGamePipeline();
+
+        mockPipeline.update({
+            stateUpdate: {
+                player: {
+                    // this is supposed to be a number
+                    // @ts-expect-error
+                    hp: 'hi',
+                },
+            },
+        });
     });
 
     it('waits for async game modules', async () => {

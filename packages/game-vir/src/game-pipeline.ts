@@ -37,6 +37,9 @@ export type GameStateListener<
 /** A callback for removing listeners. */
 export type RemoveListenerCallback = () => void;
 
+/** Listener type for the whole state. */
+export type WholeStateListener<GameState extends GameStateBase> = (gameState: GameState) => void;
+
 /**
  * Type helper that converts an array of game modules into their combined required game state and
  * execution context types.
@@ -355,6 +358,27 @@ export class GamePipeline<
     };
 
     /**
+     * Adds a listener that listens to the entire state rather than a portion of that state. You
+     * should prefer using the addStateListener() method with a specific sub-property.
+     */
+    public addWholeStateListener(
+        fireImmediately: boolean,
+        listener: WholeStateListener<ModulesToPipelineStates<GameModules>['state']>,
+    ): RemoveListenerCallback {
+        if (!this.stateListeners.listeners) {
+            this.stateListeners.listeners = new Set();
+        }
+        this.stateListeners.listeners.add(listener);
+        if (fireImmediately) {
+            listener(this.currentState);
+        }
+
+        return () => {
+            return this.removeWholeStateListener(listener);
+        };
+    }
+
+    /**
      * Listen to state updates on a specific sub property. Returns a callback that, upon being
      * called, will remove the listener.
      */
@@ -399,6 +423,13 @@ export class GamePipeline<
             children: {},
             listeners: undefined,
         };
+    }
+
+    /** Remove a whole state listener. */
+    public removeWholeStateListener(
+        listener: WholeStateListener<ModulesToPipelineStates<GameModules>['state']>,
+    ) {
+        return this.stateListeners.listeners?.delete(listener);
     }
 
     /**
