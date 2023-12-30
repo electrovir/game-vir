@@ -8,18 +8,18 @@
         "test:all": "exit 0"
     },
     "dependencies": {
-        "@augment-vir/common": "^22.0.0",
-        "element-vir": "^17.0.3",
+        "@augment-vir/common": "^22.1.1",
+        "element-vir": "^18.0.0",
         "game-vir": "*",
         "object-shape-tester": "^1.0.2",
         "run-time-assertions": "^0.2.1"
     },
     "devDependencies": {
-        "@augment-vir/node-js": "^22.0.0",
-        "esbuild": "^0.19.7",
-        "nodemon": "^3.0.1",
+        "@augment-vir/node-js": "^22.1.1",
+        "esbuild": "^0.19.11",
+        "nodemon": "^3.0.2",
         "typescript": "^5.2.2",
         "vite": "^4.5.0",
-        "vite-tsconfig-paths": "^4.2.1"
+        "vite-tsconfig-paths": "^4.2.3"
     }
 }
