@@ -15,12 +15,7 @@ import {
     round,
 } from '@augment-vir/common';
 import {UnionToIntersection, Writable} from 'type-fest';
-import {
-    ExtractEventByType,
-    ExtractEventTypes,
-    TypedEventListenerOrEventListenerObject,
-    TypedEventTarget,
-} from 'typed-event-target';
+import {RemoveListenerCallback, TypedListenTarget} from 'typed-event-target';
 import {GameStateBase} from './base-pipeline-types';
 import {GameFrame, GameStateUpdate} from './game-frame';
 import {GameModule, GameModuleRunnerInput, GameModuleRunnerOutput} from './game-module';
@@ -85,7 +80,7 @@ export type GamePipelineStates<SpecificPipeline extends GamePipeline<any>> =
  */
 export class GamePipeline<
     const GameModules extends ReadonlyArray<GameModule<any, any>>,
-> extends TypedEventTarget<GamePipelineEvents> {
+> extends TypedListenTarget<GamePipelineEvents<GameModules>> {
     /** Ids of all the game modules that this pipeline was initialized with. */
     public readonly gameModuleIds: ReadonlyArray<ArrayElement<GameModules>['moduleId']>;
 
@@ -265,34 +260,16 @@ export class GamePipeline<
     /** Clean up all GamePipeline state and call onDestroy (set in options.init). */
     public destroy() {
         this.stopPipelineLoop();
+
+        this.removeAllListeners();
+        this.removeAllStateListeners();
+
         if (this.currentOptions.init?.onDestroy) {
             this.currentOptions.init.onDestroy({
                 gameState: this.currentState,
                 executionContext: this.currentExecutionContext,
             });
         }
-
-        this.removeAllEventListeners();
-        this.removeAllStateListeners();
-    }
-
-    /**
-     * Add an event listener that is not a state update event listener. For listening to state
-     * update events, use .addStateListener() instead.
-     */
-    public override addEventListener<
-        const EventNameGeneric extends ExtractEventTypes<GamePipelineEvents>,
-    >(
-        type: EventNameGeneric,
-        callback: TypedEventListenerOrEventListenerObject<
-            ExtractEventByType<GamePipelineEvents, EventNameGeneric>
-        > | null,
-        options?: boolean | AddEventListenerOptions | undefined,
-    ): RemoveListenerCallback {
-        super.addEventListener(type, callback, options);
-        return () => {
-            super.removeEventListener(type, callback, options);
-        };
     }
 
     private internalOverrideOptions(
