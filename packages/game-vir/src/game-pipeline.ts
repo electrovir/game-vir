@@ -144,6 +144,12 @@ export class GamePipeline<
         if (this.currentOptions?.init?.startLoopImmediately) {
             this.startPipelineLoop();
         }
+
+        this.stateListeners.listeners!.add((wholeState) => {
+            this.dispatchEvent(
+                new WholeGameStateChangeEvent<typeof this.currentState>({detail: wholeState}),
+            );
+        });
     }
 
     private assertValidGameModules() {
@@ -332,7 +338,7 @@ export class GamePipeline<
 
     private stateListeners: NestedStateListeners = {
         children: {},
-        listeners: undefined,
+        listeners: new Set(),
     };
 
     /**
