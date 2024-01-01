@@ -20,7 +20,11 @@ import {GameStateBase} from './base-pipeline-types';
 import {GameFrame, GameStateUpdate} from './game-frame';
 import {GameModule, GameModuleRunnerInput, GameModuleRunnerOutput} from './game-module';
 import {GamePipelineOptions} from './game-pipeline-options';
-import {PipelineFramerateEvent, PipelinePauseEvent} from './pipeline-events';
+import {
+    PipelineFramerateEvent,
+    PipelinePauseEvent,
+    WholeGameStateChangeEvent,
+} from './pipeline-events';
 import {NestedStateListeners, callListeners} from './state-listeners';
 
 /** Listeners for game state updates on specific properties. */
@@ -28,12 +32,6 @@ export type GameStateListener<
     GameState extends GameStateBase = any,
     Keys extends NestedSequentialKeys<GameState> = any,
 > = (PartialState: NestedValue<GameState, Keys>) => MaybePromise<void>;
-
-/** A callback for removing listeners. */
-export type RemoveListenerCallback = () => void;
-
-/** Listener type for the whole state. */
-export type WholeStateListener<GameState extends GameStateBase> = (gameState: GameState) => void;
 
 /**
  * Type helper that converts an array of game modules into their combined required game state and
@@ -382,13 +380,6 @@ export class GamePipeline<
             children: {},
             listeners: undefined,
         };
-    }
-
-    /** Remove a whole state listener. */
-    public removeWholeStateListener(
-        listener: WholeStateListener<ModulesToPipelineStates<GameModules>['state']>,
-    ) {
-        return this.stateListeners.listeners?.delete(listener);
     }
 
     /**
