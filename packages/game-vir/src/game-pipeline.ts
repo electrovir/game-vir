@@ -56,7 +56,10 @@ export type ModulesToPipelineStates<GameModules extends ReadonlyArray<GameModule
  * events, as the type of state update events vary depending on what part of the state was listened
  * to.
  */
-export type GamePipelineEvents = PipelinePauseEvent | PipelineFramerateEvent;
+export type GamePipelineEvents<GameModules extends ReadonlyArray<GameModule<any, any>>> =
+    | PipelinePauseEvent
+    | PipelineFramerateEvent
+    | WholeGameStateChangeEvent<ModulesToPipelineStates<GameModules>['state']>;
 
 /**
  * Type helper that extracts the needed game state and execution context types out of a game
@@ -333,27 +336,6 @@ export class GamePipeline<
         children: {},
         listeners: undefined,
     };
-
-    /**
-     * Adds a listener that listens to the entire state rather than a portion of that state. You
-     * should prefer using the addStateListener() method with a specific sub-property.
-     */
-    public addWholeStateListener(
-        fireImmediately: boolean,
-        listener: WholeStateListener<ModulesToPipelineStates<GameModules>['state']>,
-    ): RemoveListenerCallback {
-        if (!this.stateListeners.listeners) {
-            this.stateListeners.listeners = new Set();
-        }
-        this.stateListeners.listeners.add(listener);
-        if (fireImmediately) {
-            listener(this.currentState);
-        }
-
-        return () => {
-            return this.removeWholeStateListener(listener);
-        };
-    }
 
     /**
      * Listen to state updates on a specific sub property. Returns a callback that, upon being
