@@ -4,6 +4,7 @@ import {assertTypeOf} from 'run-time-assertions';
 import {GameModule} from './game-module';
 import {GamePipeline, GamePipelineStates} from './game-pipeline';
 import {initMockGameState, setupMockGamePipeline} from './game-pipeline.mock';
+import {WholeGameStateChangeEvent} from './pipeline-events';
 
 describe(GamePipeline.name, () => {
     function setupTestGamePipeline() {
@@ -46,7 +47,7 @@ describe(GamePipeline.name, () => {
         const listenerData: number[][] = [];
 
         const gamePipeline = setupTestGamePipeline();
-        gamePipeline.addStateListener(
+        gamePipeline.listenToState(
             false,
             [
                 'enemies',
@@ -76,9 +77,9 @@ describe(GamePipeline.name, () => {
         const listenerData: (typeof gamePipeline.currentState)[] = [];
 
         const gamePipeline = setupTestGamePipeline();
-        gamePipeline.addWholeStateListener(false, (newData) => {
-            assertTypeOf(newData).toEqualTypeOf<typeof gamePipeline.currentState>();
-            listenerData.push(newData);
+        gamePipeline.listen(WholeGameStateChangeEvent, (event) => {
+            assertTypeOf(event.detail).toEqualTypeOf<typeof gamePipeline.currentState>();
+            listenerData.push(event.detail);
         });
         const framePromise = gamePipeline.triggerSingleFrame();
         assert.lengthOf(listenerData, 0, 'listener should not have been called synchronously');
@@ -127,7 +128,7 @@ describe(GamePipeline.name, () => {
         const listenerData: any[] = [];
 
         const gamePipeline = setupTestGamePipeline();
-        gamePipeline.addStateListener(
+        gamePipeline.listenToState(
             false,
             [
                 'enemies',
@@ -139,7 +140,7 @@ describe(GamePipeline.name, () => {
                 listenerData.push(newData);
             },
         );
-        gamePipeline.addStateListener(
+        gamePipeline.listenToState(
             false,
             [
                 'player',

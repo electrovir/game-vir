@@ -45,13 +45,13 @@ export const VirGameVirDemo = defineElementNoInputs({
     initCallback({state, updateState}) {
         updateState({
             pipelineListenerRemovers: [
-                state.gamePipeline.addEventListener(PipelinePauseEvent.type, (event) => {
+                state.gamePipeline.listen(PipelinePauseEvent.type, (event) => {
                     updateState({isPaused: event.detail});
                 }),
-                state.gamePipeline.addEventListener(PipelineFramerateEvent.type, (event) => {
+                state.gamePipeline.listen(PipelineFramerateEvent.type, (event) => {
                     updateState({framerate: event.detail});
                 }),
-                state.gamePipeline.addStateListener(
+                state.gamePipeline.listenToState(
                     true,
                     [
                         'shape',

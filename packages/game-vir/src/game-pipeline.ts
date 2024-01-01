@@ -339,7 +339,7 @@ export class GamePipeline<
      * Listen to state updates on a specific sub property. Returns a callback that, upon being
      * called, will remove the listener.
      */
-    public addStateListener<
+    public listenToState<
         Keys extends NestedSequentialKeys<ModulesToPipelineStates<GameModules>['state']>,
     >(
         fireImmediately: boolean,

@@ -1,3 +1,4 @@
+export type {RemoveListenerCallback} from 'typed-event-target';
 export * from './base-pipeline-types';
 export * from './game-frame';
 export * from './game-module';
