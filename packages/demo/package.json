@@ -12,7 +12,7 @@
         "element-vir": "^18.0.0",
         "game-vir": "*",
         "object-shape-tester": "^1.0.2",
-        "run-time-assertions": "^0.2.1"
+        "run-time-assertions": "^0.3.0"
     },
     "devDependencies": {
         "@augment-vir/node-js": "^22.1.1",
