@@ -1,6 +1,7 @@
 import {getEnumTypedValues, wrapNumber} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html} from 'element-vir';
 import {DemoShapeTypeEnum} from '../../demo-pipeline/demo-game-modules';
+import {testJsonCopyPerformance} from '../../json-copy-performance';
 
 const allPossibleShapeTypes = getEnumTypedValues(DemoShapeTypeEnum);
 function getNextShape(currentShape: DemoShapeTypeEnum): DemoShapeTypeEnum {
@@ -57,6 +58,12 @@ export const VirControls = defineElement<{
                 text: 'Trigger stutter',
                 action() {
                     dispatch(new events.stutter());
+                },
+            },
+            {
+                text: 'Create huge object',
+                action() {
+                    testJsonCopyPerformance();
                 },
             },
         ];
