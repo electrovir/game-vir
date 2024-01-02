@@ -13,5 +13,6 @@ export type ModuleStateUpdate<GameState extends GameStateBase> = {
 
 /** Used to store game frame history when that option is enabled. */
 export type GameFrame<GameState extends GameStateBase> = Readonly<{
-    orderedStateUpdates: ReadonlyArray<Readonly<GameStateUpdate<GameState>>>;
+    /** In the order in which they were applied. */
+    moduleUpdates: ReadonlyArray<Readonly<ModuleStateUpdate<GameState>>>;
 }>;
