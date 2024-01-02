@@ -6,7 +6,7 @@ import {GameModule} from './game-module';
  * The updates from a single pipeline execution are stored in these update objects for easier
  * internal computation.
  */
-export type GameStateUpdate<GameState extends GameStateBase> = {
+export type ModuleStateUpdate<GameState extends GameStateBase> = {
     fromModule: Readonly<GameModule<GameState>['moduleId']>;
     stateUpdates: Readonly<PartialDeep<GameState, {recurseIntoArrays: true}>> | undefined;
 };
