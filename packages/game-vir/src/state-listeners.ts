@@ -28,6 +28,7 @@ function determineListenersToCall(
     newGameState: GameStateBase | undefined,
     listenerMap: ListenersToCallMap,
     isArray = false,
+    /** Certain meaning we're sure that this is going to be called. */
     certainFromParent = false,
 ): boolean {
     const certainList: boolean[] = Object.entries(stateListeners.children).map(

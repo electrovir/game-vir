@@ -1,4 +1,4 @@
-import {copyThroughJson} from '@augment-vir/common';
+import {ArrayElement, copyThroughJson, mergeDeep} from '@augment-vir/common';
 import {GameModule} from './game-module';
 import {GamePipeline} from './game-pipeline';
 
@@ -61,19 +61,19 @@ export const mockGameModules = [
         runModule({gameState}) {
             return {
                 stateUpdate: {
-                    enemies: [
-                        {
-                            position: {
-                                x: (gameState.enemies[0]?.position?.x ?? 0) + 1,
-                            },
+                    enemies: gameState.enemies.map(
+                        (enemy, enemyIndex): ArrayElement<typeof gameState.enemies> => {
+                            if (enemyIndex === 1) {
+                                return enemy;
+                            } else {
+                                return mergeDeep(enemy, {
+                                    position: {
+                                        x: enemy.position.x + 1,
+                                    },
+                                });
+                            }
                         },
-                        {},
-                        {
-                            position: {
-                                x: (gameState.enemies[2]?.position?.x ?? 0) + 1,
-                            },
-                        },
-                    ],
+                    ),
                 },
             };
         },
@@ -86,7 +86,16 @@ export const mockGameModules = [
  * @category Mocks
  */
 export function setupMockGamePipeline() {
-    const gamePipeline = new GamePipeline(mockGameModules, copyThroughJson(initMockGameState), {});
+    const gamePipeline = new GamePipeline(
+        mockGameModules,
+        copyThroughJson(initMockGameState),
+        {},
+        {
+            debug: {
+                enableFrameHistory_Expensive: true,
+            },
+        },
+    );
 
     return gamePipeline;
 }

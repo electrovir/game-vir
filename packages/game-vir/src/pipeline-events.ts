@@ -28,6 +28,5 @@ export class PipelineFramerateEvent extends defineTypedCustomEvent<number>()(
 export class WholeGameStateChangeEvent<
     GameState extends GameStateBase = GameStateBase,
 > extends defineTypedCustomEvent<unknown>()('game-pipeline-whole-game-state-change') {
-    public override readonly detail: GameState = {} as any;
-    public something: GameState = {} as any;
+    declare detail: GameState;
 }

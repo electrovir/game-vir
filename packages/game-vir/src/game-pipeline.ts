@@ -14,10 +14,11 @@ import {
     mergeDeep,
     round,
 } from '@augment-vir/common';
+import {diffObjects} from 'run-time-assertions';
 import {UnionToIntersection, Writable} from 'type-fest';
 import {RemoveListenerCallback, TypedListenTarget} from 'typed-event-target';
 import {GameStateBase} from './base-pipeline-types';
-import {GameFrame, GameStateUpdate} from './game-frame';
+import {GameFrame, ModuleStateUpdate} from './game-frame';
 import {GameModule, GameModuleRunnerInput, GameModuleRunnerOutput} from './game-module';
 import {GamePipelineOptions} from './game-pipeline-options';
 import {
@@ -464,20 +465,17 @@ export class GamePipeline<
     }
 
     private triggerStateListeners(
-        updates: ReadonlyArray<
+        updateDiffs: ReadonlyArray<
             Readonly<
                 NonNullable<
-                    GameModuleRunnerOutput<
-                        ModulesToPipelineStates<GameModules>['state'],
-                        ModulesToPipelineStates<GameModules>['executionContext']
-                    >['stateUpdate']
+                    ModuleStateUpdate<ModulesToPipelineStates<GameModules>['state']>['updateDiff']
                 >
             >
         >,
     ) {
         return callListeners(
             this.stateListeners,
-            mergeDeep(...(updates as any[])),
+            mergeDeep(...(updateDiffs as any[])),
             this.currentState,
         );
     }
@@ -500,7 +498,7 @@ export class GamePipeline<
             this.calculateFramerate(millisecondsSinceLastFrame);
 
             const orderedStateUpdates: Readonly<
-                GameStateUpdate<ModulesToPipelineStates<GameModules>['state']>
+                ModuleStateUpdate<ModulesToPipelineStates<GameModules>['state']>
             >[] = [];
             this.lastFrameTimestamp = frameTimestampMs;
             this.lastFrameCount++;
@@ -515,35 +513,34 @@ export class GamePipeline<
                     millisecondsSinceLastFrame,
                 };
                 const moduleOutput = await gameModule.runModule(moduleInput);
+                const updateDiff = moduleOutput?.stateUpdate
+                    ? copyThroughJson(
+                          diffObjects<any, any>(this.currentState, moduleOutput.stateUpdate)[1],
+                      )
+                    : undefined;
                 if (moduleOutput) {
                     this.updateInternally(moduleOutput, false);
                 }
                 orderedStateUpdates.push({
                     fromModule: gameModule.moduleId,
-                    stateUpdates: moduleOutput?.stateUpdate,
+                    stateUpdate: moduleOutput?.stateUpdate,
+                    updateDiff,
                 });
             });
 
             if (this.currentOptions.debug?.enableFrameHistory_Expensive) {
                 const gameFrame: GameFrame<ModulesToPipelineStates<GameModules>['state']> = {
-                    orderedStateUpdates,
+                    moduleUpdates: orderedStateUpdates,
                 };
                 this.frameHistory.push(gameFrame);
             }
 
-            const stateUpdates = orderedStateUpdates.map(
-                (stateUpdate) => stateUpdate.stateUpdates,
-            ) as ReadonlyArray<
-                Readonly<
-                    GameModuleRunnerOutput<
-                        ModulesToPipelineStates<GameModules>['state'],
-                        ModulesToPipelineStates<GameModules>['executionContext']
-                    >
-                >['stateUpdate']
-            >;
+            const updateDiffs = orderedStateUpdates
+                .map((gameUpdate) => gameUpdate.updateDiff)
+                .filter(isTruthy);
             this.isFrameExecuting = false;
 
-            return this.triggerStateListeners(stateUpdates.filter(isTruthy));
+            return this.triggerStateListeners(updateDiffs);
         } catch (caught) {
             this.isFrameExecuting = false;
             const error = ensureError(caught);
