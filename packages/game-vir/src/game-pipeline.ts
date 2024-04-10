@@ -147,7 +147,7 @@ export class GamePipeline<
         }
 
         this.stateListeners.listeners!.add((wholeState) => {
-            this.dispatchEvent(
+            this.dispatch(
                 new WholeGameStateChangeEvent<typeof this.currentState>({detail: wholeState}),
             );
         });
@@ -176,7 +176,7 @@ export class GamePipeline<
     private _loopIsPaused = true;
     private set loopIsPaused(value: boolean) {
         this._loopIsPaused = value;
-        this.dispatchEvent(new PipelinePauseEvent({detail: value}));
+        this.dispatch(new PipelinePauseEvent({detail: value}));
     }
     private get loopIsPaused(): boolean {
         return this._loopIsPaused;
@@ -253,7 +253,7 @@ export class GamePipeline<
                 console.warn(`Framerate dropped to ${this.currentFramerate}`);
             }
 
-            this.dispatchEvent(
+            this.dispatch(
                 new PipelineFramerateEvent({
                     detail: this.currentFramerate,
                 }),
@@ -266,7 +266,8 @@ export class GamePipeline<
     }
 
     /** Clean up all GamePipeline state and call onDestroy (set in options.init). */
-    public destroy() {
+    public override destroy() {
+        super.destroy();
         this.stopPipelineLoop();
 
         this.removeAllListeners();

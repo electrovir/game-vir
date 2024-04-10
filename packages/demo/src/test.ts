@@ -1,13 +1,12 @@
-import {areJsonEqual} from '@augment-vir/common';
 import {WholeGameStateChangeEvent, initMockGameState, setupMockGamePipeline} from 'game-vir';
-import {assertTypeOf} from 'run-time-assertions';
+import {assertTypeOf, isJsonEqual} from 'run-time-assertions';
 
 /** Import this in index.html to test it directly in the browser. */
 
 function setupTestGamePipeline() {
     const gamePipeline = setupMockGamePipeline();
     console.assert(
-        areJsonEqual(gamePipeline.currentState, initMockGameState),
+        isJsonEqual(gamePipeline.currentState, initMockGameState),
         'state should not have changed yet',
     );
 
@@ -28,7 +27,7 @@ async function main() {
     await framePromise;
 
     console.assert(
-        areJsonEqual(listenerData, [
+        isJsonEqual(listenerData, [
             {
                 enemies: [
                     {
