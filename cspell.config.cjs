@@ -3,10 +3,10 @@ const {baseConfig} = require('virmator/base-configs/base-cspell.js');
 module.exports = {
     ...baseConfig,
     ignorePaths: [
-        '/ts.out/',
         ...baseConfig.ignorePaths,
     ],
     words: [
         ...baseConfig.words,
+        'gamepad',
     ],
 };

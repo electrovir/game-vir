@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "composite": true,
-        "module": "ES2020",
+        "module": "ES2022",
         "noEmit": false
     },
     "extends": "virmator/base-configs/tsconfig.base.json"

@@ -1,18 +1,17 @@
 {
     "name": "@game-vir/mono-repo",
-    "version": "4.0.1",
+    "version": "5.0.0",
     "private": true,
     "license": "(MIT or CC0 1.0)",
     "workspaces": [
         "packages/*"
     ],
     "scripts": {
-        "build": "npm run compile && npm run build --workspace @game-vir/demo && npm run docs --workspace game-vir && cp -r packages/game-vir/dist-docs packages/demo/dist/docs",
+        "build": "npm run compile && rm -rf dist && mkdir dist && mono-vir for-each-async npm run build",
         "compile": "mono-vir for-each tsc -b --pretty",
-        "docs": "npm run docs --workspace game-vir",
         "format": "virmator format",
         "publish": "virmator publish \"npm run compile && npm run test:all\"",
-        "start": "npm run start --workspace @game-vir/demo",
+        "start": "npm run start --workspace @game-vir/book",
         "test": "mono-vir for-each-async npm run test:all",
         "test:all": "concurrently --colors --kill-others-on-fail -c auto --names types,tests,spelling,format,docs,deps \"npm run test:types\" \"npm run test\" \"npm run test:spelling\" \"npm run test:format\" \"npm run test:docs\" \"npm run test:deps\"",
         "test:deps": "virmator deps check",
@@ -22,22 +21,19 @@
         "test:types": "npm run compile"
     },
     "devDependencies": {
-        "cspell": "^8.6.1",
-        "dependency-cruiser": "^16.3.0",
-        "esbuild": "^0.20.2",
-        "mono-vir": "^1.0.0",
+        "cspell": "^8.9.1",
+        "dependency-cruiser": "^16.3.3",
+        "esbuild": "^0.21.5",
+        "mono-vir": "^1.0.1",
         "npm-check-updates": "~16.12.3",
-        "prettier": "^3.2.5",
+        "prettier": "^3.3.2",
         "prettier-plugin-interpolated-html-tags": "^1.0.5",
         "prettier-plugin-jsdoc": "^1.3.0",
-        "prettier-plugin-multiline-arrays": "^3.0.4",
+        "prettier-plugin-multiline-arrays": "^3.0.6",
         "prettier-plugin-organize-imports": "^3.2.4",
-        "prettier-plugin-packagejson": "^2.4.14",
+        "prettier-plugin-packagejson": "^2.5.0",
         "prettier-plugin-sort-json": "^4.0.0",
         "prettier-plugin-toml": "^2.0.1",
-        "virmator": "^11.5.2"
-    },
-    "overrides": {
-        "typescript": "5.3.3"
+        "virmator": "^12.0.2"
     }
 }
