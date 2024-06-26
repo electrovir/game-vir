@@ -14,7 +14,10 @@ export const typeDocConfig: Partial<TypeDocOptions> = {
     intentionallyNotExported: [],
     defaultCategory: 'Internal',
     categoryOrder: [
-        'Main',
-        'Internal',
+        'Stages',
+        'Elements',
+        'Types',
+        'Util',
+        'Debug',
     ],
 };
