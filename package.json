@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/mono-repo",
-    "version": "5.0.0",
+    "version": "5.1.0",
     "private": true,
     "license": "(MIT or CC0 1.0)",
     "workspaces": [

@@ -1,5 +1,6 @@
-import {mapObjectValues, PartialAndUndefined} from '@augment-vir/common';
+import {mapObjectValues, PartialAndUndefined, PickSelection} from '@augment-vir/common';
 import {
+    AllDevices,
     InputDevice,
     InputDeviceHandler,
     InputDeviceKey,
@@ -75,6 +76,31 @@ export type SimpleInputDevice = Pick<InputDevice, 'deviceKey' | 'deviceName' | '
 export type SimpleInputDevicesMap = Partial<Record<InputDeviceKey, SimpleInputDevice>>;
 
 /**
+ * Maps {@link AllDevices} to {@link SimpleInputDevicesMap}.
+ *
+ * @category Util
+ */
+export function mapToSimpleDevicesMap(
+    currentDevices: PickSelection<
+        AllDevices,
+        {
+            [Key in InputDeviceKey]?: {
+                deviceName: true;
+                deviceType: true;
+            };
+        }
+    >,
+): SimpleInputDevicesMap {
+    return mapObjectValues(currentDevices, (deviceKey, device): SimpleInputDevice => {
+        return {
+            deviceKey,
+            deviceName: device.deviceName,
+            deviceType: device.deviceType,
+        };
+    });
+}
+
+/**
  * All state used by and set by {@link readRawInputStage}.
  *
  * @category Types
@@ -136,16 +162,7 @@ export const readRawInputStage: VirLineStage<ReadRawInputStageState> = {
             },
         );
 
-        const simpleDevices: SimpleInputDevicesMap = mapObjectValues(
-            currentDevices,
-            (deviceKey, device): SimpleInputDevice => {
-                return {
-                    deviceKey,
-                    deviceName: device.deviceName,
-                    deviceType: device.deviceType,
-                };
-            },
-        );
+        const simpleDevices: SimpleInputDevicesMap = mapToSimpleDevicesMap(currentDevices);
 
         state.rawInputs = rawInputs;
         state.currentInputDevices = simpleDevices;

@@ -20,11 +20,9 @@ import {
     PlayersActionsBindingsMap,
     ReadActionsStageState,
 } from '../stages/read-actions.stage';
-import {
-    calculateInputDirection,
-    InputDirection,
-    SimpleInputDevice,
-} from '../stages/read-raw-input.stage';
+import {calculateInputDirection, SimpleInputDevice} from '../stages/read-raw-input.stage';
+import {isMouseMovement} from '../util/is-mouse-movement';
+import {deviceEmojis, directionEmojis} from './emoji';
 
 /**
  * Inputs for {@link VirSimplePlayerAssignBindings}.
@@ -225,10 +223,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
                                         };
 
                                         const isBlockedMouseInput: boolean =
-                                            !inputs.allowMouseMovement &&
-                                            newInput.deviceKey === InputDeviceKey.Mouse &&
-                                            (newInput.inputName === 'axe-x' ||
-                                                newInput.inputName === 'axe-y');
+                                            !inputs.allowMouseMovement && isMouseMovement(newInput);
 
                                         if (isBlockedMouseInput) {
                                             return;
@@ -369,28 +364,6 @@ export const VirBindingChip = defineElement<Readonly<ActionBinding>>()({
         `;
     },
 });
-
-/**
- * Input device types mapped to corresponding emojis. Used in {@link VirBindingChip}.
- *
- * @category Util
- */
-export const deviceEmojis: Readonly<Record<InputDeviceType, string>> = {
-    [InputDeviceType.Gamepad]: `🎮`,
-    [InputDeviceType.Keyboard]: `⌨️`,
-    [InputDeviceType.Mouse]: `🖱`,
-};
-
-/**
- * Input directions mapped to corresponding emojis. Used in {@link VirBindingChip}.
- *
- * @category Util
- */
-export const directionEmojis: Readonly<Record<InputDirection, string>> = {
-    [InputDirection.Flat]: '',
-    [InputDirection.Negative]: '➖',
-    [InputDirection.Positive]: '➕',
-};
 
 /**
  * An opinionated and inflexible binding assignment element that supports the
