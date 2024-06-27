@@ -21,7 +21,7 @@
     "scripts": {
         "build": "npm run docs",
         "compile": "rm -rf dist && tsc -b -f --pretty",
-        "docs": "virmator docs && mkdir -p ../../dist/handle-input && cp -r dist-docs/* ../../dist/handle-input",
+        "docs": "virmator docs",
         "test": "virmator test-web",
         "test:all": "concurrently --colors --kill-others-on-fail -c auto --names docs,tests \"npm run test\" \"npm run test:docs\"",
         "test:docs": "virmator docs check",

@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "virmator frontend build && mkdir -p ../../dist/book && cp -r ./dist-book/* ../../dist/book",
+        "build": "virmator frontend build",
         "compile": "rm -rf dist && tsc -b -f --pretty",
         "start": "virmator frontend",
         "test:all": "npm run build"

@@ -7,10 +7,11 @@
         "packages/*"
     ],
     "scripts": {
-        "build": "npm run compile && rm -rf dist && mkdir dist && mono-vir for-each-async npm run build",
+        "build": "npm run compile && mono-vir for-each-async npm run build && npm run script copy-to-dist",
         "compile": "mono-vir for-each tsc -b --pretty",
         "format": "virmator format",
         "publish": "virmator publish \"npm run test:all\"",
+        "script": "npm run execute --workspace @game-vir/scripts",
         "start": "npm run start --workspace @game-vir/book",
         "test": "mono-vir for-each-async npm run test:all",
         "test:all": "npm run compile && concurrently --colors --kill-others-on-fail -c auto --names tests,spelling,format,docs,deps \"npm run test\" \"npm run test:spelling\" \"npm run test:format\" \"npm run test:docs\" \"npm run test:deps\"",
