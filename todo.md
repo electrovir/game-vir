@@ -1,0 +1,1 @@
+-   class names in `packages/book`'s built output are minified

@@ -1,3 +1,4 @@
+export * from './auto-focus-first';
 export * from './debug/vir-players-actions-bindings-debug.element';
 export * from './debug/vir-read-actions-stage-debug.element';
 export * from './debug/vir-read-raw-input-stage-debug.element';
