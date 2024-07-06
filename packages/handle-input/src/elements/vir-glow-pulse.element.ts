@@ -1,5 +1,6 @@
 import {shuffleArray} from '@augment-vir/browser';
 import {wrapNumber} from '@augment-vir/common';
+import {AnyDuration, convertDuration, DurationUnit} from 'date-vir';
 import {css, defineElement, html} from 'element-vir';
 
 /**
@@ -25,8 +26,6 @@ const rainbowColors: string[] = shuffleArray([
     'magenta',
 ]);
 
-const animationDuration = {milliseconds: 700};
-
 /**
  * Wraps its children in a glow that pulses any time the given pulse timestamp changes. Defaults to
  * cycling through a rainbow of colors but can be customized to cycle through any colors you want.
@@ -41,6 +40,12 @@ export const VirGlowPulse = defineElement<{
      * @default // a rainbow of colors
      */
     glowColors?: undefined | ReadonlyArray<string>;
+    /**
+     * Control the duration of the animation.
+     *
+     * @default {milliseconds: 350}
+     */
+    animationDuration?: AnyDuration | undefined;
 }>()({
     tagName: 'vir-glow-pulse',
     styles: css`
@@ -56,7 +61,11 @@ export const VirGlowPulse = defineElement<{
         const colors =
             inputs.glowColors && inputs.glowColors.length ? inputs.glowColors : rainbowColors;
 
-        const timestampCutoff = Date.now() - animationDuration.milliseconds;
+        const animationDuration = inputs.animationDuration
+            ? convertDuration(inputs.animationDuration, DurationUnit.Milliseconds)
+            : {milliseconds: 350};
+
+        const timestampCutoff = state.lastTimestamp + animationDuration.milliseconds / 2;
 
         const validAnimation =
             inputs.pulse && inputs.pulse.timestamp > timestampCutoff ? inputs.pulse : undefined;
@@ -93,7 +102,7 @@ export const VirGlowPulse = defineElement<{
                     },
                 ],
                 {
-                    duration: animationDuration.milliseconds / 2,
+                    duration: animationDuration.milliseconds,
                     iterations: 1,
                 },
             );
