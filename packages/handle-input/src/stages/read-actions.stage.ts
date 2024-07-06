@@ -34,7 +34,9 @@ export type ActionBinding = {
  *
  * @category Types
  */
-export type ActionsBindingsMap = {[ActionName in string]: ActionBinding[]};
+export type ActionsBindingsMap<AllowedActions extends string = string> = Partial<{
+    [ActionName in AllowedActions]: ActionBinding[];
+}>;
 
 /**
  * A collection of action bindings for all players. Used in {@link readActionsStage} and
@@ -42,8 +44,8 @@ export type ActionsBindingsMap = {[ActionName in string]: ActionBinding[]};
  *
  * @category Types
  */
-export type PlayersActionsBindingsMap = {
-    [PlayerPosition in `${number}`]: ActionsBindingsMap;
+export type PlayersActionsBindingsMap<AllowedActions extends string = string> = {
+    [PlayerPosition in `${number}`]: ActionsBindingsMap<AllowedActions>;
 };
 
 /**
@@ -62,8 +64,32 @@ export type DeviceKeyMap = Partial<Record<InputDeviceKey, InputDeviceKey>>;
  * @category Types
  */
 export type ActiveAction = {
-    duration: {milliseconds: number};
+    /**
+     * The full duration for which the current action has been active in its current direction. When
+     * an active is first pressed, this will contain 0 milliseconds.
+     *
+     * @default {milliseconds: 0}
+     */
+    holdDuration: {milliseconds: number};
     value: number;
+    /**
+     * The hold duration at which the last time this current action hold was performed. When the
+     * action hasn't been performed yet, this contain 0 milliseconds.
+     *
+     * This must be set by whatever process is reading this value.
+     *
+     * @default {milliseconds: 0}
+     */
+    lastActDuration: {milliseconds: number};
+    /**
+     * The number of times which this action has been performed for the current hold. When an action
+     * is first pressed, this will be `0`.
+     *
+     * This must be incremented by whatever process is reading this value.
+     *
+     * @default 0
+     */
+    actCount: number;
 };
 
 /**
@@ -72,7 +98,9 @@ export type ActiveAction = {
  *
  * @category Types
  */
-export type ActiveActionsMap = {[ActionName in string]: ActiveAction};
+export type ActiveActionsMap<AllowedActions extends string = string> = Partial<{
+    [ActionName in AllowedActions]: ActiveAction;
+}>;
 
 /**
  * A collection of all active actions for all players. Used in {@link readActionsStage} and
@@ -80,8 +108,8 @@ export type ActiveActionsMap = {[ActionName in string]: ActiveAction};
  *
  * @category Types
  */
-export type PlayersActiveActionsMap = {
-    [PlayerPosition in `${number}`]: ActiveActionsMap;
+export type PlayersActiveActionsMap<AllowedActions extends string = string> = {
+    [PlayerPosition in `${number}`]: ActiveActionsMap<AllowedActions>;
 };
 
 /**
@@ -89,19 +117,35 @@ export type PlayersActiveActionsMap = {
  *
  * @category Types
  */
-export type ReadActionsStageState = Pick<ReadRawInputStageState, 'rawInputs'> &
+export type ReadActionsStageState<AllowedActions extends string = string> = Pick<
+    ReadRawInputStageState,
+    'rawInputs'
+> &
     PartialAndUndefined<{
         /** Maps devices to different devices. See {@link DeviceKeyMap} for more information. */
         deviceKeyMap: DeviceKeyMap;
         /** Action bindings for all players. */
-        playersActionsBindings: PlayersActionsBindingsMap;
+        playersActionsBindings: PlayersActionsBindingsMap<AllowedActions>;
         /** All active actions for all players. */
-        playersActiveActions: PlayersActiveActionsMap;
+        playersActiveActions: PlayersActiveActionsMap<AllowedActions>;
     }>;
+
+/**
+ * Wraps {@link readActionsStage} in type parameters that require specific action name strings
+ * (rather than _any_ action name strings).
+ */
+export function createTypedReadActionsStage<const AllowedActions extends string>(): VirLineStage<
+    ReadActionsStageState<AllowedActions>
+> {
+    return readActionsStage;
+}
 
 /**
  * This stage reads all current action bindings (set externally) and all current raw inputs (set by
  * {@link readRawInputStage}) and then determines and sets the currently active actions.
+ *
+ * By default, this stage allows any strings as action names. Use {@link createTypedReadActionsStage}
+ * to define this stage with a specific set of allowed action names.
  *
  * @category Stages
  */
@@ -141,29 +185,29 @@ export const readActionsStage: VirLineStage<ReadActionsStageState> = {
     },
 };
 
-function readPlayerActions({
+function readPlayerActions<AllowedActions extends string>({
     actionsBindingsMap,
     activeActionsMap,
     reversedDeviceKeyMap,
     rawInputs,
     timeSinceLastUpdate,
 }: {
-    actionsBindingsMap: Readonly<ActionsBindingsMap>;
-    activeActionsMap: Readonly<ActiveActionsMap> | undefined;
+    actionsBindingsMap: Readonly<ActionsBindingsMap<AllowedActions>>;
+    activeActionsMap: Readonly<ActiveActionsMap<AllowedActions>> | undefined;
     reversedDeviceKeyMap: Readonly<Partial<Record<InputDeviceKey, InputDeviceKey>>>;
     rawInputs: Readonly<RawInputs> | undefined;
     timeSinceLastUpdate: Duration<DurationUnit.Milliseconds>;
-}): ActiveActionsMap {
+}): ActiveActionsMap<AllowedActions> {
     return getObjectTypedEntries(actionsBindingsMap).reduce(
         (
-            accum: ActiveActionsMap,
+            accum: ActiveActionsMap<AllowedActions>,
             [
                 actionName,
                 bindings,
             ],
         ) => {
             const matchingInputs = filterMap(
-                bindings,
+                bindings as ActionBinding[],
                 (binding) => {
                     const deviceKey = reversedDeviceKeyMap[binding.deviceKey] ?? binding.deviceKey;
 
@@ -183,17 +227,23 @@ function readPlayerActions({
                     return accum + matchingInput.inputValue;
                 }, 0);
 
-                const previousActionDuration = activeActionsMap?.[actionName]?.duration;
+                const previousActiveAction = activeActionsMap?.[actionName];
+
+                const previousActionDuration = previousActiveAction?.holdDuration;
                 const durationMs = previousActionDuration
                     ? previousActionDuration.milliseconds + timeSinceLastUpdate.milliseconds
                     : 0;
 
-                accum[actionName] = {
-                    duration: {
+                const newActiveAction: ActiveAction = {
+                    holdDuration: {
                         milliseconds: Math.round(durationMs),
                     },
                     value,
+                    actCount: previousActiveAction?.actCount || 0,
+                    lastActDuration: previousActiveAction?.lastActDuration || {milliseconds: 0},
                 };
+
+                accum[actionName] = newActiveAction;
             }
 
             return accum;

@@ -1,9 +1,24 @@
 import {omitObjectKeys, wait} from '@augment-vir/common';
 import {assert} from '@open-wc/testing';
 import {InputDeviceKey, InputDeviceType} from 'input-device-handler';
-import {stageIdToString, VirLine} from 'vir-line';
-import {readActionsStage} from './read-actions.stage';
+import {stageIdToString, StagesToFullState, VirLine} from 'vir-line';
+import {
+    ActionsBindingsMap,
+    createTypedReadActionsStage,
+    readActionsStage,
+} from './read-actions.stage';
 import {InputDirection} from './read-raw-input.stage';
+
+enum TestAction {
+    Up = 'up',
+    Down = 'down',
+    Left = 'left',
+    Right = 'right',
+
+    Submit = 'submit',
+    Reject = 'reject',
+    Pause = 'pause',
+}
 
 describe(stageIdToString(readActionsStage.stageId), () => {
     it('maps inputs to actions', async () => {
@@ -56,10 +71,12 @@ describe(stageIdToString(readActionsStage.stageId), () => {
             playersActiveActions: {
                 '1': {
                     heldAction: {
-                        duration: {
+                        holdDuration: {
                             milliseconds: 1000,
                         },
                         value: 1,
+                        actCount: 0,
+                        lastActDuration: {milliseconds: 0},
                     },
                 },
             },
@@ -126,21 +143,27 @@ describe(stageIdToString(readActionsStage.stageId), () => {
             omitObjectKeys(virLine.currentState.playersActiveActions!['1']!, ['heldAction']),
             {
                 instantAction: {
-                    duration: {milliseconds: 0},
+                    holdDuration: {milliseconds: 0},
                     value: 0.5,
+                    actCount: 0,
+                    lastActDuration: {milliseconds: 0},
                 },
                 mappedDeviceAction: {
-                    duration: {milliseconds: 0},
+                    holdDuration: {milliseconds: 0},
                     value: 2,
+                    actCount: 0,
+                    lastActDuration: {milliseconds: 0},
                 },
                 cumulativeAction: {
-                    duration: {milliseconds: 0},
+                    holdDuration: {milliseconds: 0},
                     value: 1.5,
+                    actCount: 0,
+                    lastActDuration: {milliseconds: 0},
                 },
             },
         );
         assert.isAbove(
-            virLine.currentState.playersActiveActions?.['1']?.['heldAction']?.duration
+            virLine.currentState.playersActiveActions?.['1']?.['heldAction']?.holdDuration
                 .milliseconds || 0,
             1080,
         );
@@ -162,10 +185,12 @@ describe(stageIdToString(readActionsStage.stageId), () => {
             playersActiveActions: {
                 '1': {
                     heldAction: {
-                        duration: {
+                        holdDuration: {
                             milliseconds: 1000,
                         },
                         value: 1,
+                        actCount: 0,
+                        lastActDuration: {milliseconds: 0},
                     },
                 },
             },
@@ -176,6 +201,7 @@ describe(stageIdToString(readActionsStage.stageId), () => {
 
         assert.deepStrictEqual(virLine.currentState.playersActiveActions, {});
     });
+
     it('works without a device map', async () => {
         const virLine = new VirLine([readActionsStage], {
             playersActionsBindings: {
@@ -210,12 +236,15 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         assert.deepStrictEqual(virLine.currentState.playersActiveActions, {
             '1': {
                 myAction: {
-                    duration: {milliseconds: 0},
+                    holdDuration: {milliseconds: 0},
                     value: 2,
+                    actCount: 0,
+                    lastActDuration: {milliseconds: 0},
                 },
             },
         });
     });
+
     it('maintains duration when the action trigger changes', async () => {
         const virLine = new VirLine([readActionsStage], {
             playersActionsBindings: {
@@ -255,8 +284,10 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         assert.deepStrictEqual(virLine.currentState.playersActiveActions, {
             '1': {
                 left: {
-                    duration: {milliseconds: 0},
+                    holdDuration: {milliseconds: 0},
                     value: 1,
+                    actCount: 0,
+                    lastActDuration: {milliseconds: 0},
                 },
             },
         });
@@ -266,7 +297,7 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         await virLine.triggerUpdate();
 
         const firstDuration: number =
-            virLine.currentState.playersActiveActions?.['1']?.left?.duration.milliseconds || 0;
+            virLine.currentState.playersActiveActions?.['1']?.left?.holdDuration.milliseconds || 0;
 
         assert.isAbove(firstDuration, 0);
 
@@ -288,8 +319,52 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         await virLine.triggerUpdate();
 
         const secondDuration: number =
-            virLine.currentState.playersActiveActions?.['1']?.left?.duration.milliseconds || 0;
+            virLine.currentState.playersActiveActions?.['1']?.left?.holdDuration.milliseconds || 0;
 
         assert.isAbove(secondDuration, firstDuration);
+    });
+});
+
+describe('ActionsBindingsMap', () => {
+    it('allows any action names by default', () => {
+        const actions: ActionsBindingsMap = {};
+
+        actions['my action'] = [];
+        actions['my action 2'] = [];
+    });
+    it('restricts action names', () => {
+        const actions: ActionsBindingsMap<TestAction> = {};
+
+        // @ts-expect-error: not `TestAction`
+        actions['my action'] = [];
+        actions[TestAction.Down] = [];
+    });
+});
+
+describe(createTypedReadActionsStage.name, () => {
+    it('restricts action names', () => {
+        const myStage = createTypedReadActionsStage<TestAction>();
+
+        type State = StagesToFullState<[typeof myStage]>;
+
+        const myState: State = {
+            playersActiveActions: {
+                [InputDeviceKey.Gamepad1]: {
+                    [TestAction.Down]: {
+                        holdDuration: {milliseconds: 1},
+                        value: 1,
+                        actCount: 0,
+                        lastActDuration: {milliseconds: 0},
+                    },
+                    // @ts-expect-error: this is not an allowed action name
+                    invalid: {
+                        duration: {milliseconds: 1},
+                        value: 1,
+                        actCount: 0,
+                        lastActDuration: {milliseconds: 0},
+                    },
+                },
+            },
+        };
     });
 });
