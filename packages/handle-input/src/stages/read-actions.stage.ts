@@ -133,6 +133,8 @@ export type ReadActionsStageState<AllowedActions extends string = string> = Pick
 /**
  * Wraps {@link readActionsStage} in type parameters that require specific action name strings
  * (rather than _any_ action name strings).
+ *
+ * @category Stages
  */
 export function createTypedReadActionsStage<const AllowedActions extends string>(): VirLineStage<
     ReadActionsStageState<AllowedActions>

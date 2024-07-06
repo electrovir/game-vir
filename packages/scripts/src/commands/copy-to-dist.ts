@@ -9,6 +9,7 @@ const packagesToCopy = getObjectTypedKeys(packageDirs).filter((entry) => entry !
 const packageCopyFromPaths: Readonly<Record<ArrayElement<typeof packagesToCopy>, string>> = {
     'handle-input': 'dist-docs',
     book: 'dist-book',
+    render: 'dist-docs',
 };
 
 export async function copyToDist() {

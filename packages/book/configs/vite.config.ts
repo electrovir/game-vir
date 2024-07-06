@@ -12,6 +12,7 @@ export default defineConfig({forGitHubPages: false}, (baseConfig, basePaths) => 
         resolve: {
             alias: {
                 '@game-vir/handle-input': resolve('../handle-input/src/index.ts'),
+                '@game-vir/render': resolve('../render/src/index.ts'),
             },
         },
     };

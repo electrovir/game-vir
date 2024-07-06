@@ -1,12 +1,13 @@
 {
     "name": "@game-vir/scripts",
-    "version": "5.1.0",
+    "version": "5.2.0",
     "private": true,
     "type": "module",
     "scripts": {
         "build": "exit 0",
         "execute": "tsx src/cli.ts",
-        "test:all": "exit 0"
+        "test": "mocha --colors --config 'configs/mocha.config.cjs'",
+        "test:all": "npm test"
     },
     "dependencies": {
         "@augment-vir/common": "^29.1.8",
@@ -14,7 +15,16 @@
         "cli-args-vir": "^0.0.3"
     },
     "devDependencies": {
+        "@electrovir/nyc": "^15.1.0-fix0",
+        "@istanbuljs/nyc-config-typescript": "^1.0.2",
+        "@types/chai": "^4.3.16",
+        "@types/mocha": "^10.0.7",
         "@types/node": "^20.14.10",
+        "chai": "^4.4.1",
+        "istanbul-smart-text-reporter": "^1.1.4",
+        "mocha": "^10.6.0",
+        "mocha-spec-reporter-with-file-names": "^0.0.3",
+        "ts-node": "^10.9.2",
         "tsx": "^4.16.2"
     }
 }

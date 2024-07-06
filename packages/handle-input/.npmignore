@@ -24,5 +24,3 @@ todo.md
 ts.out/
 tsconfig*.json
 tsconfig.tsbuildinfo
-
-/cspell.config.js
