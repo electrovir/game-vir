@@ -17,8 +17,6 @@ export const VirPlayersActionsBindingsDebug = defineElement<{
         }
     `,
     renderCallback({inputs}) {
-        console.log('2', inputs.playersActionsBindingsMap);
-
         return getObjectTypedEntries(inputs.playersActionsBindingsMap).map(
             ([
                 playerPosition,
@@ -52,7 +50,7 @@ export const VirActionsBindingsDebug = defineElement<{
         }
     `,
     renderCallback({inputs}) {
-        return Object.entries(inputs.actionsBindingsMap).map(
+        return getObjectTypedEntries(inputs.actionsBindingsMap).map(
             ([
                 actionName,
                 bindings,

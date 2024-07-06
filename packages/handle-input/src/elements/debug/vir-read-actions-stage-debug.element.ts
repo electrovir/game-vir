@@ -167,8 +167,6 @@ export const VirReadActionsStageDebug = defineElement<
 
         const playersActionsBindingsMap = state.pipeline.currentState.playersActionsBindings || {};
 
-        console.log('1', playersActionsBindingsMap);
-
         return html`
             <h2>Action Bindings</h2>
             <${VirPlayersActionsBindingsDebug.assign({

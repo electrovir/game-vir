@@ -2,6 +2,7 @@ export * from './debug/vir-players-actions-bindings-debug.element';
 export * from './debug/vir-read-actions-stage-debug.element';
 export * from './debug/vir-read-raw-input-stage-debug.element';
 export * from './emoji';
+export * from './menu-nav';
 export * from './vir-device-chip.element';
 export * from './vir-device-list.element';
 export * from './vir-glow-pulse.element';
