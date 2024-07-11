@@ -15,11 +15,11 @@ import {
 import {isJsonEqual} from 'run-time-assertions';
 import {noUserSelect, viraAnimationDurations, ViraButton, viraDisabledStyles} from 'vira';
 import {
-    ActionBinding,
-    ActionsBindingsMap,
-    PlayersActionsBindingsMap,
-    ReadActionsStageState,
-} from '../stages/read-actions.stage';
+    Binding,
+    BindingsMap,
+    PlayersBindingsMap,
+    ReadBindingsStageState,
+} from '../stages/read-bindings.stage';
 import {calculateInputDirection, SimpleInputDevice} from '../stages/read-raw-input.stage';
 import {isMouseMovement} from '../util/is-mouse-movement';
 import {deviceEmojis, directionEmojis} from './emoji';
@@ -43,9 +43,9 @@ export type VirSimpleAssignBindingsInputs = Readonly<
              */
             allowMouseMovement: boolean;
         } & Pick<InputDeviceHandlerOptions, 'globalDeadZone' | 'gamepadDeadZoneSettings'> &
-            Pick<ReadActionsStageState, 'playersActionsBindings' | 'deviceKeyMap'>
+            Pick<ReadBindingsStageState, 'playersBindings' | 'deviceKeyMap'>
     > & {
-        actionNames: ReadonlyArray<string>;
+        bindingNames: ReadonlyArray<string>;
         supportedPlayerCount: number;
     }
 >;
@@ -53,8 +53,8 @@ export type VirSimpleAssignBindingsInputs = Readonly<
 const virBindingChipHeight = 52;
 
 /**
- * An opinionated and inflexible binding assignment element that supports the
- * {@link ActionsBindingsMap} type for a single player. Used in {@link VirSimpleAssignBindings}.
+ * An opinionated and inflexible binding assignment element that supports the {@link BindingsMap}
+ * type for a single player. Used in {@link VirSimpleAssignBindings}.
  *
  * This is intended to be simple for use in initial game development for the sake of quickness.
  *
@@ -62,7 +62,7 @@ const virBindingChipHeight = 52;
  */
 export const VirSimplePlayerAssignBindings = defineElement<
     Readonly<
-        Pick<VirSimpleAssignBindingsInputs, 'actionNames' | 'playersActionsBindings'> & {
+        Pick<VirSimpleAssignBindingsInputs, 'bindingNames' | 'playersBindings'> & {
             playerPosition: number;
             listeningToInput: boolean;
             deviceHandler: Pick<InputDeviceHandler, 'listen'>;
@@ -145,33 +145,33 @@ export const VirSimplePlayerAssignBindings = defineElement<
          * (`false`).
          */
         inputListen: defineElementEvent<boolean>(),
-        bindingsUpdate: defineElementEvent<ActionsBindingsMap>(),
+        bindingsUpdate: defineElementEvent<BindingsMap>(),
     },
     stateInitStatic: {
-        listeningForAction: undefined as undefined | string,
+        listeningForBinding: undefined as undefined | string,
     },
     renderCallback({inputs, dispatch, events, state, updateState}) {
-        const rowTemplates = inputs.actionNames.map((actionName) => {
-            const currentPlayerActionsBindings =
-                inputs.playersActionsBindings?.[`${inputs.playerPosition}`] || {};
+        const rowTemplates = inputs.bindingNames.map((bindingName) => {
+            const currentPlayerBindings =
+                inputs.playersBindings?.[`${inputs.playerPosition}`] || {};
 
-            const currentActionBindings = currentPlayerActionsBindings[actionName] || [];
+            const currentBindings = currentPlayerBindings[bindingName] || [];
 
-            const bindingTemplates = currentActionBindings.length
-                ? currentActionBindings.map((binding, bindingIndex) => {
+            const bindingTemplates = currentBindings.length
+                ? currentBindings.map((binding, bindingIndex) => {
                       return html`
                           <${VirBindingChip.assign({
                               ...binding,
                           })}
                               ${listen(VirBindingChip.events.removeBinding, () => {
-                                  const newActionsBindingsMap = {
-                                      ...currentPlayerActionsBindings,
-                                      [actionName]: filterOutIndexes(currentActionBindings, [
+                                  const newBindingsMap = {
+                                      ...currentPlayerBindings,
+                                      [bindingName]: filterOutIndexes(currentBindings, [
                                           bindingIndex,
                                       ]),
                                   };
 
-                                  dispatch(new events.bindingsUpdate(newActionsBindingsMap));
+                                  dispatch(new events.bindingsUpdate(newBindingsMap));
                               })}
                           ></${VirBindingChip}>
                       `;
@@ -180,10 +180,10 @@ export const VirSimplePlayerAssignBindings = defineElement<
                       <p class="empty-bindings">Empty</p>
                   `;
 
-            const listeningForCurrentAction = state.listeningForAction === actionName;
+            const isListeningForCurrentBinding = state.listeningForBinding === bindingName;
 
             const listeningOverlay =
-                listeningForCurrentAction && inputs.listeningToInput
+                isListeningForCurrentBinding && inputs.listeningToInput
                     ? html`
                           <div class="listening-overlay"><span>Listening for input...</span></div>
                       `
@@ -204,7 +204,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
                             ${listen('click', () => {
                                 dispatch(new events.inputListen(true));
                                 updateState({
-                                    listeningForAction: actionName,
+                                    listeningForBinding: bindingName,
                                 });
 
                                 inputs.deviceHandler?.listen(
@@ -216,7 +216,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
                                             return;
                                         }
 
-                                        const newBinding: ActionBinding = {
+                                        const newBinding: Binding = {
                                             deviceKey: newInput.deviceKey,
                                             direction: calculateInputDirection(newInput.inputValue),
                                             inputName: newInput.inputName,
@@ -229,15 +229,15 @@ export const VirSimplePlayerAssignBindings = defineElement<
                                             return;
                                         }
 
-                                        const bindingAlreadyExists = currentActionBindings.some(
+                                        const bindingAlreadyExists = currentBindings.some(
                                             (binding) => isJsonEqual(newBinding, binding),
                                         );
 
                                         if (!bindingAlreadyExists) {
-                                            const newBindings: ActionsBindingsMap = {
-                                                ...currentPlayerActionsBindings,
-                                                [actionName]: [
-                                                    ...currentActionBindings,
+                                            const newBindings: BindingsMap = {
+                                                ...currentPlayerBindings,
+                                                [bindingName]: [
+                                                    ...currentBindings,
                                                     newBinding,
                                                 ],
                                             };
@@ -247,18 +247,20 @@ export const VirSimplePlayerAssignBindings = defineElement<
                                         removeSelf();
                                         dispatch(new events.inputListen(false));
                                         updateState({
-                                            listeningForAction: undefined,
+                                            listeningForBinding: undefined,
                                         });
                                     },
                                 );
                             })}
                         ></${ViraButton}>
                     </td>
-                    <th class=${classMap({fadable: !listeningForCurrentAction})}>${actionName}:</th>
-                    <td class=${classMap({fadable: !listeningForCurrentAction})}>
+                    <th class=${classMap({fadable: !isListeningForCurrentBinding})}>
+                        ${bindingName}:
+                    </th>
+                    <td class=${classMap({fadable: !isListeningForCurrentBinding})}>
                         <div
                             class="bindings ${classMap({
-                                'empty-bindings': !currentActionBindings.length,
+                                'empty-bindings': !currentBindings.length,
                             })}"
                         >
                             ${listeningOverlay}${bindingTemplates}
@@ -279,7 +281,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
  *
  * @category Elements
  */
-export const VirBindingChip = defineElement<Readonly<ActionBinding>>()({
+export const VirBindingChip = defineElement<Readonly<Binding>>()({
     tagName: 'vir-binding-chip',
     styles: css`
         :host {
@@ -367,7 +369,7 @@ export const VirBindingChip = defineElement<Readonly<ActionBinding>>()({
 
 /**
  * An opinionated and inflexible binding assignment element that supports the
- * {@link PlayersActionsBindingsMap} type and also an arbitrary number of players.
+ * {@link PlayersBindingsMap} type and also an arbitrary number of players.
  *
  * This is intended to be simple for use in initial game development for the sake of quickness.
  *
@@ -390,7 +392,7 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
         }
     `,
     events: {
-        playersActionsBindingsUpdate: defineElementEvent<PlayersActionsBindingsMap>(),
+        playersBindingsUpdate: defineElementEvent<PlayersBindingsMap>(),
     },
     stateInitStatic: {
         deviceHandler: undefined as VirSimpleAssignBindingsInputs['inputDeviceHandler'],
@@ -483,9 +485,9 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
                     <section class="player-assignment">
                         ${playerHeaderTemplate}
                         <${VirSimplePlayerAssignBindings.assign({
-                            actionNames: inputs.actionNames,
+                            bindingNames: inputs.bindingNames,
                             playerPosition,
-                            playersActionsBindings: inputs.playersActionsBindings,
+                            playersBindings: inputs.playersBindings,
                             listeningToInput: state.listeningToInput,
                             deviceHandler,
                             allowMouseMovement: inputs.allowMouseMovement || false,
@@ -498,12 +500,12 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
                             ${listen(
                                 VirSimplePlayerAssignBindings.events.bindingsUpdate,
                                 (event) => {
-                                    const newBindings: PlayersActionsBindingsMap = {
-                                        ...inputs.playersActionsBindings,
+                                    const newBindings: PlayersBindingsMap = {
+                                        ...inputs.playersBindings,
                                         [String(playerPosition)]: event.detail,
                                     };
 
-                                    dispatch(new events.playersActionsBindingsUpdate(newBindings));
+                                    dispatch(new events.playersBindingsUpdate(newBindings));
                                 },
                             )}
                         ></${VirSimplePlayerAssignBindings}>

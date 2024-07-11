@@ -1,9 +1,5 @@
 import {ensureType} from '@augment-vir/common';
-import {
-    InputDirection,
-    PlayersActionsBindingsMap,
-    VirSimpleAssignBindings,
-} from '@game-vir/handle-input';
+import {InputDirection, PlayersBindingsMap, VirSimpleAssignBindings} from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, html, listen} from 'element-vir';
 import {elementsPage} from '../top-level-pages';
@@ -21,7 +17,7 @@ export const virSimpleAssignBindingsPage = defineBookPage({
                 }
             `,
             stateInitStatic: {
-                playersActionsBindings: ensureType<PlayersActionsBindingsMap>({
+                playersBindings: ensureType<PlayersBindingsMap>({
                     '1': {
                         up: [
                             {
@@ -49,7 +45,7 @@ export const virSimpleAssignBindingsPage = defineBookPage({
                 return html`
                     <div class="size">
                         <${VirSimpleAssignBindings.assign({
-                            actionNames: [
+                            bindingNames: [
                                 'up',
                                 'down',
                                 'left',
@@ -58,13 +54,13 @@ export const virSimpleAssignBindingsPage = defineBookPage({
                                 'pause',
                             ],
                             supportedPlayerCount: 2,
-                            playersActionsBindings: state.playersActionsBindings,
+                            playersBindings: state.playersBindings,
                         })}
                             ${listen(
-                                VirSimpleAssignBindings.events.playersActionsBindingsUpdate,
+                                VirSimpleAssignBindings.events.playersBindingsUpdate,
                                 (event) => {
                                     updateState({
-                                        playersActionsBindings: event.detail,
+                                        playersBindings: event.detail,
                                     });
                                 },
                             )}

@@ -3,14 +3,14 @@ import {css, defineElement, html, nothing} from 'element-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {VirLine} from 'vir-line';
 import {
-    PlayersActionsBindingsMap,
-    PlayersActiveActionsMap,
-    readActionsStage,
-} from '../../stages/read-actions.stage';
+    PlayersActiveBindingsMap,
+    PlayersBindingsMap,
+    readBindingsStage,
+} from '../../stages/read-bindings.stage';
 import {InputDirection, readRawInputStage} from '../../stages/read-raw-input.stage';
-import {VirPlayersActionsBindingsDebug} from './vir-players-actions-bindings-debug.element';
+import {VirPlayersBindingsDebug} from './vir-players-bindings-debug.element';
 
-const defaultActionBindings: Readonly<PlayersActionsBindingsMap> = {
+const defaultBindings: Readonly<PlayersBindingsMap> = {
     '1': {
         jump: [
             {
@@ -57,18 +57,18 @@ const defaultActionBindings: Readonly<PlayersActionsBindingsMap> = {
 };
 
 /**
- * An element for debugging {@link readActionsStage} that displays the given action bindings as well
- * as all currently active actions.
+ * An element for debugging {@link readBindingsStage} that displays the given bindings as well as all
+ * currently active bindings.
  *
  * @category Debug
  */
-export const VirReadActionsStageDebug = defineElement<
+export const VirReadBindingsStageDebug = defineElement<
     PartialAndUndefined<{
         inputDeviceHandler: InputDeviceHandler;
-        actionBindings: PlayersActionsBindingsMap;
+        bindingsMap: PlayersBindingsMap;
     }>
 >()({
-    tagName: 'vir-read-actions-stage-debug',
+    tagName: 'vir-read-bindings-stage-debug',
     styles: css`
         :host {
             display: flex;
@@ -80,7 +80,7 @@ export const VirReadActionsStageDebug = defineElement<
             margin: 4px;
         }
 
-        .no-actions {
+        .no-bindings {
             opacity: 0.3;
             font-weight: bold;
         }
@@ -89,8 +89,8 @@ export const VirReadActionsStageDebug = defineElement<
         deviceHandler: undefined as undefined | InputDeviceHandler,
         pipeline: undefined as
             | undefined
-            | VirLine<[typeof readRawInputStage, typeof readActionsStage]>,
-        activeActions: {} as PlayersActiveActionsMap,
+            | VirLine<[typeof readRawInputStage, typeof readBindingsStage]>,
+        activeBindings: {} as PlayersActiveBindingsMap,
     },
     initCallback({state, updateState, inputs}) {
         const deviceHandler =
@@ -107,11 +107,11 @@ export const VirReadActionsStageDebug = defineElement<
             new VirLine(
                 [
                     readRawInputStage,
-                    readActionsStage,
+                    readBindingsStage,
                 ],
                 {
                     deviceHandler,
-                    playersActionsBindings: inputs.actionBindings || defaultActionBindings,
+                    playersBindings: inputs.bindingsMap || defaultBindings,
                 },
                 {
                     init: {
@@ -126,9 +126,9 @@ export const VirReadActionsStageDebug = defineElement<
             });
         }
 
-        pipeline.listenToState(true, {playersActiveActions: true}, (activeActions) => {
+        pipeline.listenToState(true, {playersActiveBindings: true}, (activeBindings) => {
             updateState({
-                activeActions: activeActions || {},
+                activeBindings: activeBindings || {},
             });
         });
     },
@@ -149,35 +149,35 @@ export const VirReadActionsStageDebug = defineElement<
             return nothing;
         }
 
-        const activeActionTemplates = Object.entries(state.activeActions).map(
+        const activeBindingTemplates = Object.entries(state.activeBindings).map(
             ([
-                actionName,
-                activeAction,
+                bindingName,
+                activeBinding,
             ]) => {
                 return html`
-                    <section class="action">
-                        <h3>${actionName}</h3>
-                        <pre>${JSON.stringify(activeAction, null, 4)}</pre>
+                    <section class="binding">
+                        <h3>${bindingName}</h3>
+                        <pre>${JSON.stringify(activeBinding, null, 4)}</pre>
                     </section>
                 `;
             },
         );
 
-        const noActions = !activeActionTemplates.length;
+        const noBindings = !activeBindingTemplates.length;
 
-        const playersActionsBindingsMap = state.pipeline.currentState.playersActionsBindings || {};
+        const playersBindingsMap = state.pipeline.currentState.playersBindings || {};
 
         return html`
-            <h2>Action Bindings</h2>
-            <${VirPlayersActionsBindingsDebug.assign({
-                playersActionsBindingsMap,
-            })}></${VirPlayersActionsBindingsDebug}>
-            <h2>Active Actions</h2>
-            ${noActions
+            <h2>Bindings</h2>
+            <${VirPlayersBindingsDebug.assign({
+                playersBindingsMap: playersBindingsMap,
+            })}></${VirPlayersBindingsDebug}>
+            <h2>Active Bindings</h2>
+            ${noBindings
                 ? html`
-                      <p class="no-actions">No inputs</p>
+                      <p class="no-bindings">No inputs</p>
                   `
-                : activeActionTemplates}
+                : activeBindingTemplates}
         `;
     },
     options: {

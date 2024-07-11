@@ -1,32 +1,32 @@
 import {getObjectTypedEntries} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
-import {ActionsBindingsMap, PlayersActionsBindingsMap} from '../../stages/read-actions.stage';
+import {BindingsMap, PlayersBindingsMap} from '../../stages/read-bindings.stage';
 
 /**
- * An element for debugging that displays all given action bindings for all players.
+ * An element for debugging that displays all given bindings for all players.
  *
  * @category Debug
  */
-export const VirPlayersActionsBindingsDebug = defineElement<{
-    playersActionsBindingsMap: PlayersActionsBindingsMap;
+export const VirPlayersBindingsDebug = defineElement<{
+    playersBindingsMap: PlayersBindingsMap;
 }>()({
-    tagName: 'vir-players-actions-bindings-debug',
+    tagName: 'vir-players-bindings-debug',
     styles: css`
         h3 {
             margin: 4px;
         }
     `,
     renderCallback({inputs}) {
-        return getObjectTypedEntries(inputs.playersActionsBindingsMap).map(
+        return getObjectTypedEntries(inputs.playersBindingsMap).map(
             ([
                 playerPosition,
-                actionsBindingsMap,
+                bindingsMap,
             ]) => {
                 return html`
                     <h3>Player ${playerPosition}</h3>
-                    <${VirActionsBindingsDebug.assign({
-                        actionsBindingsMap,
-                    })}></${VirActionsBindingsDebug}>
+                    <${VirBindingsDebug.assign({
+                        bindingsMap: bindingsMap,
+                    })}></${VirBindingsDebug}>
                 `;
             },
         );
@@ -34,25 +34,25 @@ export const VirPlayersActionsBindingsDebug = defineElement<{
 });
 
 /**
- * An element for debugging that displays all given action bindings for a single player.
+ * An element for debugging that displays all given bindings for a single player.
  *
- * Used within {@link VirPlayersActionsBindingsDebug}
+ * Used within {@link VirPlayersBindingsDebug}
  *
  * @category Debug
  */
-export const VirActionsBindingsDebug = defineElement<{
-    actionsBindingsMap: ActionsBindingsMap;
+export const VirBindingsDebug = defineElement<{
+    bindingsMap: BindingsMap;
 }>()({
-    tagName: 'vir-actions-bindings-debug',
+    tagName: 'vir-bindings-debug',
     styles: css`
         h4 {
             margin: 4px;
         }
     `,
     renderCallback({inputs}) {
-        return getObjectTypedEntries(inputs.actionsBindingsMap).map(
+        return getObjectTypedEntries(inputs.bindingsMap).map(
             ([
-                actionName,
+                bindingName,
                 bindings,
             ]) => {
                 const bindingsRows = bindings.map((binding) => {
@@ -66,7 +66,7 @@ export const VirActionsBindingsDebug = defineElement<{
 
                 return html`
                     <section class="binding">
-                        <h4>${actionName}</h4>
+                        <h4>${bindingName}</h4>
                         <table><tbody>${bindingsRows}</tbody></table>
                     </section>
                 `;

@@ -1,8 +1,8 @@
 import {
-    createTypedReadActionsStage,
+    createTypedReadBindingsStage,
     group,
     InputDirection,
-    MenuNavAction,
+    MenuNavBinding,
     MenuNavController,
     MenuNavState,
     nav,
@@ -58,48 +58,48 @@ const VirMenuNavTest = defineElementNoInputs({
             new VirLine(
                 [
                     readRawInputStage,
-                    createTypedReadActionsStage<MenuNavAction>(),
+                    createTypedReadBindingsStage<MenuNavBinding>(),
                 ],
                 {
                     deviceHandler: state.deviceHandler,
-                    playersActionsBindings: {
+                    playersBindings: {
                         '1': {
-                            [MenuNavAction.Up]: [
+                            [MenuNavBinding.Up]: [
                                 {
                                     deviceKey: InputDeviceKey.Keyboard,
                                     direction: InputDirection.Positive,
                                     inputName: 'button-KeyW',
                                 },
                             ],
-                            [MenuNavAction.Down]: [
+                            [MenuNavBinding.Down]: [
                                 {
                                     deviceKey: InputDeviceKey.Keyboard,
                                     direction: InputDirection.Positive,
                                     inputName: 'button-KeyS',
                                 },
                             ],
-                            [MenuNavAction.Right]: [
+                            [MenuNavBinding.Right]: [
                                 {
                                     deviceKey: InputDeviceKey.Keyboard,
                                     direction: InputDirection.Positive,
                                     inputName: 'button-KeyD',
                                 },
                             ],
-                            [MenuNavAction.Left]: [
+                            [MenuNavBinding.Left]: [
                                 {
                                     deviceKey: InputDeviceKey.Keyboard,
                                     direction: InputDirection.Positive,
                                     inputName: 'button-KeyA',
                                 },
                             ],
-                            [MenuNavAction.SectionNext]: [
+                            [MenuNavBinding.SectionNext]: [
                                 {
                                     deviceKey: InputDeviceKey.Keyboard,
                                     direction: InputDirection.Positive,
                                     inputName: 'button-KeyE',
                                 },
                             ],
-                            [MenuNavAction.SectionPrevious]: [
+                            [MenuNavBinding.SectionPrevious]: [
                                 {
                                     deviceKey: InputDeviceKey.Keyboard,
                                     direction: InputDirection.Positive,

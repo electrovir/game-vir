@@ -2,14 +2,10 @@ import {omitObjectKeys, wait} from '@augment-vir/common';
 import {assert} from '@open-wc/testing';
 import {InputDeviceKey, InputDeviceType} from 'input-device-handler';
 import {stageIdToString, StagesToFullState, VirLine} from 'vir-line';
-import {
-    ActionsBindingsMap,
-    createTypedReadActionsStage,
-    readActionsStage,
-} from './read-actions.stage';
+import {BindingsMap, createTypedReadBindingsStage, readBindingsStage} from './read-bindings.stage';
 import {InputDirection} from './read-raw-input.stage';
 
-enum TestAction {
+enum TestBinding {
     Up = 'up',
     Down = 'down',
     Left = 'left',
@@ -20,41 +16,41 @@ enum TestAction {
     Pause = 'pause',
 }
 
-describe(stageIdToString(readActionsStage.stageId), () => {
-    it('maps inputs to actions', async () => {
-        const virLine = new VirLine([readActionsStage], {
-            playersActionsBindings: {
+describe(stageIdToString(readBindingsStage.stageId), () => {
+    it('maps inputs to active bindings', async () => {
+        const virLine = new VirLine([readBindingsStage], {
+            playersBindings: {
                 '1': {
-                    heldAction: [
+                    heldBinding: [
                         {
                             deviceKey: 'keyboard',
                             direction: InputDirection.Positive,
                             inputName: 'button-ArrowUp',
                         },
                     ],
-                    unboundAction: [],
-                    unusedAction: [
+                    unboundBinding: [],
+                    unusedBinding: [
                         {
                             deviceKey: InputDeviceKey.Gamepad1,
                             direction: InputDirection.Positive,
                             inputName: 'button-4',
                         },
                     ],
-                    instantAction: [
+                    instantBinding: [
                         {
                             deviceKey: InputDeviceKey.Gamepad2,
                             direction: InputDirection.Positive,
                             inputName: 'button-1',
                         },
                     ],
-                    mappedDeviceAction: [
+                    mappedDeviceBinding: [
                         {
                             deviceKey: InputDeviceKey.Gamepad1,
                             direction: InputDirection.Positive,
                             inputName: 'button-3',
                         },
                     ],
-                    cumulativeAction: [
+                    cumulativeBinding: [
                         {
                             deviceKey: 'keyboard',
                             direction: InputDirection.Positive,
@@ -68,9 +64,9 @@ describe(stageIdToString(readActionsStage.stageId), () => {
                     ],
                 },
             },
-            playersActiveActions: {
+            playersActiveBindings: {
                 '1': {
-                    heldAction: {
+                    heldBinding: {
                         holdDuration: {
                             milliseconds: 1000,
                         },
@@ -140,21 +136,21 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         await virLine.triggerUpdate();
 
         assert.deepStrictEqual(
-            omitObjectKeys(virLine.currentState.playersActiveActions!['1']!, ['heldAction']),
+            omitObjectKeys(virLine.currentState.playersActiveBindings!['1']!, ['heldBinding']),
             {
-                instantAction: {
+                instantBinding: {
                     holdDuration: {milliseconds: 0},
                     value: 0.5,
                     actCount: 0,
                     lastActDuration: {milliseconds: 0},
                 },
-                mappedDeviceAction: {
+                mappedDeviceBinding: {
                     holdDuration: {milliseconds: 0},
                     value: 2,
                     actCount: 0,
                     lastActDuration: {milliseconds: 0},
                 },
-                cumulativeAction: {
+                cumulativeBinding: {
                     holdDuration: {milliseconds: 0},
                     value: 1.5,
                     actCount: 0,
@@ -163,17 +159,17 @@ describe(stageIdToString(readActionsStage.stageId), () => {
             },
         );
         assert.isAbove(
-            virLine.currentState.playersActiveActions?.['1']?.['heldAction']?.holdDuration
+            virLine.currentState.playersActiveBindings?.['1']?.['heldBinding']?.holdDuration
                 .milliseconds || 0,
             1080,
         );
     });
 
-    it('wipes all actions if there are no inputs', async () => {
-        const virLine = new VirLine([readActionsStage], {
-            playersActionsBindings: {
+    it('wipes all active bindings if there are no inputs', async () => {
+        const virLine = new VirLine([readBindingsStage], {
+            playersBindings: {
                 '1': {
-                    heldAction: [
+                    heldBinding: [
                         {
                             deviceKey: 'keyboard',
                             direction: InputDirection.Positive,
@@ -182,9 +178,9 @@ describe(stageIdToString(readActionsStage.stageId), () => {
                     ],
                 },
             },
-            playersActiveActions: {
+            playersActiveBindings: {
                 '1': {
-                    heldAction: {
+                    heldBinding: {
                         holdDuration: {
                             milliseconds: 1000,
                         },
@@ -199,14 +195,14 @@ describe(stageIdToString(readActionsStage.stageId), () => {
 
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(virLine.currentState.playersActiveActions, {});
+        assert.deepStrictEqual(virLine.currentState.playersActiveBindings, {});
     });
 
     it('works without a device map', async () => {
-        const virLine = new VirLine([readActionsStage], {
-            playersActionsBindings: {
+        const virLine = new VirLine([readBindingsStage], {
+            playersBindings: {
                 '1': {
-                    myAction: [
+                    myBinding: [
                         {
                             deviceKey: '0',
                             direction: InputDirection.Positive,
@@ -215,7 +211,7 @@ describe(stageIdToString(readActionsStage.stageId), () => {
                     ],
                 },
             },
-            playersActiveActions: {},
+            playersActiveBindings: {},
             rawInputs: {
                 '0': {
                     'button-3': {
@@ -233,9 +229,9 @@ describe(stageIdToString(readActionsStage.stageId), () => {
 
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(virLine.currentState.playersActiveActions, {
+        assert.deepStrictEqual(virLine.currentState.playersActiveBindings, {
             '1': {
-                myAction: {
+                myBinding: {
                     holdDuration: {milliseconds: 0},
                     value: 2,
                     actCount: 0,
@@ -245,9 +241,9 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         });
     });
 
-    it('maintains duration when the action trigger changes', async () => {
-        const virLine = new VirLine([readActionsStage], {
-            playersActionsBindings: {
+    it('maintains duration when the binding trigger changes', async () => {
+        const virLine = new VirLine([readBindingsStage], {
+            playersBindings: {
                 '1': {
                     left: [
                         {
@@ -263,7 +259,7 @@ describe(stageIdToString(readActionsStage.stageId), () => {
                     ],
                 },
             },
-            playersActiveActions: {},
+            playersActiveBindings: {},
             rawInputs: {
                 keyboard: {
                     'button-ArrowLeft': {
@@ -281,7 +277,7 @@ describe(stageIdToString(readActionsStage.stageId), () => {
 
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(virLine.currentState.playersActiveActions, {
+        assert.deepStrictEqual(virLine.currentState.playersActiveBindings, {
             '1': {
                 left: {
                     holdDuration: {milliseconds: 0},
@@ -297,7 +293,7 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         await virLine.triggerUpdate();
 
         const firstDuration: number =
-            virLine.currentState.playersActiveActions?.['1']?.left?.holdDuration.milliseconds || 0;
+            virLine.currentState.playersActiveBindings?.['1']?.left?.holdDuration.milliseconds || 0;
 
         assert.isAbove(firstDuration, 0);
 
@@ -319,44 +315,44 @@ describe(stageIdToString(readActionsStage.stageId), () => {
         await virLine.triggerUpdate();
 
         const secondDuration: number =
-            virLine.currentState.playersActiveActions?.['1']?.left?.holdDuration.milliseconds || 0;
+            virLine.currentState.playersActiveBindings?.['1']?.left?.holdDuration.milliseconds || 0;
 
         assert.isAbove(secondDuration, firstDuration);
     });
 });
 
-describe('ActionsBindingsMap', () => {
-    it('allows any action names by default', () => {
-        const actions: ActionsBindingsMap = {};
+describe('BindingsMap', () => {
+    it('allows any binding names by default', () => {
+        const bindings: BindingsMap = {};
 
-        actions['my action'] = [];
-        actions['my action 2'] = [];
+        bindings['my binding'] = [];
+        bindings['my binding 2'] = [];
     });
-    it('restricts action names', () => {
-        const actions: ActionsBindingsMap<TestAction> = {};
+    it('restricts binding names', () => {
+        const bindings: BindingsMap<TestBinding> = {};
 
-        // @ts-expect-error: not `TestAction`
-        actions['my action'] = [];
-        actions[TestAction.Down] = [];
+        // @ts-expect-error: not an allowed binding name
+        bindings['my binding'] = [];
+        bindings[TestBinding.Down] = [];
     });
 });
 
-describe(createTypedReadActionsStage.name, () => {
-    it('restricts action names', () => {
-        const myStage = createTypedReadActionsStage<TestAction>();
+describe(createTypedReadBindingsStage.name, () => {
+    it('restricts binding names', () => {
+        const myStage = createTypedReadBindingsStage<TestBinding>();
 
         type State = StagesToFullState<[typeof myStage]>;
 
         const myState: State = {
-            playersActiveActions: {
+            playersActiveBindings: {
                 [InputDeviceKey.Gamepad1]: {
-                    [TestAction.Down]: {
+                    [TestBinding.Down]: {
                         holdDuration: {milliseconds: 1},
                         value: 1,
                         actCount: 0,
                         lastActDuration: {milliseconds: 0},
                     },
-                    // @ts-expect-error: this is not an allowed action name
+                    // @ts-expect-error: this is not an allowed binding name
                     invalid: {
                         duration: {milliseconds: 1},
                         value: 1,

@@ -6,18 +6,18 @@ import {
 import {type AnyDuration, convertDuration, DurationUnit} from 'date-vir';
 import {NavController, NavDirection} from 'device-navigation';
 import type {RemoveListenerCallback, VirLine, VirLineWithState} from 'vir-line';
-import type {PlayersActiveActionsMap} from '../stages/read-actions.stage';
+import type {PlayersActiveBindingsMap} from '../stages/read-bindings.stage';
 
 export {group, nav, NavController, navSelector} from 'device-navigation';
 
 /**
- * All supported menu navigation actions. To ignore any, simply don't allow players to bind to them.
- * Any menus that don't have sufficient nestings to support any actions simply won't perform those
- * actions (even if they are active).
+ * All supported menu navigation bindings. To ignore any, simply don't allow players to bind to
+ * them. Any menus that don't have sufficient nestings to support any specific binding simply won't
+ * do anything if they're active.
  *
  * @category Types
  */
-export enum MenuNavAction {
+export enum MenuNavBinding {
     Up = 'up',
     Down = 'down',
     Left = 'left',
@@ -50,7 +50,7 @@ export enum MenuNavAction {
  * @category Types
  */
 export type MenuNavState = PartialAndUndefined<{
-    playersActiveActions: PlayersActiveActionsMap<MenuNavAction>;
+    playersActiveBindings: PlayersActiveBindingsMap<MenuNavBinding>;
 }>;
 
 /**
@@ -61,13 +61,13 @@ export type MenuNavState = PartialAndUndefined<{
 export type MenuNavOptions = Readonly<
     Partial<{
         /**
-         * The duration that any menu nav action must be held before it starts auto-repeating.
+         * The duration that any menu nav binding must be held before it starts auto-repeating.
          *
          * @default {milliseconds: 500}
          */
         repeatThreshold: Readonly<AnyDuration>;
         /**
-         * The minimum interval between each repetition in a repeating menu nav action.
+         * The minimum interval between each repetition in a repeating menu nav binding.
          *
          * @default {milliseconds: 60}
          */
@@ -82,8 +82,8 @@ export type MenuNavOptions = Readonly<
 >;
 
 /**
- * Listen to menu navigation actions on a {@link VirLine} object and perform them within the given
- * element.
+ * Listen to active menu navigation bindings on a {@link VirLine} instance and perform them within
+ * the given element.
  *
  * @category Elements
  */
@@ -93,7 +93,7 @@ export class MenuNavController extends NavController {
 
     /**
      * The current options assigned to this {@link MenuNavController} instance. Override the defaults
-     * in the constructor, or mutate it at any time to affect all subsequent menu nav actions.
+     * in the constructor, or mutate it at any time to affect all subsequent menu navigation.
      */
     public options: Required<MenuNavOptions> = {
         repeatThreshold: {milliseconds: 500},
@@ -136,9 +136,9 @@ export class MenuNavController extends NavController {
 
         this.lastUnlisten = this.virLine.listenToState(
             false,
-            {playersActiveActions: true},
-            (playersActions) => {
-                if (!playersActions || this.paused) {
+            {playersActiveBindings: true},
+            (playersActiveBindings) => {
+                if (!playersActiveBindings || this.paused) {
                     return;
                 }
 
@@ -151,45 +151,45 @@ export class MenuNavController extends NavController {
                     DurationUnit.Milliseconds,
                 ).milliseconds;
 
-                const actionsToPerform: Partial<Record<MenuNavAction, boolean>> = {};
+                const bindingsToAct: Partial<Record<MenuNavBinding, boolean>> = {};
 
-                getObjectTypedValues(playersActions).forEach((playerActions) => {
-                    getObjectTypedEntries(playerActions).forEach(
+                getObjectTypedValues(playersActiveBindings).forEach((playerActiveBindings) => {
+                    getObjectTypedEntries(playerActiveBindings).forEach(
                         ([
-                            actionName,
-                            activeAction,
+                            bindingName,
+                            activeBinding,
                         ]) => {
-                            if (activeAction.holdDuration.milliseconds >= repeatThreshold) {
+                            if (activeBinding.holdDuration.milliseconds >= repeatThreshold) {
                                 if (
-                                    activeAction.holdDuration.milliseconds -
-                                        activeAction.lastActDuration.milliseconds >
+                                    activeBinding.holdDuration.milliseconds -
+                                        activeBinding.lastActDuration.milliseconds >
                                     repeatInterval
                                 ) {
-                                    actionsToPerform[actionName] = true;
-                                    activeAction.actCount++;
-                                    activeAction.lastActDuration = activeAction.holdDuration;
+                                    bindingsToAct[bindingName] = true;
+                                    activeBinding.actCount++;
+                                    activeBinding.lastActDuration = activeBinding.holdDuration;
                                 }
-                            } else if (!activeAction.holdDuration.milliseconds) {
-                                actionsToPerform[actionName] = true;
+                            } else if (!activeBinding.holdDuration.milliseconds) {
+                                bindingsToAct[bindingName] = true;
                             }
                         },
                     );
                 });
 
-                if (actionsToPerform[MenuNavAction.Enter]) {
+                if (bindingsToAct[MenuNavBinding.Enter]) {
                     this.enterInto();
                     return;
                 }
-                if (actionsToPerform[MenuNavAction.Exit]) {
+                if (bindingsToAct[MenuNavBinding.Exit]) {
                     this.exitOutOf();
                     return;
                 }
                 const sectionDirection =
-                    actionsToPerform[MenuNavAction.SectionNext] &&
-                    !actionsToPerform[MenuNavAction.SectionPrevious]
+                    bindingsToAct[MenuNavBinding.SectionNext] &&
+                    !bindingsToAct[MenuNavBinding.SectionPrevious]
                         ? NavDirection.Right
-                        : !actionsToPerform[MenuNavAction.SectionNext] &&
-                            actionsToPerform[MenuNavAction.SectionPrevious]
+                        : !bindingsToAct[MenuNavBinding.SectionNext] &&
+                            bindingsToAct[MenuNavBinding.SectionPrevious]
                           ? NavDirection.Left
                           : undefined;
 
@@ -202,18 +202,16 @@ export class MenuNavController extends NavController {
                 }
 
                 const vertical =
-                    actionsToPerform[MenuNavAction.Up] && !actionsToPerform[MenuNavAction.Down]
+                    bindingsToAct[MenuNavBinding.Up] && !bindingsToAct[MenuNavBinding.Down]
                         ? NavDirection.Up
-                        : !actionsToPerform[MenuNavAction.Up] &&
-                            actionsToPerform[MenuNavAction.Down]
+                        : !bindingsToAct[MenuNavBinding.Up] && bindingsToAct[MenuNavBinding.Down]
                           ? NavDirection.Down
                           : undefined;
 
                 const horizontal =
-                    actionsToPerform[MenuNavAction.Right] && !actionsToPerform[MenuNavAction.Left]
+                    bindingsToAct[MenuNavBinding.Right] && !bindingsToAct[MenuNavBinding.Left]
                         ? NavDirection.Right
-                        : !actionsToPerform[MenuNavAction.Right] &&
-                            actionsToPerform[MenuNavAction.Left]
+                        : !bindingsToAct[MenuNavBinding.Right] && bindingsToAct[MenuNavBinding.Left]
                           ? NavDirection.Left
                           : undefined;
 
