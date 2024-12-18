@@ -156,11 +156,11 @@ export function createTypedReadBindingsStage<const BindingNames extends string>(
  *
  * @category Stages
  */
-export const readBindingsStage: VirLineStage<ReadBindingsStageState> = {
-    stageId: {
+export const readBindingsStage = new VirLineStage<ReadBindingsStageState>(
+    {
         name: 'read bindings',
     },
-    executor({state, timeSinceLastUpdate}) {
+    ({state, timeSinceLastUpdate}) => {
         if (
             !state.playersBindings ||
             !Object.keys(state.playersBindings).length ||
@@ -190,7 +190,7 @@ export const readBindingsStage: VirLineStage<ReadBindingsStageState> = {
 
         state.playersActiveBindings = newPlayersActiveBindingsMap;
     },
-};
+);
 
 function readPlayerBindings<BindingNames extends string>({
     bindingsMap: bindingsMap,

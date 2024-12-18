@@ -116,11 +116,11 @@ export type ReadRawInputStageState = {
  *
  * @category Stages
  */
-export const readRawInputStage: VirLineStage<ReadRawInputStageState> = {
-    stageId: {
+export const readRawInputStage = new VirLineStage<ReadRawInputStageState>(
+    {
         name: 'read raw input',
     },
-    executor({state, timeSinceLastUpdate}) {
+    ({state, timeSinceLastUpdate}) => {
         const currentDevices = state.deviceHandler.readAllDevices();
 
         const rawInputs: RawInputs = mapObjectValues(
@@ -167,4 +167,4 @@ export const readRawInputStage: VirLineStage<ReadRawInputStageState> = {
         state.rawInputs = rawInputs;
         state.currentInputDevices = simpleDevices;
     },
-};
+);
