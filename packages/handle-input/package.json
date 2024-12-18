@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/handle-input",
-    "version": "6.0.1",
+    "version": "6.1.0",
     "description": "",
     "keywords": [],
     "homepage": "https://github.com/electrovir/game-vir",
@@ -37,6 +37,7 @@
         "element-vir": "^23.1.1",
         "gamepad-type": "^1.0.3",
         "input-device-handler": "^8.1.1",
+        "object-shape-tester": "^3.1.8",
         "vir-line": "^2.0.0",
         "vira": "^23.1.1"
     },

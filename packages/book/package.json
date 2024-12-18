@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/book",
-    "version": "6.0.1",
+    "version": "6.1.0",
     "private": true,
     "homepage": "https://github.com/electrovir/game-vir",
     "bugs": {
@@ -24,8 +24,8 @@
     },
     "dependencies": {
         "@augment-vir/common": "^31.2.0",
-        "@game-vir/handle-input": "^6.0.1",
-        "@game-vir/render": "^6.0.1",
+        "@game-vir/handle-input": "^6.1.0",
+        "@game-vir/render": "^6.1.0",
         "element-book": "^23.1.1",
         "element-vir": "^23.1.1",
         "input-device-handler": "^8.1.1",

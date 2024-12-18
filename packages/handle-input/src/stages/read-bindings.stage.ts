@@ -4,9 +4,11 @@ import {
     getObjectTypedEntries,
     mapObjectValues,
     PartialWithUndefined,
+    type EnumBaseType,
 } from '@augment-vir/common';
 import {Duration, DurationUnit} from 'date-vir';
 import {InputDeviceKey} from 'input-device-handler';
+import {defineShape, enumShape, indexedKeys} from 'object-shape-tester';
 import {VirLineStage} from 'vir-line';
 import {reverseObjectKeyValue} from '../augments/object.js';
 import {
@@ -17,18 +19,41 @@ import {
 } from './read-raw-input.stage.js';
 
 /**
+ * A shape definition corresponding to the {@link Binding} type.
+ *
+ * @category Types
+ */
+export const bindingShape = defineShape({
+    deviceKey: enumShape(InputDeviceKey),
+    inputName: '',
+    direction: enumShape(InputDirection),
+});
+
+/**
  * An individual binding assignment. Used in {@link readBindingsStage} and {@link BindingsMap}.
  *
  * @category Types
  */
-export type Binding = {
-    deviceKey: InputDeviceKey;
-    inputName: string;
-    direction: InputDirection;
-};
+export type Binding = typeof bindingShape.runtimeType;
 
 /** Starts at `'1'`. */
 export type PlayerPosition = `${number}`;
+
+/**
+ * Generates a shape definition for {@link BindingsMap} with your specific set of allowed binding
+ * names.
+ *
+ * @category Types
+ */
+export function generateBindingsMapShape(bindingNamesEnum: EnumBaseType) {
+    return defineShape(
+        indexedKeys({
+            keys: enumShape(bindingNamesEnum),
+            values: bindingShape,
+            required: false,
+        }),
+    );
+}
 
 /**
  * A collection of bindings for a single player. Used in {@link readBindingsStage} and
@@ -39,6 +64,22 @@ export type PlayerPosition = `${number}`;
 export type BindingsMap<BindingNames extends string = string> = Partial<
     Record<BindingNames, Binding[]>
 >;
+
+/**
+ * Generates a shape definition for {@link PlayersBindingsMap} with your specific set of allowed
+ * binding names.
+ *
+ * @category Types
+ */
+export function createPlayersBindingsMapShape(bindingNamesEnum: EnumBaseType) {
+    return defineShape(
+        indexedKeys({
+            keys: '' as `${number}`,
+            values: generateBindingsMapShape(bindingNamesEnum),
+            required: false,
+        }),
+    );
+}
 
 /**
  * A collection of bindings for all players. Used in {@link readBindingsStage} and

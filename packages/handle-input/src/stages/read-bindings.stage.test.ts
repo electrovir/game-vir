@@ -2,9 +2,11 @@ import {assert} from '@augment-vir/assert';
 import {omitObjectKeys, wait} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {InputDeviceKey, InputDeviceType} from 'input-device-handler';
+import {isValidShape} from 'object-shape-tester';
 import {stageIdToString, StagesToFullState, VirLine} from 'vir-line';
 import {
     BindingsMap,
+    createPlayersBindingsMapShape,
     createTypedReadBindingsStage,
     readBindingsStage,
 } from './read-bindings.stage.js';
@@ -368,5 +370,51 @@ describe(createTypedReadBindingsStage.name, () => {
                 },
             },
         };
+    });
+});
+
+describe(createPlayersBindingsMapShape.name, () => {
+    it('creates a shape', () => {
+        enum PlayerAction {
+            Go = 'go',
+            Stop = 'stop',
+        }
+
+        const myPlayersBindingsMapShape = createPlayersBindingsMapShape(PlayerAction);
+
+        assert.isTrue(
+            isValidShape({}, myPlayersBindingsMapShape),
+            'An empty map should be allowed.',
+        );
+        assert.isFalse(
+            isValidShape(
+                {
+                    '1': {
+                        'invalid action name': {
+                            deviceKey: InputDeviceKey.Gamepad1,
+                            inputName: 'button-1',
+                            direction: InputDirection.Negative,
+                        },
+                    },
+                },
+                myPlayersBindingsMapShape,
+            ),
+            'Should block an invalid action name',
+        );
+        assert.isTrue(
+            isValidShape(
+                {
+                    '1': {
+                        [PlayerAction.Go]: {
+                            deviceKey: InputDeviceKey.Gamepad1,
+                            inputName: 'button-1',
+                            direction: InputDirection.Negative,
+                        },
+                    },
+                },
+                myPlayersBindingsMapShape,
+            ),
+            'Should allow a valid action name',
+        );
     });
 });
