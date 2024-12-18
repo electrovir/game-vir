@@ -1,4 +1,5 @@
-import {filterOutIndexes, mapObjectValues, PartialAndUndefined} from '@augment-vir/common';
+import {check} from '@augment-vir/assert';
+import {filterOutIndexes, mapObjectValues, PartialWithUndefined} from '@augment-vir/common';
 import {classMap, css, defineElement, defineElementEvent, html, listen, nothing} from 'element-vir';
 import {
     CurrentInputsChangedEvent,
@@ -12,17 +13,16 @@ import {
     NewDevicesAddedEvent,
     parseInputTypeFromInputName,
 } from 'input-device-handler';
-import {isJsonEqual} from 'run-time-assertions';
 import {noUserSelect, viraAnimationDurations, ViraButton, viraDisabledStyles} from 'vira';
 import {
     Binding,
     BindingsMap,
     PlayersBindingsMap,
     ReadBindingsStageState,
-} from '../stages/read-bindings.stage';
-import {calculateInputDirection, SimpleInputDevice} from '../stages/read-raw-input.stage';
-import {isMouseMovement} from '../util/is-mouse-movement';
-import {deviceEmojis, directionEmojis} from './emoji';
+} from '../stages/read-bindings.stage.js';
+import {calculateInputDirection, SimpleInputDevice} from '../stages/read-raw-input.stage.js';
+import {isMouseMovement} from '../util/is-mouse-movement.js';
+import {deviceEmojis, directionEmojis} from './emoji.js';
 
 /**
  * Inputs for {@link VirSimplePlayerAssignBindings}.
@@ -30,7 +30,7 @@ import {deviceEmojis, directionEmojis} from './emoji';
  * @category Types
  */
 export type VirSimpleAssignBindingsInputs = Readonly<
-    PartialAndUndefined<
+    PartialWithUndefined<
         {
             inputDeviceHandler: Readonly<
                 Pick<InputDeviceHandler, 'readAllDevices' | 'listen' | 'destroy'>
@@ -150,7 +150,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
     stateInitStatic: {
         listeningForBinding: undefined as undefined | string,
     },
-    renderCallback({inputs, dispatch, events, state, updateState}) {
+    render({inputs, dispatch, events, state, updateState}) {
         const rowTemplates = inputs.bindingNames.map((bindingName) => {
             const currentPlayerBindings =
                 inputs.playersBindings?.[`${inputs.playerPosition}`] || {};
@@ -207,7 +207,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
                                     listeningForBinding: bindingName,
                                 });
 
-                                inputs.deviceHandler?.listen(
+                                inputs.deviceHandler.listen(
                                     CurrentInputsChangedEvent,
                                     (event, removeSelf) => {
                                         const newInput = event.detail.inputs.newInputs[0];
@@ -230,7 +230,7 @@ export const VirSimplePlayerAssignBindings = defineElement<
                                         }
 
                                         const bindingAlreadyExists = currentBindings.some(
-                                            (binding) => isJsonEqual(newBinding, binding),
+                                            (binding) => check.jsonEquals(newBinding, binding),
                                         );
 
                                         if (!bindingAlreadyExists) {
@@ -330,7 +330,7 @@ export const VirBindingChip = defineElement<Readonly<Binding>>()({
     events: {
         removeBinding: defineElementEvent<void>(),
     },
-    renderCallback({inputs, dispatch, events}) {
+    render({inputs, dispatch, events}) {
         const deviceType = inputDeviceKeyToInputDeviceType[inputs.deviceKey];
         const deviceEmoji = deviceEmojis[deviceType];
         const controllerSlot = Number(inputs.deviceKey) + 1;
@@ -401,7 +401,7 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
         currentDevices: {} as Partial<Record<InputDeviceKey, SimpleInputDevice>>,
         listeningToInput: false,
     },
-    initCallback({inputs, state, updateState}) {
+    init({inputs, state, updateState}) {
         const deviceHandler =
             state.deviceHandler ||
             inputs.inputDeviceHandler ||
@@ -446,7 +446,7 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
 
         updateDevices();
     },
-    cleanupCallback({inputs, state, updateState}) {
+    cleanup({inputs, state, updateState}) {
         if (!inputs.inputDeviceHandler) {
             /** Only destroy the device handler if it was internally constructed. */
             state.deviceHandler?.destroy();
@@ -459,7 +459,7 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
             cleanup: undefined,
         });
     },
-    renderCallback({state, inputs, updateState, dispatch, events}) {
+    render({state, inputs, updateState, dispatch, events}) {
         const deviceHandler = state.deviceHandler;
 
         if (!deviceHandler) {
@@ -470,48 +470,43 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
 
         const shouldShowPlayerPosition: boolean = inputs.supportedPlayerCount > 1;
 
-        return Array(inputs.supportedPlayerCount)
-            .fill(0)
-            .map((_, playerIndex) => {
-                const playerPosition = playerIndex + 1;
+        return new Array(inputs.supportedPlayerCount).fill(0).map((_, playerIndex) => {
+            const playerPosition = playerIndex + 1;
 
-                const playerHeaderTemplate = shouldShowPlayerPosition
-                    ? html`
-                          <h3>Player ${playerPosition}</h3>
-                      `
-                    : nothing;
+            const playerHeaderTemplate = shouldShowPlayerPosition
+                ? html`
+                      <h3>Player ${playerPosition}</h3>
+                  `
+                : nothing;
 
-                return html`
-                    <section class="player-assignment">
-                        ${playerHeaderTemplate}
-                        <${VirSimplePlayerAssignBindings.assign({
-                            bindingNames: inputs.bindingNames,
-                            playerPosition,
-                            playersBindings: inputs.playersBindings,
-                            listeningToInput: state.listeningToInput,
-                            deviceHandler,
-                            allowMouseMovement: inputs.allowMouseMovement || false,
+            return html`
+                <section class="player-assignment">
+                    ${playerHeaderTemplate}
+                    <${VirSimplePlayerAssignBindings.assign({
+                        bindingNames: inputs.bindingNames,
+                        playerPosition,
+                        playersBindings: inputs.playersBindings,
+                        listeningToInput: state.listeningToInput,
+                        deviceHandler,
+                        allowMouseMovement: inputs.allowMouseMovement || false,
+                    })}
+                        ${listen(VirSimplePlayerAssignBindings.events.inputListen, (event) => {
+                            updateState({
+                                listeningToInput: event.detail,
+                            });
                         })}
-                            ${listen(VirSimplePlayerAssignBindings.events.inputListen, (event) => {
-                                updateState({
-                                    listeningToInput: event.detail,
-                                });
-                            })}
-                            ${listen(
-                                VirSimplePlayerAssignBindings.events.bindingsUpdate,
-                                (event) => {
-                                    const newBindings: PlayersBindingsMap = {
-                                        ...inputs.playersBindings,
-                                        [String(playerPosition)]: event.detail,
-                                    };
+                        ${listen(VirSimplePlayerAssignBindings.events.bindingsUpdate, (event) => {
+                            const newBindings: PlayersBindingsMap = {
+                                ...inputs.playersBindings,
+                                [String(playerPosition)]: event.detail,
+                            };
 
-                                    dispatch(new events.playersBindingsUpdate(newBindings));
-                                },
-                            )}
-                        ></${VirSimplePlayerAssignBindings}>
-                    </section>
-                `;
-            });
+                            dispatch(new events.playersBindingsUpdate(newBindings));
+                        })}
+                    ></${VirSimplePlayerAssignBindings}>
+                </section>
+            `;
+        });
     },
     options: {
         /** So this can directly be used as a top-level element. */

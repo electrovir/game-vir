@@ -1,14 +1,16 @@
-import {wait, waitUntilTruthy} from '@augment-vir/common';
-import {assert, fixture} from '@open-wc/testing';
-import {html, testIdBy} from 'element-vir';
-import {assertInstanceOf} from 'run-time-assertions';
+import {assert, waitUntil} from '@augment-vir/assert';
+import {wait} from '@augment-vir/common';
+import {describe, it, testWeb} from '@augment-vir/test';
+import {html, testIdSelector} from 'element-vir';
 import {VirLine} from 'vir-line';
-import {VirFps, VirFpsTestId} from './vir-fps.element';
+import {VirFps, VirFpsTestId} from './vir-fps.element.js';
 
 describe(VirFps.tagName, () => {
     it('renders fps', async () => {
         function extractFps(element: (typeof VirFps)['instanceType']): number {
-            const fpsDisplay = element.shadowRoot.querySelector(testIdBy(VirFpsTestId.fpsDisplay));
+            const fpsDisplay = element.shadowRoot.querySelector(
+                testIdSelector(VirFpsTestId.fpsDisplay),
+            );
             return Number(fpsDisplay?.textContent || 0);
         }
 
@@ -20,22 +22,22 @@ describe(VirFps.tagName, () => {
             },
         );
 
-        const rootElement = await fixture(html`
+        const rootElement = await testWeb.render(html`
             <${VirFps.assign({virLine})}></${VirFps}>
         `);
-        assertInstanceOf(rootElement, VirFps);
+        assert.instanceOf(rootElement, VirFps);
 
         const startFps = extractFps(rootElement);
 
         await virLine.triggerUpdate();
         await virLine.triggerUpdate();
-        await wait(50);
+        await wait({milliseconds: 50});
         await virLine.triggerUpdate();
         await virLine.triggerUpdate();
 
-        const endFps = await waitUntilTruthy(() => extractFps(rootElement));
+        const endFps = await waitUntil.isTruthy(() => extractFps(rootElement));
 
-        assert.strictEqual(startFps, 0);
+        assert.strictEquals(startFps, 0);
         assert.isAbove(endFps, startFps);
     });
 });

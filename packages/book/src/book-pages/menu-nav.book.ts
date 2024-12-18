@@ -12,7 +12,7 @@ import {defineBookPage} from 'element-book';
 import {css, defineElementNoInputs, html, perInstance} from 'element-vir';
 import {InputDeviceHandler, InputDeviceKey} from 'input-device-handler';
 import {VirLine, VirLineWithState} from 'vir-line';
-import {elementsPage} from '../top-level-pages';
+import {elementsPage} from '../top-level-pages.js';
 
 const VirMenuNavTest = defineElementNoInputs({
     tagName: 'vir-menu-nav-test',
@@ -52,7 +52,7 @@ const VirMenuNavTest = defineElementNoInputs({
         virLine: undefined as undefined | VirLineWithState<MenuNavState>,
         deviceHandler: perInstance(() => new InputDeviceHandler({disableMouseMovement: true})),
     },
-    initCallback({host, state, updateState}) {
+    init({host, state, updateState}) {
         const virLine =
             state.virLine ||
             new VirLine(
@@ -122,11 +122,11 @@ const VirMenuNavTest = defineElementNoInputs({
             });
         }
     },
-    cleanupCallback({state, updateState}) {
+    cleanup({state, updateState}) {
         state.menuNavController?.destroy();
         updateState({menuNavController: undefined});
     },
-    renderCallback() {
+    render() {
         return html`
             <section ${nav(group)}>
                 <div class="cell" ${nav()}>Cell</div>
@@ -149,10 +149,10 @@ const VirMenuNavTest = defineElementNoInputs({
 export const menuNavPage = defineBookPage({
     title: MenuNavController.name,
     parent: elementsPage,
-    elementExamplesCallback({defineExample}) {
+    defineExamples({defineExample}) {
         defineExample({
             title: 'example',
-            renderCallback() {
+            render() {
                 return html`
                     <${VirMenuNavTest}></${VirMenuNavTest}>
                 `;

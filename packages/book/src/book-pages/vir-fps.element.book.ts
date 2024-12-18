@@ -2,17 +2,17 @@ import {VirFps} from '@game-vir/render';
 import {defineBookPage} from 'element-book';
 import {html} from 'element-vir';
 import {VirLine} from 'vir-line';
-import {elementsPage} from '../top-level-pages';
+import {elementsPage} from '../top-level-pages.js';
 
 export const virFpsPage = defineBookPage({
     title: VirFps.tagName,
     parent: elementsPage,
-    elementExamplesCallback({defineExample}) {
+    defineExamples({defineExample}) {
         const virLine = new VirLine([], {});
 
         defineExample({
             title: 'default',
-            renderCallback() {
+            render() {
                 virLine.startUpdateLoop();
                 return html`
                     <${VirFps.assign({
@@ -23,7 +23,7 @@ export const virFpsPage = defineBookPage({
         });
         defineExample({
             title: '2 decimals',
-            renderCallback() {
+            render() {
                 virLine.startUpdateLoop();
                 return html`
                     <${VirFps.assign({

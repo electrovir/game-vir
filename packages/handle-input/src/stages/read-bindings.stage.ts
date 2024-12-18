@@ -1,20 +1,20 @@
+import {check} from '@augment-vir/assert';
 import {
     filterMap,
     getObjectTypedEntries,
-    isTruthy,
     mapObjectValues,
-    PartialAndUndefined,
+    PartialWithUndefined,
 } from '@augment-vir/common';
 import {Duration, DurationUnit} from 'date-vir';
 import {InputDeviceKey} from 'input-device-handler';
 import {VirLineStage} from 'vir-line';
-import {reverseObjectKeyValue} from '../augments/object';
+import {reverseObjectKeyValue} from '../augments/object.js';
 import {
     InputDirection,
     RawInputs,
     readRawInputStage,
     ReadRawInputStageState,
-} from './read-raw-input.stage';
+} from './read-raw-input.stage.js';
 
 /**
  * An individual binding assignment. Used in {@link readBindingsStage} and {@link BindingsMap}.
@@ -52,9 +52,9 @@ export type PlayersBindingsMap<BindingNames extends string = string> = Record<
 >;
 
 /**
- * A mapping from {@link InputDeviceKey} to {@link InputDeviceKey} that simply allows devices to be
- * interpreted as different devices. This is mostly only useful for mapping a controller in any port
- * to any player. For example, mapping the controller in port 4 to player 1. Used in
+ * A mapping from `InputDeviceKey` to `InputDeviceKey` that simply allows devices to be interpreted
+ * as different devices. This is mostly only useful for mapping a controller in any port to any
+ * player. For example, mapping the controller in port 4 to player 1. Used in
  * {@link readBindingsStage} and {@link ReadBindingsStageState}.
  *
  * @category Types
@@ -125,7 +125,7 @@ export type ReadBindingsStageState<BindingNames extends string = string> = Pick<
     ReadRawInputStageState,
     'rawInputs'
 > &
-    PartialAndUndefined<{
+    PartialWithUndefined<{
         /** Maps devices to different devices. See {@link DeviceKeyMap} for more information. */
         deviceKeyMap: DeviceKeyMap;
         /** Bindings for all players. */
@@ -226,7 +226,7 @@ function readPlayerBindings<BindingNames extends string>({
                         return undefined;
                     }
                 },
-                isTruthy,
+                check.isTruthy,
             );
 
             if (matchingInputs.length) {

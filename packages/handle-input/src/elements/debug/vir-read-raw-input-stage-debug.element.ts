@@ -1,8 +1,8 @@
-import {PartialAndUndefined} from '@augment-vir/common';
+import {PartialWithUndefined} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {VirLine} from 'vir-line';
-import {RawInputs, readRawInputStage} from '../../stages/read-raw-input.stage';
+import {RawInputs, readRawInputStage} from '../../stages/read-raw-input.stage.js';
 
 /**
  * An element for debugging {@link readRawInputStage} that displays all current inputs.
@@ -10,7 +10,7 @@ import {RawInputs, readRawInputStage} from '../../stages/read-raw-input.stage';
  * @category Debug
  */
 export const VirReadRawInputStageDebug = defineElement<
-    PartialAndUndefined<{
+    PartialWithUndefined<{
         inputDeviceHandler: InputDeviceHandler;
     }>
 >()({
@@ -36,7 +36,7 @@ export const VirReadRawInputStageDebug = defineElement<
         pipeline: undefined as undefined | VirLine<[typeof readRawInputStage]>,
         rawInputs: {} as RawInputs,
     },
-    initCallback({state, updateState, inputs}) {
+    init({state, updateState, inputs}) {
         const deviceHandler =
             state.deviceHandler || inputs.inputDeviceHandler || new InputDeviceHandler();
 
@@ -72,7 +72,7 @@ export const VirReadRawInputStageDebug = defineElement<
             });
         });
     },
-    cleanupCallback({inputs, state, updateState}) {
+    cleanup({inputs, state, updateState}) {
         if (!inputs.inputDeviceHandler) {
             /** Only destroy the device handler if it was internally constructed. */
             state.deviceHandler?.destroy();
@@ -84,7 +84,7 @@ export const VirReadRawInputStageDebug = defineElement<
             pipeline: undefined,
         });
     },
-    renderCallback({state}) {
+    render({state}) {
         if (!state.deviceHandler || !state.pipeline) {
             return nothing;
         }

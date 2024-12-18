@@ -11,7 +11,7 @@ export enum VirFpsTestId {
 }
 
 /**
- * An element that display the current FPS of a {@link VirLine} instance.
+ * An element that display the current FPS of a `VirLine` instance.
  *
  * @category Debug
  */
@@ -33,7 +33,7 @@ export const VirFps = defineElement<{
         cleanup: undefined as undefined | (() => void),
         fps: 0,
     },
-    initCallback({updateState, state, inputs}) {
+    init({updateState, state, inputs}) {
         if (!state.cleanup) {
             updateState({
                 cleanup: inputs.virLine.listen(VirLineUpdateRateEvent, (event) => {
@@ -42,11 +42,11 @@ export const VirFps = defineElement<{
             });
         }
     },
-    cleanupCallback({state, updateState}) {
+    cleanup({state, updateState}) {
         state.cleanup?.();
         updateState({cleanup: undefined});
     },
-    renderCallback({state, inputs}) {
+    render({state, inputs}) {
         return html`
             <span ${testId(VirFpsTestId.fpsDisplay)}>
                 ${state.fps.toFixed(inputs.decimals || 0)}

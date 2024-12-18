@@ -1,30 +1,44 @@
 {
     "name": "@game-vir/scripts",
-    "version": "5.3.0",
+    "version": "6.0.0",
     "private": true,
+    "description": "",
+    "keywords": [],
+    "homepage": "https://github.com/electrovir/game-vir",
+    "bugs": {
+        "url": "https://github.com/electrovir/game-vir/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/electrovir/game-vir.git"
+    },
+    "license": "(MIT or CC0 1.0)",
+    "author": {
+        "name": "electrovir",
+        "url": "https://github.com/electrovir"
+    },
     "type": "module",
     "scripts": {
         "build": "exit 0",
+        "compile": "virmator compile",
         "execute": "tsx src/cli.ts",
-        "test": "mocha --colors --config 'configs/mocha.config.cjs'",
-        "test:all": "npm test"
+        "test": "virmator test node",
+        "test:update": "npm test update"
     },
     "dependencies": {
-        "@augment-vir/common": "^29.1.8",
-        "@augment-vir/node-js": "^29.1.8",
-        "cli-args-vir": "^0.0.3"
+        "@augment-vir/assert": "^31.2.0",
+        "@augment-vir/common": "^31.2.0",
+        "@augment-vir/node": "^31.2.0"
     },
     "devDependencies": {
-        "@electrovir/nyc": "^15.1.0-fix0",
-        "@istanbuljs/nyc-config-typescript": "^1.0.2",
-        "@types/chai": "^4.3.16",
-        "@types/mocha": "^10.0.7",
-        "@types/node": "^20.14.10",
-        "chai": "^4.4.1",
-        "istanbul-smart-text-reporter": "^1.1.4",
-        "mocha": "^10.6.0",
-        "mocha-spec-reporter-with-file-names": "^0.0.3",
-        "ts-node": "^10.9.2",
-        "tsx": "^4.16.2"
+        "@augment-vir/test": "^31.2.0",
+        "@types/node": "^22.10.2",
+        "tsx": "^4.19.2"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }

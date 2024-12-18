@@ -1,8 +1,7 @@
-import {ArrayElement, awaitedForEach, getObjectTypedKeys} from '@augment-vir/common';
-import {log} from '@augment-vir/node-js';
+import {ArrayElement, awaitedForEach, getObjectTypedKeys, log} from '@augment-vir/common';
 import {cp, mkdir, rm} from 'node:fs/promises';
 import {join} from 'node:path';
-import {packageDirs, rootDistDir} from '../repo-paths';
+import {packageDirs, rootDistDir} from '../repo-paths.js';
 
 const packagesToCopy = getObjectTypedKeys(packageDirs).filter((entry) => entry !== 'scripts');
 

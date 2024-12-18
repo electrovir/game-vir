@@ -1,18 +1,18 @@
 import {ElementBookApp} from 'element-book';
 import {defineElementNoInputs, html} from 'element-vir';
-import {joinUrlParts} from 'url-vir';
-import {allGameVirBookEntries} from './all-book-entries';
+import {joinUrlPaths} from 'url-vir';
+import {allGameVirBookEntries} from './all-book-entries.js';
 
 export const GameVirDemoApp = defineElementNoInputs({
     tagName: 'game-vir-demo-app',
-    renderCallback() {
+    render() {
         return html`
             <${ElementBookApp.assign({
                 internalRouterConfig: {
-                    basePath: joinUrlParts('game-vir', 'book'),
+                    basePath: joinUrlPaths('game-vir', 'book'),
                     useInternalRouter: true,
                 },
-                entries: allGameVirBookEntries,
+                pages: allGameVirBookEntries,
                 themeColor: '#33ccff',
             })}></${ElementBookApp}>
         `;

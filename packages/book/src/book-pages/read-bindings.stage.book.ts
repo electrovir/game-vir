@@ -1,15 +1,15 @@
 import {readBindingsStage, VirReadBindingsStageDebug} from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {html} from 'element-vir';
-import {stagesPage} from '../top-level-pages';
+import {stagesPage} from '../top-level-pages.js';
 
 export const readBindingsStagePage = defineBookPage({
     parent: stagesPage,
     title: readBindingsStage.stageId.name,
-    elementExamplesCallback({defineExample}) {
+    defineExamples({defineExample}) {
         defineExample({
             title: 'Debugging',
-            renderCallback() {
+            render() {
                 return html`
                     <${VirReadBindingsStageDebug}></${VirReadBindingsStageDebug}>
                 `;

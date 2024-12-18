@@ -2,12 +2,12 @@ import {ensureType} from '@augment-vir/common';
 import {InputDirection, PlayersBindingsMap, VirSimpleAssignBindings} from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, html, listen} from 'element-vir';
-import {elementsPage} from '../top-level-pages';
+import {elementsPage} from '../top-level-pages.js';
 
 export const virSimpleAssignBindingsPage = defineBookPage({
     parent: elementsPage,
     title: VirSimpleAssignBindings.tagName,
-    elementExamplesCallback({defineExample}) {
+    defineExamples({defineExample}) {
         defineExample({
             title: 'Default',
             styles: css`
@@ -41,7 +41,7 @@ export const virSimpleAssignBindingsPage = defineBookPage({
                     },
                 }),
             },
-            renderCallback({state, updateState}) {
+            render({state, updateState}) {
                 return html`
                     <div class="size">
                         <${VirSimpleAssignBindings.assign({

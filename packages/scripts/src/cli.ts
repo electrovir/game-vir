@@ -1,6 +1,7 @@
-import {hasKey, joinWithFinalConjunction} from '@augment-vir/common';
-import {extractRelevantArgs} from 'cli-args-vir';
-import {commands} from './commands';
+import {check} from '@augment-vir/assert';
+import {joinWithFinalConjunction} from '@augment-vir/common';
+import {extractRelevantArgs} from '@augment-vir/node';
+import {commands} from './commands.js';
 
 async function cli(rawArgs: ReadonlyArray<string>) {
     const relevantArgs = extractRelevantArgs({
@@ -11,7 +12,7 @@ async function cli(rawArgs: ReadonlyArray<string>) {
 
     const commandName = relevantArgs[0];
 
-    if (!commandName || !hasKey(commands, commandName)) {
+    if (!commandName || !check.isKeyOf(commandName, commands)) {
         throw new Error(
             `Invalid command given: '${commandName}'. Expected one of: ${joinWithFinalConjunction(Object.keys(commands), 'or')}`,
         );
@@ -22,4 +23,4 @@ async function cli(rawArgs: ReadonlyArray<string>) {
     await command();
 }
 
-cli(process.argv);
+await cli(process.argv);

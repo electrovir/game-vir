@@ -2,7 +2,7 @@ import {PulseTimestamp, VirGlowPulse} from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, defineElement, html, listen} from 'element-vir';
 import {noUserSelect} from 'vira';
-import {elementsPage} from '../top-level-pages';
+import {elementsPage} from '../top-level-pages.js';
 
 const VirGlowPulseBookWrapper = defineElement<{
     milliseconds: number;
@@ -13,7 +13,7 @@ const VirGlowPulseBookWrapper = defineElement<{
         intervalId: undefined as undefined | number,
         animation: undefined as undefined | Readonly<PulseTimestamp>,
     },
-    initCallback({state, updateState, inputs}) {
+    init({state, updateState, inputs}) {
         if (state.intervalId == undefined) {
             updateState({
                 intervalId: window.setInterval(() => {
@@ -22,13 +22,13 @@ const VirGlowPulseBookWrapper = defineElement<{
             });
         }
     },
-    cleanupCallback({state, updateState}) {
+    cleanup({state, updateState}) {
         if (state.intervalId != undefined) {
             window.clearInterval(state.intervalId);
             updateState({intervalId: undefined});
         }
     },
-    renderCallback({state, inputs}) {
+    render({state, inputs}) {
         return html`
             <${VirGlowPulse.assign({
                 pulse: state.animation,
@@ -46,7 +46,7 @@ export const virGlowPulseBookPage = defineBookPage({
     descriptionParagraphs: [
         'Used to give repeated emphasis to an element. In particular, this is used for showing controller activity in vir-device-list.',
     ],
-    elementExamplesCallback({defineExample}) {
+    defineExamples({defineExample}) {
         defineExample({
             title: 'automatic',
             styles: css`
@@ -54,7 +54,7 @@ export const virGlowPulseBookPage = defineBookPage({
                     ${noUserSelect};
                 }
             `,
-            renderCallback() {
+            render() {
                 return html`
                     <${VirGlowPulseBookWrapper.assign({
                         milliseconds: 500,
@@ -69,7 +69,7 @@ export const virGlowPulseBookPage = defineBookPage({
                     ${noUserSelect};
                 }
             `,
-            renderCallback() {
+            render() {
                 return html`
                     <${VirGlowPulseBookWrapper.assign({
                         milliseconds: 500,
@@ -94,7 +94,7 @@ export const virGlowPulseBookPage = defineBookPage({
                     ${noUserSelect};
                 }
             `,
-            renderCallback({state, updateState}) {
+            render({state, updateState}) {
                 return html`
                     <${VirGlowPulse.assign({
                         pulse: state.animation,

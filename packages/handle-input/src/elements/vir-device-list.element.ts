@@ -1,8 +1,8 @@
-import {getObjectTypedEntries, mapObjectValues, PartialAndUndefined} from '@augment-vir/common';
+import {getObjectTypedEntries, mapObjectValues, PartialWithUndefined} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
 import {CurrentInputsChangedEvent, InputDeviceHandler, InputDeviceKey} from 'input-device-handler';
-import {isMouseMovement} from '../util/is-mouse-movement';
-import {VirDeviceChip} from './vir-device-chip.element';
+import {isMouseMovement} from '../util/is-mouse-movement.js';
+import {VirDeviceChip} from './vir-device-chip.element.js';
 
 /** Each timestamp indicates the last time that this device has an input made. */
 type DeviceTimestampMap = Partial<Record<InputDeviceKey, {timestamp: number}>>;
@@ -14,7 +14,7 @@ type DeviceTimestampMap = Partial<Record<InputDeviceKey, {timestamp: number}>>;
  */
 export const VirDeviceList = defineElement<
     Readonly<
-        PartialAndUndefined<{
+        PartialWithUndefined<{
             inputDeviceHandler: Readonly<InputDeviceHandler>;
             omitDevices: ReadonlyArray<InputDeviceKey>;
             showMouseMovement: boolean;
@@ -45,7 +45,7 @@ export const VirDeviceList = defineElement<
         /** Used to clean up device handler listeners. */
         cleanup: undefined as undefined | (() => void),
     },
-    initCallback({inputs, state, updateState}) {
+    init({inputs, state, updateState}) {
         const deviceHandler =
             inputs.inputDeviceHandler || new InputDeviceHandler({startLoopImmediately: true});
 
@@ -81,7 +81,7 @@ export const VirDeviceList = defineElement<
             deviceTimestamps: readDeviceTimestamps(),
         });
     },
-    cleanupCallback({inputs, state, updateState}) {
+    cleanup({inputs, state, updateState}) {
         state.cleanup?.();
 
         if (!inputs.inputDeviceHandler) {
@@ -93,7 +93,7 @@ export const VirDeviceList = defineElement<
             deviceHandler: undefined,
         });
     },
-    renderCallback({state}) {
+    render({state}) {
         const deviceTemplates = getObjectTypedEntries(state.deviceTimestamps).map(
             ([
                 deviceKey,

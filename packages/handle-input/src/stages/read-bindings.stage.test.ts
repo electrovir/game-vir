@@ -1,9 +1,14 @@
+import {assert} from '@augment-vir/assert';
 import {omitObjectKeys, wait} from '@augment-vir/common';
-import {assert} from '@open-wc/testing';
+import {describe, it} from '@augment-vir/test';
 import {InputDeviceKey, InputDeviceType} from 'input-device-handler';
 import {stageIdToString, StagesToFullState, VirLine} from 'vir-line';
-import {BindingsMap, createTypedReadBindingsStage, readBindingsStage} from './read-bindings.stage';
-import {InputDirection} from './read-raw-input.stage';
+import {
+    BindingsMap,
+    createTypedReadBindingsStage,
+    readBindingsStage,
+} from './read-bindings.stage.js';
+import {InputDirection} from './read-raw-input.stage.js';
 
 enum TestBinding {
     Up = 'up',
@@ -132,10 +137,11 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
             },
         });
 
-        await wait(100);
+        await wait({milliseconds: 100});
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(
+        assert.deepEquals(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             omitObjectKeys(virLine.currentState.playersActiveBindings!['1']!, ['heldBinding']),
             {
                 instantBinding: {
@@ -195,7 +201,7 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
 
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(virLine.currentState.playersActiveBindings, {});
+        assert.deepEquals(virLine.currentState.playersActiveBindings, {});
     });
 
     it('works without a device map', async () => {
@@ -229,7 +235,7 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
 
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(virLine.currentState.playersActiveBindings, {
+        assert.deepEquals(virLine.currentState.playersActiveBindings, {
             '1': {
                 myBinding: {
                     holdDuration: {milliseconds: 0},
@@ -277,7 +283,7 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
 
         await virLine.triggerUpdate();
 
-        assert.deepStrictEqual(virLine.currentState.playersActiveBindings, {
+        assert.deepEquals(virLine.currentState.playersActiveBindings, {
             '1': {
                 left: {
                     holdDuration: {milliseconds: 0},
@@ -288,16 +294,16 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
             },
         });
 
-        await wait(100);
+        await wait({milliseconds: 100});
 
         await virLine.triggerUpdate();
 
         const firstDuration: number =
-            virLine.currentState.playersActiveBindings?.['1']?.left?.holdDuration.milliseconds || 0;
+            virLine.currentState.playersActiveBindings['1'].left.holdDuration.milliseconds;
 
         assert.isAbove(firstDuration, 0);
 
-        await wait(100);
+        await wait({milliseconds: 100});
 
         virLine.currentState.rawInputs = {
             keyboard: {
@@ -315,7 +321,7 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
         await virLine.triggerUpdate();
 
         const secondDuration: number =
-            virLine.currentState.playersActiveBindings?.['1']?.left?.holdDuration.milliseconds || 0;
+            virLine.currentState.playersActiveBindings['1'].left.holdDuration.milliseconds;
 
         assert.isAbove(secondDuration, firstDuration);
     });

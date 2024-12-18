@@ -1,5 +1,5 @@
-import {CommandCallback} from './command-implementation';
-import {copyToDist} from './commands/copy-to-dist';
+import {CommandCallback} from './command-implementation.js';
+import {copyToDist} from './commands/copy-to-dist.js';
 
 export const commands = {
     'copy-to-dist': copyToDist,

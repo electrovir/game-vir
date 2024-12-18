@@ -1,6 +1,6 @@
-import {queryThroughShadow} from '@augment-vir/browser';
+import {assert} from '@augment-vir/assert';
+import {queryThroughShadow} from '@augment-vir/web';
 import {onDomCreated} from 'element-vir';
-import {assertInstanceOf} from 'run-time-assertions';
 
 /**
  * An HTML template directive that will automatically find, on initial DOM creation, the first
@@ -11,9 +11,13 @@ import {assertInstanceOf} from 'run-time-assertions';
  */
 export function autoFocusFirst(selector: string) {
     return onDomCreated((element) => {
-        const firstElement = queryThroughShadow({element, query: selector, all: false});
+        const firstElement = queryThroughShadow(element, selector, {all: false});
 
-        assertInstanceOf(firstElement, HTMLElement, `Failed to find first '${selector}' to focus.`);
+        assert.instanceOf(
+            firstElement,
+            HTMLElement,
+            `Failed to find first '${selector}' to focus.`,
+        );
 
         firstElement.focus();
     });

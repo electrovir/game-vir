@@ -4,8 +4,8 @@ import {
     inputDeviceKeyToInputDeviceType,
     InputDeviceType,
 } from 'input-device-handler';
-import {deviceEmojis} from './emoji';
-import {VirGlowPulse} from './vir-glow-pulse.element';
+import {deviceEmojis} from './emoji.js';
+import {VirGlowPulse} from './vir-glow-pulse.element.js';
 
 /**
  * Shows a single device and, for gamepads, their port number.
@@ -37,7 +37,7 @@ export const VirDeviceChip = defineElement<{
             font-size: 2em;
         }
     `,
-    renderCallback({inputs, host}) {
+    render({inputs, host}) {
         const deviceType = inputDeviceKeyToInputDeviceType[inputs.deviceKey];
         const deviceEmoji = deviceEmojis[deviceType];
         /** Only relevant to gamepads. */

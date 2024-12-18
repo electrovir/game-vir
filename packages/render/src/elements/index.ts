@@ -1,1 +1,1 @@
-export * from './vir-fps.element';
+export * from './vir-fps.element.js';

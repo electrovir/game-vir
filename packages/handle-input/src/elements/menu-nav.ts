@@ -1,12 +1,12 @@
 import {
     getObjectTypedEntries,
     getObjectTypedValues,
-    type PartialAndUndefined,
+    type PartialWithUndefined,
 } from '@augment-vir/common';
-import {type AnyDuration, convertDuration, DurationUnit} from 'date-vir';
+import {type AnyDuration, convertDuration} from 'date-vir';
 import {NavController, NavDirection} from 'device-navigation';
-import type {RemoveListenerCallback, VirLine, VirLineWithState} from 'vir-line';
-import type {PlayersActiveBindingsMap} from '../stages/read-bindings.stage';
+import type {RemoveListenerCallback, VirLineWithState} from 'vir-line';
+import type {PlayersActiveBindingsMap} from '../stages/read-bindings.stage.js';
 
 export {group, nav, NavController, navSelector} from 'device-navigation';
 
@@ -45,11 +45,11 @@ export enum MenuNavBinding {
 }
 
 /**
- * The state that {@link VirLine} must contain for {@link MenuNavController} to function.
+ * The state that `VirLine` must contain for {@link MenuNavController} to function.
  *
  * @category Types
  */
-export type MenuNavState = PartialAndUndefined<{
+export type MenuNavState = PartialWithUndefined<{
     playersActiveBindings: PlayersActiveBindingsMap<MenuNavBinding>;
 }>;
 
@@ -82,8 +82,8 @@ export type MenuNavOptions = Readonly<
 >;
 
 /**
- * Listen to active menu navigation bindings on a {@link VirLine} instance and perform them within
- * the given element.
+ * Listen to active menu navigation bindings on a `VirLine` instance and perform them within the
+ * given element.
  *
  * @category Elements
  */
@@ -142,14 +142,12 @@ export class MenuNavController extends NavController {
                     return;
                 }
 
-                const repeatThreshold = convertDuration(
-                    this.options.repeatThreshold,
-                    DurationUnit.Milliseconds,
-                ).milliseconds;
-                const repeatInterval = convertDuration(
-                    this.options.repeatInterval,
-                    DurationUnit.Milliseconds,
-                ).milliseconds;
+                const repeatThreshold = convertDuration(this.options.repeatThreshold, {
+                    milliseconds: true,
+                }).milliseconds;
+                const repeatInterval = convertDuration(this.options.repeatInterval, {
+                    milliseconds: true,
+                }).milliseconds;
 
                 const bindingsToAct: Partial<Record<MenuNavBinding, boolean>> = {};
 

@@ -1,5 +1,5 @@
 import {InputDeviceType} from 'input-device-handler';
-import {InputDirection} from '../stages/read-raw-input.stage';
+import {InputDirection} from '../stages/read-raw-input.stage.js';
 
 /**
  * Input device types mapped to corresponding emojis.

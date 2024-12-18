@@ -1,8 +1,9 @@
+import {assert} from '@augment-vir/assert';
 import {awaitedFilter} from '@augment-vir/common';
-import {assert} from 'chai';
-import {readdir, stat} from 'fs/promises';
-import {join} from 'path';
-import {packageDirs, packagesDir} from './repo-paths';
+import {describe, it} from '@augment-vir/test';
+import {readdir, stat} from 'node:fs/promises';
+import {join} from 'node:path';
+import {packageDirs, packagesDir} from './repo-paths.js';
 
 describe('packageDirs', () => {
     it('contains all packages', async () => {
@@ -10,6 +11,6 @@ describe('packageDirs', () => {
             return (await stat(join(packagesDir, fileName))).isDirectory();
         });
 
-        assert.hasAllKeys(packageDirs, packageNames);
+        assert.hasKeys(packageDirs, packageNames);
     });
 });

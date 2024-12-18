@@ -1,6 +1,5 @@
-import {shuffleArray} from '@augment-vir/browser';
-import {wrapNumber} from '@augment-vir/common';
-import {AnyDuration, convertDuration, DurationUnit} from 'date-vir';
+import {shuffleArray, wrapNumber} from '@augment-vir/common';
+import {AnyDuration, convertDuration} from 'date-vir';
 import {css, defineElement, html} from 'element-vir';
 
 /**
@@ -57,12 +56,12 @@ export const VirGlowPulse = defineElement<{
         lastTimestamp: 0,
         colorIndex: 0,
     },
-    renderCallback({inputs, host, state, updateState}) {
+    render({inputs, host, state, updateState}) {
         const colors =
             inputs.glowColors && inputs.glowColors.length ? inputs.glowColors : rainbowColors;
 
         const animationDuration = inputs.animationDuration
-            ? convertDuration(inputs.animationDuration, DurationUnit.Milliseconds)
+            ? convertDuration(inputs.animationDuration, {milliseconds: true})
             : {milliseconds: 350};
 
         const timestampCutoff = state.lastTimestamp + animationDuration.milliseconds / 2;
@@ -72,10 +71,9 @@ export const VirGlowPulse = defineElement<{
 
         if (validAnimation) {
             updateState({
-                colorIndex: wrapNumber({
+                colorIndex: wrapNumber(state.colorIndex + 1, {
                     min: 0,
                     max: colors.length - 1,
-                    value: state.colorIndex + 1,
                 }),
             });
         }
@@ -86,11 +84,7 @@ export const VirGlowPulse = defineElement<{
             throw new Error(`Exceeded colors array size somehow.`);
         }
 
-        if (
-            validAnimation &&
-            validAnimation.timestamp !== state.lastTimestamp &&
-            color != undefined
-        ) {
+        if (validAnimation && validAnimation.timestamp !== state.lastTimestamp) {
             host.getAnimations().forEach((animation) => animation.cancel());
             host.animate(
                 [

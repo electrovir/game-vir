@@ -1,4 +1,4 @@
-import {PartialAndUndefined} from '@augment-vir/common';
+import {PartialWithUndefined} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {VirLine} from 'vir-line';
@@ -6,9 +6,9 @@ import {
     PlayersActiveBindingsMap,
     PlayersBindingsMap,
     readBindingsStage,
-} from '../../stages/read-bindings.stage';
-import {InputDirection, readRawInputStage} from '../../stages/read-raw-input.stage';
-import {VirPlayersBindingsDebug} from './vir-players-bindings-debug.element';
+} from '../../stages/read-bindings.stage.js';
+import {InputDirection, readRawInputStage} from '../../stages/read-raw-input.stage.js';
+import {VirPlayersBindingsDebug} from './vir-players-bindings-debug.element.js';
 
 const defaultBindings: Readonly<PlayersBindingsMap> = {
     '1': {
@@ -63,7 +63,7 @@ const defaultBindings: Readonly<PlayersBindingsMap> = {
  * @category Debug
  */
 export const VirReadBindingsStageDebug = defineElement<
-    PartialAndUndefined<{
+    PartialWithUndefined<{
         inputDeviceHandler: InputDeviceHandler;
         bindingsMap: PlayersBindingsMap;
     }>
@@ -92,7 +92,7 @@ export const VirReadBindingsStageDebug = defineElement<
             | VirLine<[typeof readRawInputStage, typeof readBindingsStage]>,
         activeBindings: {} as PlayersActiveBindingsMap,
     },
-    initCallback({state, updateState, inputs}) {
+    init({state, updateState, inputs}) {
         const deviceHandler =
             state.deviceHandler || inputs.inputDeviceHandler || new InputDeviceHandler();
 
@@ -132,7 +132,7 @@ export const VirReadBindingsStageDebug = defineElement<
             });
         });
     },
-    cleanupCallback({inputs, state, updateState}) {
+    cleanup({inputs, state, updateState}) {
         if (!inputs.inputDeviceHandler) {
             /** Only destroy the device handler if it was internally constructed. */
             state.deviceHandler?.destroy();
@@ -144,7 +144,7 @@ export const VirReadBindingsStageDebug = defineElement<
             pipeline: undefined,
         });
     },
-    renderCallback({state}) {
+    render({state}) {
         if (!state.deviceHandler || !state.pipeline) {
             return nothing;
         }

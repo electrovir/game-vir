@@ -1,6 +1,6 @@
-import {itCases} from '@augment-vir/browser-testing';
+import {assert} from '@augment-vir/assert';
 import {wait} from '@augment-vir/common';
-import {assert} from '@open-wc/testing';
+import {describe, it, itCases} from '@augment-vir/test';
 import {sendKeys} from '@web/test-runner-commands';
 import {InputDeviceHandler, InputDeviceType} from 'input-device-handler';
 import {stageIdToString, VirLine} from 'vir-line';
@@ -9,7 +9,7 @@ import {
     InputDirection,
     RawInputs,
     readRawInputStage,
-} from './read-raw-input.stage';
+} from './read-raw-input.stage.js';
 
 describe(stageIdToString(readRawInputStage.stageId), () => {
     it('reads keyboard inputs', async () => {
@@ -29,7 +29,7 @@ describe(stageIdToString(readRawInputStage.stageId), () => {
         await virLine.triggerUpdate();
         frames.push(virLine.currentState.rawInputs?.keyboard);
 
-        await wait(100);
+        await wait({milliseconds: 100});
 
         await virLine.triggerUpdate();
         const heldDuration =
@@ -42,7 +42,7 @@ describe(stageIdToString(readRawInputStage.stageId), () => {
         await virLine.triggerUpdate();
         frames.push(virLine.currentState.rawInputs?.keyboard);
 
-        assert.deepStrictEqual(frames, [
+        assert.deepEquals(frames, [
             {},
             {
                 'button-ArrowUp': {

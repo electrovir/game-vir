@@ -1,21 +1,13 @@
-import {
-    getObjectTypedEntries,
-    PropertyValueType,
-    typedObjectFromEntries,
-} from '@augment-vir/common';
+import {mapObject, type Values} from '@augment-vir/common';
 
+/** Flips object keys and values. */
 export function reverseObjectKeyValue<const T extends Record<PropertyKey, PropertyKey>>(
     input: T,
-): Record<PropertyValueType<T>, keyof T> {
-    return typedObjectFromEntries(
-        getObjectTypedEntries(input).map(
-            ([
-                key,
-                value,
-            ]): [PropertyKey, PropertyKey] => [
-                value!,
-                key,
-            ],
-        ),
-    ) as Record<PropertyValueType<T>, keyof T>;
+): Record<Values<T>, keyof T> {
+    return mapObject(input, (key, value) => {
+        return {
+            key: value,
+            value: key,
+        };
+    });
 }

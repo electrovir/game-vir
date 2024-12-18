@@ -1,10 +1,10 @@
-import {mapObjectValues, PartialAndUndefined, PickSelection} from '@augment-vir/common';
+import {mapObjectValues, type PartialWithUndefined, type SelectFrom} from '@augment-vir/common';
 import {
-    AllDevices,
-    InputDevice,
-    InputDeviceHandler,
-    InputDeviceKey,
-    InputValueWrapper,
+    type AllDevices,
+    type InputDevice,
+    type InputDeviceHandler,
+    type InputDeviceKey,
+    type InputValueWrapper,
 } from 'input-device-handler';
 import {VirLineStage} from 'vir-line';
 
@@ -55,12 +55,12 @@ export type RawInput = Omit<InputValueWrapper<InputDeviceKey, any>, 'details'> &
  *
  * @category Types
  */
-export type RawInputs = PartialAndUndefined<
+export type RawInputs = PartialWithUndefined<
     Record<InputDeviceKey, {[InputName in string]: RawInput}>
 >;
 
 /**
- * An input device object. A simpler version of {@link InputDevice} from the [`input-device-handler`
+ * An input device object. A simpler version of `InputDevice` from the [`input-device-handler`
  * package](https://www.npmjs.com/package/input-device-handler). Used in {@link readRawInputStage}
  * and {@link SimpleInputDevicesMap}.
  *
@@ -76,12 +76,12 @@ export type SimpleInputDevice = Pick<InputDevice, 'deviceKey' | 'deviceName' | '
 export type SimpleInputDevicesMap = Partial<Record<InputDeviceKey, SimpleInputDevice>>;
 
 /**
- * Maps {@link AllDevices} to {@link SimpleInputDevicesMap}.
+ * Maps `AllDevices` to {@link SimpleInputDevicesMap}.
  *
  * @category Util
  */
 export function mapToSimpleDevicesMap(
-    currentDevices: PickSelection<
+    currentDevices: SelectFrom<
         AllDevices,
         {
             [Key in InputDeviceKey]?: {
@@ -127,10 +127,10 @@ export const readRawInputStage: VirLineStage<ReadRawInputStageState> = {
             currentDevices,
             (deviceKey: InputDeviceKey, rawDevice) => {
                 /**
-                 * {@link mapObjectValues} thinks that {@link rawDevice} is potentially `undefined`
-                 * but it is wrong because the input type uses `Partial`, not `| undefined`.
+                 * {@link mapObjectValues} thinks that `rawDevice` is potentially `undefined` but it
+                 * is wrong because the input type uses `Partial`, not `| undefined`.
                  */
-                const device = rawDevice!;
+                const device = rawDevice;
 
                 return mapObjectValues(
                     device.currentInputs,

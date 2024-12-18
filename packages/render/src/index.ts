@@ -1,1 +1,1 @@
-export * from './elements/index';
+export * from './elements/index.js';

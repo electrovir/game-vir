@@ -1,1 +1,1 @@
-export * from './is-mouse-movement';
+export * from './is-mouse-movement.js';

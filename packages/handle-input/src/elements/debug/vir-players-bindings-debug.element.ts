@@ -1,6 +1,6 @@
 import {getObjectTypedEntries} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
-import {BindingsMap, PlayersBindingsMap} from '../../stages/read-bindings.stage';
+import {BindingsMap, PlayersBindingsMap} from '../../stages/read-bindings.stage.js';
 
 /**
  * An element for debugging that displays all given bindings for all players.
@@ -16,7 +16,7 @@ export const VirPlayersBindingsDebug = defineElement<{
             margin: 4px;
         }
     `,
-    renderCallback({inputs}) {
+    render({inputs}) {
         return getObjectTypedEntries(inputs.playersBindingsMap).map(
             ([
                 playerPosition,
@@ -49,7 +49,7 @@ export const VirBindingsDebug = defineElement<{
             margin: 4px;
         }
     `,
-    renderCallback({inputs}) {
+    render({inputs}) {
         return getObjectTypedEntries(inputs.bindingsMap).map(
             ([
                 bindingName,
