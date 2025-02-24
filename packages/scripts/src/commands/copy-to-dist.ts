@@ -1,9 +1,13 @@
-import {ArrayElement, awaitedForEach, getObjectTypedKeys, log} from '@augment-vir/common';
+import {ArrayElement, awaitedForEach, log} from '@augment-vir/common';
 import {cp, mkdir, rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {packageDirs, rootDistDir} from '../repo-paths.js';
 
-const packagesToCopy = getObjectTypedKeys(packageDirs).filter((entry) => entry !== 'scripts');
+const packagesToCopy = [
+    'book',
+    'handle-input',
+    'render',
+] as const satisfies (keyof typeof packageDirs)[];
 
 const packageCopyFromPaths: Readonly<Record<ArrayElement<typeof packagesToCopy>, string>> = {
     'handle-input': 'dist-docs',

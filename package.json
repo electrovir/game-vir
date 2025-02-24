@@ -42,7 +42,7 @@
         "@stylistic/eslint-plugin": "^4.0.1",
         "@stylistic/eslint-plugin-ts": "^4.0.1",
         "@typescript-eslint/eslint-plugin": "^8.24.1",
-        "cspell": "^8.17.4",
+        "cspell": "^8.17.5",
         "dependency-cruiser": "^16.10.0",
         "esbuild": "^0.25.0",
         "eslint": "^9.21.0",

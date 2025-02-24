@@ -12,6 +12,7 @@ describe(multiplayerService.serviceName, () => {
                     roomId: '23f3eef2-682d-4a78-afda-129006318cdf',
                     roomName: 'Room A',
                     clientCount: 2,
+                    hasRoomPassword: false,
                 },
             },
             multiplayerService.endpoints['/rooms'].responseDataShape,

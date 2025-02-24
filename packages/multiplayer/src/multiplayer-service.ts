@@ -1,5 +1,6 @@
 import {AnyOrigin, defineService, HttpMethod} from '@rest-vir/define-service';
 import {and, defineShape, exact, indexedKeys, or, uuidShape} from 'object-shape-tester';
+import {buildUrl} from 'url-vir';
 
 /**
  * All possible message types sent to and from the game-vir multiplayer server. These are used to
@@ -21,9 +22,19 @@ export enum MultiplayerWebSocketMessageType {
      */
     Answer = 'answer',
 
-    /** Sent to the multiplayer server from a client when they want to leave a room. */
-    LeaveRoom = 'leave-room',
+    /**
+     * Sent from the multiplayer server to a client WebSocket after their offer has been processed
+     * to instruct the client on what kind of client they are (member or host).
+     */
+    OfferResult = 'offer-result',
 
+    /**
+     * A message sent to the multiplayer server from the host client to keep the room info up to
+     * date. This will be sent repeatedly on an interval.
+     */
+    HostPing = 'host-ping',
+
+    /** An error message. */
     Error = 'error',
 }
 
@@ -73,20 +84,13 @@ export type MultiplayerClientRooms = typeof multiplayerClientRoomsShape.runtimeT
 export const clientIdShape = defineShape({
     /** This UUID is used to keep track of each client on the multiplayer server. */
     clientId: uuidShape,
-    /** The user's self-defined name for themself. */
-    clientName: '',
     /**
      * The id of the room that the user is communicating with. Set this either to to an existing
      * room to join that room, or a new id to create a new room.
      */
     roomId: uuidShape,
-    /**
-     * The name of the room to create. Set this as an empty string when connecting to an existing
-     * room.
-     */
+    /** The name of the room to create or join. */
     roomName: '',
-    /** Set this when joining a room with a password or when creating a room to set a room password. */
-    roomPassword: '',
 });
 
 /**
@@ -98,7 +102,24 @@ export const clientIdShape = defineShape({
 export type ClientIdentification = typeof clientIdShape.runtimeType;
 
 /**
- * Message shape for "answer" messages.
+ * Shape definition for {@link WebrtcAnswer}.
+ *
+ * @category Internal
+ */
+export const webrtcAnswerShape = defineShape({
+    type: exact(MultiplayerWebSocketMessageType.Answer),
+    sdp: '',
+});
+
+/**
+ * WebRTC handshake answer data.
+ *
+ * @category Internal
+ */
+export type WebrtcAnswer = typeof webrtcAnswerShape.runtimeType;
+
+/**
+ * Shape definition for "answer" messages.
  *
  * @category Internal
  */
@@ -113,31 +134,74 @@ export const answerMessageShape = and(clientIdShape, {
         sdp: '',
     },
 });
+
 /**
- * Message shape for "leave room" messages.
+ * Shape definition for {@link WebrtcOffer}.
  *
  * @category Internal
  */
-export const leaveRoomMessageShape = and(clientIdShape, {
-    type: exact(MultiplayerWebSocketMessageType.LeaveRoom),
+export const webrtcOfferShape = defineShape({
+    type: exact(MultiplayerWebSocketMessageType.Offer),
+    sdp: '',
 });
 
 /**
- * Message shape for "offer" messages.
+ * WebRTC handshake offer data.
  *
  * @category Internal
  */
-export const offerMessageShape = and(clientIdShape, {
+export type WebrtcOffer = typeof webrtcOfferShape.runtimeType;
+
+/**
+ * Shape definition for "offer" messages forwarded from the multiplayer server to the host.
+ *
+ * @category Internal
+ */
+export const forwardedOfferMessageShape = and(clientIdShape, {
     type: exact(MultiplayerWebSocketMessageType.Offer),
     /**
      * This data object matches the `RTCSessionDescriptionInit` type from the TS lib. This data
      * should be passed into `RTCPeerConnection.setRemoteDescription` when creating an offer.
      */
-    data: {
-        type: exact(MultiplayerWebSocketMessageType.Offer),
-        sdp: '',
-    },
+    data: webrtcOfferShape,
 });
+/**
+ * Shape definition for "offer" messages.
+ *
+ * @category Internal
+ */
+export const offerMessageShape = and(forwardedOfferMessageShape, {
+    /**
+     * This secret is used to verify that a client is a host of a room. Do not share this with other
+     * clients.
+     */
+    clientSecret: '',
+    /** Set this when joining a room with a password or when creating a room to set a room password. */
+    roomPassword: '',
+});
+
+/**
+ * Shape definition for "host ping" messages.
+ *
+ * @category Internal
+ */
+export const hostPingMessageShape = and(clientIdShape, {
+    type: exact(MultiplayerWebSocketMessageType.HostPing),
+    /** This secret is used to verify that the sender is indeed the host of the current room. */
+    clientSecret: '',
+    clientCount: -1,
+    roomPassword: '',
+});
+
+/**
+ * Shape definition for "offer result" messages.
+ *
+ * @category Internal
+ */
+export const offerResultShape = {
+    type: exact(MultiplayerWebSocketMessageType.OfferResult),
+    youAreTheHost: false,
+};
 
 /**
  * The output from {@link defineMultiplayerService}, regardless of what the passed-in `serviceOrigin`
@@ -148,11 +212,21 @@ export const offerMessageShape = and(clientIdShape, {
 export type MultiplayerService = ReturnType<typeof defineMultiplayerService>;
 
 /**
+ * The default, or starting, port for the multiplayer service.
+ *
+ * @category Internal
+ */
+export const defaultMultiplayerServicePort = 3500;
+
+/**
  * The multiplayer service definition.
  *
  * @category Internal
  */
-export function defineMultiplayerService(serviceOrigin: string) {
+export function defineMultiplayerService(
+    serviceOrigin: string = buildUrl('http://localhost', {port: defaultMultiplayerServicePort})
+        .origin,
+) {
     return defineService({
         serviceName: 'multiplayer-service',
         requiredClientOrigin: AnyOrigin,
@@ -179,12 +253,17 @@ export function defineMultiplayerService(serviceOrigin: string) {
                 messageFromClientShape: or(
                     answerMessageShape,
                     offerMessageShape,
-                    leaveRoomMessageShape,
+                    hostPingMessageShape,
                 ),
-                messageFromHostShape: or(answerMessageShape, offerMessageShape, {
-                    type: exact(MultiplayerWebSocketMessageType.Error),
-                    errorMessage: '',
-                }),
+                messageFromHostShape: or(
+                    answerMessageShape,
+                    forwardedOfferMessageShape,
+                    offerResultShape,
+                    {
+                        type: exact(MultiplayerWebSocketMessageType.Error),
+                        errorMessage: '',
+                    },
+                ),
             },
         },
     });

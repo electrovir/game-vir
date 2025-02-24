@@ -1,8 +1,21 @@
 import {assert, assertWrap, waitUntil} from '@augment-vir/assert';
-import {createUuidV4, extractErrorMessage, type MaybePromise, type Uuid} from '@augment-vir/common';
+import {
+    awaitedForEach,
+    createUuidV4,
+    extractErrorMessage,
+    randomString,
+    type ArrayElement,
+    type MaybePromise,
+    type Uuid,
+    type Values,
+} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
-import {MultiplayerService, MultiplayerWebSocketMessageType} from '@game-vir/multiplayer';
-import {ClientWebSocket, CommonWebSocketState} from '@rest-vir/define-service';
+import {
+    MultiplayerService,
+    MultiplayerWebSocketMessageType,
+    type MultiplayerClientRooms,
+} from '@game-vir/multiplayer';
+import {ClientWebSocket} from '@rest-vir/define-service';
 import {testService, type FetchTestService} from '@rest-vir/run-service';
 import {
     ImplementedMultiplayerService,
@@ -10,27 +23,40 @@ import {
     type MultiplayerServerState,
 } from './implemented-multiplayer-service.js';
 
+type SetupRoomsOutput<Rooms extends string[][]> = {
+    [Key in keyof Rooms]: {
+        roomId: Uuid;
+        roomName: string;
+        clients: Record<ArrayElement<Rooms[Key]>, TestClient>;
+    };
+};
+
+type TestClient = {
+    webSocket: ClientWebSocket<MultiplayerService['webSockets']['/connect']>;
+    clientId: Uuid;
+    clientName: string;
+    clientSecret: string;
+};
+
+type MultiplayerServiceCallbackParams = Readonly<{
+    serverState: MultiplayerServerState;
+    fetchEndpoint: FetchTestService<ImplementedMultiplayerService>;
+    createClient: (name: string) => Promise<TestClient>;
+    webSocketMessages: Record<
+        string,
+        MultiplayerService['webSockets']['/connect']['MessageFromHostType'][]
+    >;
+    setupRooms: <const Rooms extends string[][]>(rooms: Rooms) => Promise<SetupRoomsOutput<Rooms>>;
+    logs: {
+        info: unknown[];
+        error: string[];
+    };
+    closeAllWebSockets: () => Promise<void>;
+}>;
+
 function testMultiplayerService(
     description: string,
-    callback: (
-        params: Readonly<{
-            serverState: MultiplayerServerState;
-            fetchEndpoint: FetchTestService<ImplementedMultiplayerService>;
-            createWebSocket: (name: string) => Promise<{
-                webSocket: ClientWebSocket<MultiplayerService['webSockets']['/connect']>;
-                clientId: Uuid;
-                name: string;
-            }>;
-            webSocketMessages: Record<
-                string,
-                MultiplayerService['webSockets']['/connect']['MessageFromHostType'][]
-            >;
-            logs: {
-                info: unknown[];
-                error: string[];
-            };
-        }>,
-    ) => MaybePromise<void>,
+    callback: (params: MultiplayerServiceCallbackParams) => MaybePromise<void>,
 ) {
     it(description, async () => {
         const logs = {
@@ -49,55 +75,118 @@ function testMultiplayerService(
             },
         });
 
+        const allClients: TestClient[] = [];
+
         const webSocketMessages: Record<
             string,
             MultiplayerService['webSockets']['/connect']['MessageFromHostType'][]
         > = {};
 
-        async function createWebSocket(name: string) {
+        async function createClient(
+            clientName: string,
+        ): ReturnType<MultiplayerServiceCallbackParams['createClient']> {
             const webSocket = await connectWebSocket['/connect']({
                 listeners: {
                     open() {
-                        console.log('opened', name);
-                        webSocketMessages[name] = [];
+                        webSocketMessages[clientName] = [];
                     },
                     message({message}) {
-                        console.log('inserting message to', name);
-                        assertWrap.isDefined(webSocketMessages[name]).push(message);
+                        assertWrap.isDefined(webSocketMessages[clientName]).push(message);
                     },
                 },
             });
 
-            console.log(webSocket.readyState, CommonWebSocketState);
-
-            return {
+            const testClient = {
                 webSocket,
                 clientId: createUuidV4(),
-                name,
+                clientName,
+                clientSecret: randomString(32),
             };
+
+            allClients.push(testClient);
+
+            return testClient;
+        }
+
+        async function setupRooms<Rooms extends string[][]>(
+            rooms: Rooms,
+        ): Promise<SetupRoomsOutput<Rooms>> {
+            const roomIds: Uuid[] = [];
+
+            const finishedRooms = await Promise.all(
+                rooms.map(
+                    async (roomClients, roomIndex): Promise<Values<SetupRoomsOutput<Rooms>>> => {
+                        if (roomClients.length) {
+                            const roomId = createUuidV4();
+                            roomIds.push(roomId);
+                            const roomName = `room-${roomIndex}`;
+                            const clients: Record<string, TestClient> = {};
+
+                            await awaitedForEach(roomClients, async (clientName) => {
+                                const client = await createClient(clientName);
+                                clients[clientName] = client;
+
+                                client.webSocket.send({
+                                    clientId: client.clientId,
+                                    data: {
+                                        sdp: 'test',
+                                        type: MultiplayerWebSocketMessageType.Offer,
+                                    },
+                                    roomId,
+                                    roomName,
+                                    type: MultiplayerWebSocketMessageType.Offer,
+                                    roomPassword: '',
+                                    clientSecret: client.clientSecret,
+                                });
+                            });
+
+                            return {
+                                roomId,
+                                roomName,
+                                clients,
+                            };
+                        } else {
+                            throw new Error('Cannot create a mock room without any clients.');
+                        }
+                    },
+                ),
+            );
+
+            await waitUntil.hasKeys(
+                roomIds,
+                async () => await (await fetchEndpoint['/rooms']()).json(),
+            );
+
+            return finishedRooms as SetupRoomsOutput<Rooms>;
+        }
+
+        async function closeAllWebSockets(this: void) {
+            await Promise.all(allClients.map((client) => client.webSocket.close()));
         }
 
         const {connectWebSocket, fetchEndpoint, kill} = await testService(service);
 
         try {
-            await callback({serverState, createWebSocket, fetchEndpoint, logs, webSocketMessages});
+            await callback({
+                serverState,
+                createClient,
+                setupRooms,
+                fetchEndpoint,
+                logs,
+                webSocketMessages,
+                closeAllWebSockets,
+            });
         } finally {
+            await closeAllWebSockets();
             await kill();
         }
     });
 }
 
-async function setupRooms(
-    rooms: [
-        /** Client names. The first client will become the host. */
-        string[],
-    ],
-) {}
-
 describe('multiplayer service', () => {
     testMultiplayerService(
         'hosts multiple room connections',
-        async ({createWebSocket, webSocketMessages, fetchEndpoint}) => {
+        async ({setupRooms, webSocketMessages, fetchEndpoint, closeAllWebSockets}) => {
             assert.isTrue((await fetchEndpoint['/health']()).ok, 'server health should be okay');
             assert.deepEquals(
                 await (await fetchEndpoint['/rooms']()).json(),
@@ -105,114 +194,101 @@ describe('multiplayer service', () => {
                 'rooms should be empty on server init',
             );
 
-            const roomAHostClient = await createWebSocket('a-host');
-            const roomBHostClient = await createWebSocket('b-host');
-            const roomBMember1Client = await createWebSocket('b-member-1');
-
-            const roomAId = createUuidV4();
-            const roomBId = createUuidV4();
-
-            roomAHostClient.webSocket.send({
-                clientId: roomAHostClient.clientId,
-                clientName: 'a-host',
-                data: {
-                    sdp: 'test',
-                    type: MultiplayerWebSocketMessageType.Offer,
-                },
-                roomId: roomAId,
-                roomName: 'Room A',
-                type: MultiplayerWebSocketMessageType.Offer,
-                roomPassword: '',
-            });
-
-            await waitUntil.hasKey(
-                roomAId,
-                async () => await (await fetchEndpoint['/rooms']()).json(),
-            );
-
-            roomBHostClient.webSocket.send({
-                clientId: roomBHostClient.clientId,
-                clientName: 'b-host',
-                data: {
-                    sdp: 'test',
-                    type: MultiplayerWebSocketMessageType.Offer,
-                },
-                roomId: roomBId,
-                roomName: 'Room B',
-                type: MultiplayerWebSocketMessageType.Offer,
-                roomPassword: '',
-            });
-
-            await waitUntil.hasKeys(
+            const rooms = await setupRooms([
                 [
-                    roomAId,
-                    roomBId,
+                    'a-host',
                 ],
-                async () => await (await fetchEndpoint['/rooms']()).json(),
-            );
-
-            roomBMember1Client.webSocket.send({
-                clientId: roomBMember1Client.clientId,
-                clientName: 'b-member 1',
-                data: {
-                    sdp: 'test',
-                    type: MultiplayerWebSocketMessageType.Offer,
-                },
-                roomId: roomBId,
-                roomName: '',
-                type: MultiplayerWebSocketMessageType.Offer,
-                roomPassword: '',
-            });
+                [
+                    'b-host',
+                    'b-member-1',
+                ],
+            ]);
 
             await waitUntil.deepEquals(
                 {
-                    [roomAHostClient.name]: [],
-                    [roomBHostClient.name]: [
+                    [rooms[0].clients['a-host'].clientName]: [
                         {
-                            clientId: roomBMember1Client.clientId,
-                            clientName: 'b-member 1',
+                            type: MultiplayerWebSocketMessageType.OfferResult,
+                            youAreTheHost: true,
+                        },
+                    ],
+                    [rooms[1].clients['b-host'].clientName]: [
+                        {
+                            type: MultiplayerWebSocketMessageType.OfferResult,
+                            youAreTheHost: true,
+                        },
+                        {
+                            clientId: rooms[1].clients['b-member-1'].clientId,
                             data: {
                                 sdp: 'test',
                                 type: MultiplayerWebSocketMessageType.Offer,
                             },
-                            roomId: roomBId,
-                            roomName: '',
+                            roomId: rooms[1].roomId,
+                            roomName: rooms[1].roomName,
                             type: MultiplayerWebSocketMessageType.Offer,
-                            roomPassword: '',
                         },
                     ],
-                    [roomBMember1Client.name]: [],
+                    [rooms[1].clients['b-member-1'].clientName]: [
+                        {
+                            type: MultiplayerWebSocketMessageType.OfferResult,
+                            youAreTheHost: false,
+                        },
+                    ],
                 },
                 () => webSocketMessages,
                 undefined,
                 "Room B host should have received Room B member 1's offer message",
             );
 
+            rooms[1].clients['b-host'].webSocket.send({
+                type: MultiplayerWebSocketMessageType.HostPing,
+                clientCount: 2,
+                clientId: rooms[1].clients['b-host'].clientId,
+                clientSecret: rooms[1].clients['b-host'].clientSecret,
+                roomId: rooms[1].roomId,
+                roomName: rooms[1].roomName,
+                roomPassword: '',
+            });
+
             await waitUntil.deepEquals(
                 {
-                    [roomAId]: {
-                        roomName: 'Room A',
-                        roomId: roomAId,
+                    [rooms[0].roomId]: {
+                        roomName: rooms[0].roomName,
+                        roomId: rooms[0].roomId,
                         clientCount: 1,
+                        hasRoomPassword: false,
                     },
-                    [roomBId]: {
-                        roomName: 'Room B',
-                        roomId: roomBId,
+                    [rooms[1].roomId]: {
+                        roomName: rooms[1].roomName,
+                        roomId: rooms[1].roomId,
                         clientCount: 2,
+                        hasRoomPassword: false,
+                    },
+                } satisfies MultiplayerClientRooms,
+                async () => await (await fetchEndpoint['/rooms']()).json(),
+                {
+                    interval: {
+                        seconds: 1,
+                    },
+                    timeout: {
+                        seconds: 20,
                     },
                 },
-                async () => await (await fetchEndpoint['/rooms']()).json(),
-                undefined,
                 'Rooms should have appropriate members',
             );
 
-            await roomAHostClient.webSocket.close();
-            await roomBHostClient.webSocket.close();
-            await roomBMember1Client.webSocket.close();
+            await closeAllWebSockets();
 
             await waitUntil.isEmpty(
                 async () => await (await fetchEndpoint['/rooms']()).json(),
-                undefined,
+                {
+                    interval: {
+                        seconds: 2,
+                    },
+                    timeout: {
+                        minutes: 1,
+                    },
+                },
                 'Rooms should empty out when their clients have all closed.',
             );
         },

@@ -1,4 +1,11 @@
-import {callAsynchronously, stringify, type ArrayElement, type Uuid} from '@augment-vir/common';
+import {
+    callAsynchronously,
+    mapObjectValues,
+    omitObjectKeys,
+    stringify,
+    type ArrayElement,
+    type Uuid,
+} from '@augment-vir/common';
 import {
     defineMultiplayerService,
     MultiplayerWebSocketMessageType,
@@ -15,6 +22,7 @@ import {
     ServerWebSocket,
     ServiceLogger,
 } from '@rest-vir/implement-service';
+import {convertDuration} from 'date-vir';
 
 /**
  * Multiplayer server options.
@@ -34,21 +42,38 @@ export type MultiplayerServerOptions = {
     logger?: ServiceLogger;
 };
 
-type MultiplayerClient = Pick<ClientIdentification, 'clientName' | 'clientId'> & {
+/**
+ * An individual multiplayer client.
+ *
+ * @category Internal
+ */
+export type MultiplayerClient = Pick<ClientIdentification, 'clientId'> & {
+    clientSecret: string;
     webSocket: ServerWebSocket<MultiplayerService['webSockets']['/connect']>;
 };
 
-type MultiplayerServerRoom = {
-    clients: Record<Uuid, MultiplayerClient>;
+/**
+ * A multiplayer room.
+ *
+ * @category Internal
+ */
+export type MultiplayerServerRoom = {
     clientsAwaitingAnswer: Record<Uuid, MultiplayerClient>;
-    hostClient: MultiplayerClient | undefined;
+    hostClient: MultiplayerClient;
+    connectedClientCount: number;
     roomPassword: string;
+    lastHostPingTimestamp: number;
 } & Pick<MultiplayerClientRoom, 'roomName' | 'roomId'>;
 
-type MultiplayerServerRooms = Record<Uuid, MultiplayerServerRoom>;
+/**
+ * A collection of multiplayer rooms.
+ *
+ * @category Internal
+ */
+export type MultiplayerServerRooms = Record<Uuid, MultiplayerServerRoom>;
 
 /**
- * The server's state object which will be mutated constantly while it is running.
+ * Internal state for the multiplayer server.
  *
  * @category Internal
  */
@@ -56,17 +81,18 @@ export type MultiplayerServerState = {
     multiplayerRooms: MultiplayerServerRooms;
     webSocketMessageQueue: {
         webSocket: ServerWebSocket<MultiplayerService['webSockets']['/connect']>;
-        message: MultiplayerService['webSockets']['/connect']['MessageFromClientType'] | undefined;
+        message: MultiplayerService['webSockets']['/connect']['MessageFromClientType'];
     }[];
-    webSocketToRoomMap: WeakMap<
-        ServerWebSocket,
-        {
-            joinedRoomId: Uuid;
-            clientId: Uuid;
-        }
-    >;
     isProcessingQueue: boolean;
+    /**
+     * This is separate from the multiplayer rooms object because this object is directly
+     * transferred to any client that hits the `/rooms` endpoint to keep CPU load minimal. This
+     * object is only updated when necessary.
+     */
     roomsForFetching: MultiplayerClientRooms;
+
+    updateRoomsIntervalId: ReturnType<typeof setInterval> | undefined;
+
     logger: ServiceLogger;
 };
 
@@ -89,20 +115,15 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
         logger: options.logger || defaultServiceLogger,
         multiplayerRooms: {},
         webSocketMessageQueue: [],
-        webSocketToRoomMap: new WeakMap(),
         isProcessingQueue: false,
+        updateRoomsIntervalId: undefined,
+
         roomsForFetching: {},
     };
 
     const service = implementService(
         {
-            service: defineMultiplayerService(
-                /**
-                 * This origin doesn't really matter because `startMultiplayerServer` has options
-                 * for this.
-                 */
-                'http://localhost:3000',
-            ),
+            service: defineMultiplayerService(),
             logger: serverState.logger,
         },
         {
@@ -125,10 +146,6 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
                         serverState.webSocketMessageQueue.push({message, webSocket});
                         void callAsynchronously(() => processQueue(serverState));
                     },
-                    close({webSocket}) {
-                        serverState.webSocketMessageQueue.push({message: undefined, webSocket});
-                        void callAsynchronously(() => processQueue(serverState));
-                    },
                 },
             },
         },
@@ -140,61 +157,63 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
     };
 }
 
-function updateRoomsForFetching(
-    roomId: Uuid,
-    serverState: Pick<MultiplayerServerState, 'roomsForFetching' | 'multiplayerRooms' | 'logger'>,
-) {
-    const roomForFetching = serverState.roomsForFetching[roomId];
-    const multiplayerRoom = serverState.multiplayerRooms[roomId];
+const updateRoomsForFetchingIntervalDuration = convertDuration(
+    {
+        seconds: 5,
+    },
+    {
+        milliseconds: true,
+    },
+);
 
-    if (!multiplayerRoom) {
-        delete serverState.roomsForFetching[roomId];
-        serverState.logger.error(
-            new Error(`Trying to update a multiplayer room that does not exist: '${roomId}'.`),
-        );
+function updateRoomsForFetchingOnInterval(
+    serverState: Pick<
+        MultiplayerServerState,
+        'roomsForFetching' | 'multiplayerRooms' | 'logger' | 'updateRoomsIntervalId'
+    >,
+) {
+    if (serverState.updateRoomsIntervalId) {
         return;
     }
 
-    const clientCount =
-        Object.keys(multiplayerRoom.clients).length + (multiplayerRoom.hostClient ? 1 : 0);
-
-    if (roomForFetching) {
-        roomForFetching.clientCount = clientCount;
-    } else {
-        serverState.roomsForFetching[roomId] = {
-            roomId: multiplayerRoom.roomId,
-            roomName: multiplayerRoom.roomName,
-            clientCount: clientCount,
-            hasRoomPassword: !!multiplayerRoom.roomPassword,
-        };
-    }
+    serverState.updateRoomsIntervalId = setInterval(() => {
+        updateRoomsForFetching(serverState);
+    }, updateRoomsForFetchingIntervalDuration.milliseconds);
 }
 
-function leaveCurrentRoom(
-    serverState: MultiplayerServerState,
-    webSocket: ArrayElement<typeof serverState.webSocketMessageQueue>['webSocket'],
+function updateRoomsForFetching(
+    serverState: Pick<
+        MultiplayerServerState,
+        'roomsForFetching' | 'multiplayerRooms' | 'logger' | 'updateRoomsIntervalId'
+    >,
 ) {
-    const mappedJoin = serverState.webSocketToRoomMap.get(webSocket);
-
-    if (mappedJoin) {
-        serverState.webSocketToRoomMap.delete(webSocket);
-        const joinedRoom = serverState.multiplayerRooms[mappedJoin.joinedRoomId];
-
-        if (joinedRoom) {
-            if (joinedRoom.hostClient?.clientId === mappedJoin.clientId) {
-                joinedRoom.hostClient = undefined;
-            }
-            delete joinedRoom.clients[mappedJoin.clientId];
-            delete joinedRoom.clientsAwaitingAnswer[mappedJoin.clientId];
-
-            if (!Object.keys(joinedRoom.clients).length && !joinedRoom.hostClient) {
-                /** If the room is now empty, remove it. */
-                delete serverState.multiplayerRooms[mappedJoin.joinedRoomId];
-                delete serverState.roomsForFetching[mappedJoin.joinedRoomId];
-            } else {
-                updateRoomsForFetching(mappedJoin.joinedRoomId, serverState);
-            }
+    Object.values(serverState.multiplayerRooms).forEach((multiplayerRoom) => {
+        if (
+            /** Delete a room if its host is no longer active. */
+            multiplayerRoom.hostClient.webSocket.readyState !== CommonWebSocketState.Open ||
+            /** Delete a room if it has had no updates from the host for two cycles. */
+            multiplayerRoom.lastHostPingTimestamp <
+                Date.now() - updateRoomsForFetchingIntervalDuration.milliseconds * 2
+        ) {
+            delete serverState.multiplayerRooms[multiplayerRoom.roomId];
         }
+    });
+
+    serverState.roomsForFetching = mapObjectValues(
+        serverState.multiplayerRooms,
+        (roomId, multiplayerRoom): MultiplayerClientRoom => {
+            return {
+                clientCount: multiplayerRoom.connectedClientCount,
+                hasRoomPassword: !!multiplayerRoom.roomPassword,
+                roomId,
+                roomName: multiplayerRoom.roomName,
+            };
+        },
+    );
+
+    if (!Object.keys(serverState.roomsForFetching).length) {
+        clearInterval(serverState.updateRoomsIntervalId);
+        serverState.updateRoomsIntervalId = undefined;
     }
 }
 
@@ -202,120 +221,114 @@ function processQueueItem(
     serverState: MultiplayerServerState,
     {message, webSocket}: ArrayElement<typeof serverState.webSocketMessageQueue>,
 ) {
-    /** If the WebSocket is closed, we remove this user from all rooms. */
-    if (webSocket.readyState !== CommonWebSocketState.Open || !message) {
-        leaveCurrentRoom(serverState, webSocket);
-
-        return;
-    }
-
-    const multiplayerRoom = serverState.multiplayerRooms[message.roomId];
+    const multiplayerRoom =
+        serverState.multiplayerRooms[message.roomId]?.hostClient.webSocket.readyState ===
+        CommonWebSocketState.Open
+            ? serverState.multiplayerRooms[message.roomId]
+            : undefined;
     const currentClient: MultiplayerClient = {
-        clientName: message.clientName,
         clientId: message.clientId,
         webSocket,
+        clientSecret: 'clientSecret' in message ? message.clientSecret : '',
     };
 
     if (message.type === MultiplayerWebSocketMessageType.Offer) {
-        /** Indicates that the user is trying to join a new room. */
-        const joiningExistingRoom: boolean = !message.roomName;
-
-        /** If a client is trying to join a new room, they must leave their old room first. */
-        leaveCurrentRoom(serverState, webSocket);
-
-        if (joiningExistingRoom && !multiplayerRoom) {
-            /** The client is trying to join a room which no longer exists. */
-            const errorMessage = `Failed to join room ${message.roomId}: it no longer exists.`;
-            serverState.logger.error(new Error(errorMessage));
-            webSocket.send({
-                type: MultiplayerWebSocketMessageType.Error,
-                errorMessage,
-            });
-        } else if (!joiningExistingRoom && !multiplayerRoom) {
-            /** The client is creating a new room. */
-            const newRoom: MultiplayerServerRoom = {
-                clients: {},
-                clientsAwaitingAnswer: {},
-                hostClient: currentClient,
-                roomName: message.roomName,
-                roomId: message.roomId,
-                roomPassword: message.roomPassword,
-            };
-            serverState.logger.info(
-                `Creating new room '${newRoom.roomName}' with id '${newRoom.roomId}' and host '${currentClient.clientId}'`,
-            );
-            serverState.multiplayerRooms[newRoom.roomId] = newRoom;
-            updateRoomsForFetching(newRoom.roomId, serverState);
-            serverState.webSocketToRoomMap.set(webSocket, {
-                clientId: currentClient.clientId,
-                joinedRoomId: newRoom.roomId,
-            });
-        } else if (multiplayerRoom) {
-            /** The client is connecting to a room. */
+        if (multiplayerRoom) {
+            /** The client is connecting to an existing room with a valid host. */
             if (
                 multiplayerRoom.roomPassword &&
                 message.roomPassword !== multiplayerRoom.roomPassword
             ) {
                 webSocket.send({
                     type: MultiplayerWebSocketMessageType.Error,
-                    errorMessage: 'Invalid password',
+                    errorMessage: 'Invalid password.',
                 });
-                return;
-            }
-
-            if (
-                multiplayerRoom.hostClient &&
-                multiplayerRoom.hostClient.webSocket.readyState === CommonWebSocketState.Open
-            ) {
-                /** The room has a valid host. */
-                serverState.logger.info(`Sending offer to host from ${message.clientId}`);
-                multiplayerRoom.hostClient.webSocket.send(message);
-                multiplayerRoom.clients[currentClient.clientId] = currentClient;
-                serverState.webSocketToRoomMap.set(webSocket, {
-                    clientId: currentClient.clientId,
-                    joinedRoomId: multiplayerRoom.roomId,
-                });
-                updateRoomsForFetching(message.roomId, serverState);
             } else {
-                /** The room has no valid host, so we set this client as the host. */
                 serverState.logger.info(
-                    `Setting room '${multiplayerRoom.roomId}' host to ${message.clientId}`,
+                    `Sending offer to host ${multiplayerRoom.hostClient.clientId} in room ${multiplayerRoom.roomName} (${multiplayerRoom.roomId})`,
                 );
-                multiplayerRoom.hostClient = currentClient;
-                delete multiplayerRoom.clients[currentClient.clientId];
-
-                updateRoomsForFetching(message.roomId, serverState);
+                webSocket.send({
+                    type: MultiplayerWebSocketMessageType.OfferResult,
+                    youAreTheHost: false,
+                });
+                multiplayerRoom.clientsAwaitingAnswer[currentClient.clientId] = currentClient;
+                multiplayerRoom.hostClient.webSocket.send(
+                    omitObjectKeys(message, [
+                        'clientSecret',
+                        'roomPassword',
+                    ]),
+                );
             }
         } else {
-            /** Unexpected operation. */
-            const errorMessage = `Operation failed: ${stringify(message)}`;
-            serverState.logger.error(new Error(errorMessage));
+            /**
+             * The client is either creating a new room or joining a room that just died (so create
+             * a new one).
+             */
+            const newRoom: MultiplayerServerRoom = {
+                clientsAwaitingAnswer: {},
+                hostClient: currentClient,
+                roomName: message.roomName,
+                roomId: message.roomId,
+                roomPassword: message.roomPassword,
+                connectedClientCount: 1,
+                lastHostPingTimestamp: Date.now(),
+            };
+            serverState.logger.info(
+                `Creating new room '${newRoom.roomName}' with id '${newRoom.roomId}' and host '${currentClient.clientId}'`,
+            );
+            serverState.multiplayerRooms[newRoom.roomId] = newRoom;
+            updateRoomsForFetching(serverState);
             webSocket.send({
-                type: MultiplayerWebSocketMessageType.Error,
-                errorMessage,
+                type: MultiplayerWebSocketMessageType.OfferResult,
+                youAreTheHost: true,
             });
         }
     } else if (message.type === MultiplayerWebSocketMessageType.Answer) {
         /** The host client is sending an answer to one of its clients. */
+
+        serverState.logger.info(`Received answer from ${message.clientId}`);
+
         const client = multiplayerRoom?.clientsAwaitingAnswer[message.clientId];
-        if (!client) {
-            serverState.logger.error(
-                new Error(`No client found waiting for an answer by '${message.clientId}'`),
+
+        if (client && client.webSocket.readyState === CommonWebSocketState.Open) {
+            /**
+             * Now that we're sending an answer to this client, we can remove it from the list of
+             * clients that are waiting for answers.
+             */
+            delete multiplayerRoom.clientsAwaitingAnswer[message.clientId];
+            serverState.logger.info(
+                `Sending answer to host ${message.clientId} in room ${multiplayerRoom.roomName} (${multiplayerRoom.roomId}).`,
             );
+
+            serverState.logger.info(`Sending answer to ${client.clientId}`);
+            client.webSocket.send(message);
+        } else {
+            const errorMessage = `No client found waiting for an answer by id ${message.clientId}`;
+            serverState.logger.error(new Error(errorMessage));
+            webSocket.send({
+                type: MultiplayerWebSocketMessageType.Error,
+                errorMessage: errorMessage,
+            });
             return;
         }
-        /**
-         * Now that we're sending an answer to this client, we can remove it from the list of
-         * clients that are waiting for answers.
-         */
-        delete multiplayerRoom.clientsAwaitingAnswer[message.clientId];
-        serverState.logger.info(`Sending answer to ${message.clientId}`);
-        client.webSocket.send(message);
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    } else if (message.type === MultiplayerWebSocketMessageType.LeaveRoom) {
-        leaveCurrentRoom(serverState, webSocket);
+    } else if (message.type === MultiplayerWebSocketMessageType.HostPing) {
+        if (multiplayerRoom && multiplayerRoom.hostClient.clientSecret === message.clientSecret) {
+            multiplayerRoom.connectedClientCount = message.clientCount;
+            multiplayerRoom.roomName = message.roomName;
+            multiplayerRoom.roomPassword = message.roomPassword;
+            multiplayerRoom.lastHostPingTimestamp = Date.now();
+        } else {
+            webSocket.send({
+                type: MultiplayerWebSocketMessageType.Error,
+                errorMessage: `Invalid room to ping.`,
+            });
+        }
     } else {
-        serverState.logger.error(new TypeError(`Invalid message: ${stringify(message)}`));
+        webSocket.send({
+            type: MultiplayerWebSocketMessageType.Error,
+            errorMessage: `Invalid message: ${stringify(message)}`,
+        });
     }
 }
 
@@ -324,6 +337,7 @@ function processQueue(serverState: MultiplayerServerState) {
         return;
     }
     serverState.isProcessingQueue = true;
+    updateRoomsForFetchingOnInterval(serverState);
 
     let nextItem: ArrayElement<typeof serverState.webSocketMessageQueue> | undefined;
 

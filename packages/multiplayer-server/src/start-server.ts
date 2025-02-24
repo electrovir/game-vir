@@ -1,3 +1,4 @@
+import type {SetRequired} from '@augment-vir/common';
 import {
     startService,
     type StartServiceOutput,
@@ -16,11 +17,15 @@ import {
 export async function startMultiplayerServer(
     options: Readonly<
         MultiplayerServerOptions &
-            Pick<StartServiceUserOptions, 'debug' | 'host' | 'lockPort' | 'port'>
+            SetRequired<
+                Pick<StartServiceUserOptions, 'debug' | 'host' | 'lockPort' | 'port'>,
+                'port'
+            >
     >,
 ) {
     const {service, serverState} = implementMultiplayerService(options);
     const startOutput = (await startService(service, {
+        ...options,
         /** This server cannot currently be distributed. */
         workerCount: 1,
     })) as Required<Omit<StartServiceOutput, 'cluster' | 'worker'>>;
