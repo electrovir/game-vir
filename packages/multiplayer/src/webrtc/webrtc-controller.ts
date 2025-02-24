@@ -124,6 +124,13 @@ export class WebrtcController<MessageData> extends ListenTarget<WebrtcEvents<Mes
         this.dataChannel.send(JSON.stringify(data));
     }
 
+    public override destroy() {
+        this.dataChannel?.close();
+        this.connection?.close();
+        // this.isConnected = false;
+        super.destroy();
+    }
+
     private handleDataChannel(dataChannel: Readonly<RTCDataChannel>) {
         this.dataChannel?.close();
         this.dataChannel = dataChannel;

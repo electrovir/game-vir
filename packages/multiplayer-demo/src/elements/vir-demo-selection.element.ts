@@ -3,12 +3,17 @@ import {defineElementNoInputs, html, nothing, type DeclarativeElementDefinition}
 import {SpaRouter, type FullRoute} from 'spa-router-vir';
 import {ViraLink} from 'vira';
 import {Demo1App} from './demo-1-room-connection/demo-1-app.element.js';
+import {Demo2App} from './demo-2-room-selection/demo-2-app.element.js';
 
 const demoList = (
     [
         {
             name: 'Demo 1: Room Connection',
             element: Demo1App,
+        },
+        {
+            name: 'Demo 2: Room Selection',
+            element: Demo2App,
         },
     ] satisfies {name: string; element: DeclarativeElementDefinition}[]
 ).map((entry) => {

@@ -1,22 +1,56 @@
-import {assert} from '@augment-vir/assert';
+import {assert, waitUntil} from '@augment-vir/assert';
 import {
     createUuidV4,
+    ensureErrorAndPrependMessage,
     getObjectTypedEntries,
+    getObjectTypedKeys,
     log,
     makeWritable,
+    mergeDefinedProperties,
     randomString,
+    stringify,
+    type PartialWithUndefined,
     type Uuid,
 } from '@augment-vir/common';
 import type {ClientWebSocket} from '@rest-vir/define-service';
-import {ListenTarget} from 'typed-event-target';
+import type {RequireExactlyOne} from 'type-fest';
+import {ListenTarget, defineTypedCustomEvent} from 'typed-event-target';
 import type {MultiplayerApi} from '../multiplayer-api.js';
 import {MultiplayerWebSocketMessageType, type MultiplayerService} from '../multiplayer-service.js';
-import {
-    WebrtcConnectEvent,
-    WebrtcController,
-    WebrtcEvents,
-    WebrtcMessageEvent,
-} from './webrtc-controller.js';
+import {WebrtcConnectEvent, WebrtcController, WebrtcMessageEvent} from './webrtc-controller.js';
+
+/**
+ * An event that is omitted from {@link WebrtcMultiplayerController} when the multiplayer room host
+ * is updated.
+ *
+ * @category Internal
+ */
+export class WebrtcMultiplayerConnectionUpdateEvent extends defineTypedCustomEvent<
+    RequireExactlyOne<{
+        newHost: Uuid;
+        newMember: Uuid;
+        lostHost: Uuid;
+        lostMember: Uuid;
+    }>
+>()('webrtc-multiplayer-connection-update') {}
+
+/**
+ * A helper for creating a new empty room.
+ *
+ * @category Main
+ */
+export function createNewRoom(
+    params: Readonly<PartialWithUndefined<Omit<RoomInput, 'roomId'>>> = {},
+): RoomInput {
+    return mergeDefinedProperties<RoomInput>(
+        {
+            roomId: createUuidV4(),
+            roomName: '',
+            roomPassword: '',
+        },
+        params,
+    );
+}
 
 /**
  * Room selection input for {@link WebrtcMultiplayerController}.
@@ -41,19 +75,11 @@ export type RoomInput = Pick<
  * @category Main
  */
 export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTarget<
-    WebrtcEvents<MessageData>
+    WebrtcMessageEvent<MessageData> | WebrtcMultiplayerConnectionUpdateEvent
 > {
-    /**
-     * If this controller is the host, it'll behave differently:
-     *
-     * - Hosts hold WebRTC connections to all clients (non-hosts only hold a WebRTC connection to the
-     *   host).
-     * - Hosts hold a WebSocket connection to the signal server so they can receive more clients at
-     *   any time.
-     */
-    public readonly isHost: boolean = false;
     /** The randomized client id for this controller. */
     public readonly clientId: Uuid = createUuidV4();
+    public readonly hostClientId: Uuid | undefined;
 
     /**
      * Connections between multiple WebRTC peers.
@@ -77,12 +103,38 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
         super();
     }
 
+    /**
+     * If this controller is the host, it'll behave differently:
+     *
+     * - Hosts hold WebRTC connections to all clients (non-hosts only hold a WebRTC connection to the
+     *   host).
+     * - Hosts hold a WebSocket connection to the signal server so they can receive more clients at
+     *   any time.
+     */
+    public isHost(): boolean {
+        return this.hostClientId === this.clientId;
+    }
+
+    /** Get all connected client ids. */
+    public getConnectedClientIds(): Uuid[] {
+        const hostConnection: Uuid[] =
+            this.isHost() || !this.hostClientId ? [] : [this.hostClientId];
+
+        const memberConnections = getObjectTypedKeys(this.connections).filter((clientId) => {
+            const controller = this.connections[clientId];
+
+            return controller && controller.isConnected && clientId !== this.clientId;
+        });
+
+        return [
+            ...hostConnection,
+            ...memberConnections,
+        ];
+    }
+
     /** Indicates whether ths client is connected to a multiplayer room. */
-    public get isConnected() {
-        return (
-            this.isHost ||
-            Object.values(this.connections).some((controller) => controller.isConnected)
-        );
+    public isConnected(): boolean {
+        return this.isHost() || !!this.getConnectedClientIds().length;
     }
 
     /** Destroy this controller and clean everything up. */
@@ -148,7 +200,11 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
 
         assert.strictEquals(reply.type, MultiplayerWebSocketMessageType.OfferResult);
 
-        makeWritable(this).isHost = reply.youAreTheHost;
+        /**
+         * `hostClientId` will be set by the already attached listener. We just need to wait until
+         * it does, because we need to know who the host is before calling `sendHostPing`.
+         */
+        await waitUntil.isDefined(() => this.hostClientId);
 
         this.sendHostPing();
 
@@ -156,7 +212,7 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
     }
 
     private sendHostPing() {
-        if (this.isHost && this.webSocket) {
+        if (this.isHost() && this.webSocket) {
             this.webSocket.send({
                 type: MultiplayerWebSocketMessageType.HostPing,
                 clientCount:
@@ -184,51 +240,87 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
         const webSocket = await this.multiplayerApi.webSockets['/connect'].connect({
             listeners: {
                 message: async ({message}) => {
-                    if (message.type === MultiplayerWebSocketMessageType.Offer) {
-                        if (!this.isHost) {
-                            throw new Error(`Non-host multiplayer client received a WebRTC offer.`);
-                        }
-                        log.faint('received offer');
+                    try {
+                        if (message.type === MultiplayerWebSocketMessageType.Offer) {
+                            if (!this.isHost()) {
+                                throw new Error(
+                                    `Non-host multiplayer client received a WebRTC offer.`,
+                                );
+                            }
+                            log.faint('received offer');
 
-                        const initConnection = this.connections[this.clientId];
-                        /**
-                         * Remove the init connection since it won't be used now that this
-                         * multi-peer instance is the host.
-                         */
-                        delete this.connections[this.clientId];
-                        const newConnection = this.createNewConnection(message.clientId);
-                        const answer = await newConnection.createAnswer(
-                            message.data,
-                            this.stunServerUrls,
-                        );
-                        initConnection?.destroy();
+                            const newConnection = this.createNewConnection(message.clientId);
+                            const answer = await newConnection.createAnswer(
+                                message.data,
+                                this.stunServerUrls,
+                            );
 
-                        webSocket.send({
-                            type: MultiplayerWebSocketMessageType.Answer,
-                            roomId: message.roomId,
-                            roomName: message.roomName,
-                            clientId: message.clientId,
-                            data: answer,
-                        });
-                    } else if (message.type === MultiplayerWebSocketMessageType.Answer) {
-                        log.faint('received answer');
-                        /** A connection with the current uuid is the init connection. */
-                        const initConnection = this.connections[this.clientId];
-                        if (!initConnection) {
-                            throw new Error('Cannot accept answer, no init connection found.');
-                        }
+                            webSocket.send({
+                                type: MultiplayerWebSocketMessageType.Answer,
+                                roomId: message.roomId,
+                                roomName: message.roomName,
+                                clientId: message.clientId,
+                                data: answer,
+                            });
+                        } else if (message.type === MultiplayerWebSocketMessageType.Answer) {
+                            if (this.isHost()) {
+                                throw new Error(
+                                    `Host multiplayer client received a WebRTC answer.`,
+                                );
+                            }
 
-                        await initConnection.acceptAnswer(message.data);
+                            log.faint('received answer');
+                            /** A connection with the current uuid is the init connection. */
+                            const initConnection = this.connections[this.clientId];
+                            if (!initConnection) {
+                                throw new Error('Cannot accept answer, no init connection found.');
+                            }
 
-                        if (!this.isHost) {
+                            await initConnection.acceptAnswer(message.data);
+
                             /**
                              * This client does not need a WebSocket connection anymore if it is not
                              * the host.
                              */
                             await webSocket.close();
+                        } else if (message.type === MultiplayerWebSocketMessageType.OfferResult) {
+                            if (message.hostClientId !== this.hostClientId) {
+                                makeWritable(this).hostClientId = message.hostClientId;
+
+                                if (this.isHost()) {
+                                    const initConnection = this.connections[this.clientId];
+                                    /**
+                                     * Remove the init connection since it won't be used now that
+                                     * this instance is the host.
+                                     */
+                                    delete this.connections[this.clientId];
+                                    initConnection?.destroy();
+                                }
+
+                                this.dispatch(
+                                    new WebrtcMultiplayerConnectionUpdateEvent({
+                                        detail: {
+                                            newHost: message.hostClientId,
+                                        },
+                                    }),
+                                );
+                            }
+                        } else if (
+                            (message.type as string) === MultiplayerWebSocketMessageType.Error
+                        ) {
+                            throw new Error(message.errorMessage);
+                        } else {
+                            throw new Error(
+                                `Unexpected ${WebrtcMultiplayerController.name} WebSocket message type: ${message.type}`,
+                            );
                         }
-                    } else if (message.type === MultiplayerWebSocketMessageType.Error) {
-                        log.error(message.errorMessage);
+                    } catch (error) {
+                        log.error(
+                            ensureErrorAndPrependMessage(
+                                error,
+                                `WebSocket message failed: ${stringify(message)}`,
+                            ),
+                        );
                     }
                 },
                 error: (error) => {
@@ -248,14 +340,41 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
         const newController = new WebrtcController<MessageData>();
         this.connections[uuid] = newController;
         newController.listen(WebrtcConnectEvent, (event) => {
-            if (event.detail) {
-                this.dispatch(new WebrtcConnectEvent({detail: true}));
+            const connectionEstablished = event.detail;
+
+            if (connectionEstablished) {
+                if (uuid !== this.clientId) {
+                    this.dispatch(
+                        new WebrtcMultiplayerConnectionUpdateEvent({
+                            detail: {
+                                newMember: uuid,
+                            },
+                        }),
+                    );
+                }
             } else {
                 newController.destroy();
                 delete this.connections[uuid];
-                if (!Object.keys(this.connections).length && !this.isHost) {
-                    /** If a member client has lost connection to the host, we've got to get it back! */
-                    this.dispatch(new WebrtcConnectEvent({detail: false}));
+                if (this.isHost()) {
+                    this.dispatch(
+                        new WebrtcMultiplayerConnectionUpdateEvent({
+                            detail: {
+                                lostMember: uuid,
+                            },
+                        }),
+                    );
+                } else {
+                    this.dispatch(
+                        new WebrtcMultiplayerConnectionUpdateEvent({
+                            detail: {
+                                lostHost: uuid,
+                            },
+                        }),
+                    );
+                    /**
+                     * If this member client has lost connection to its host, we've got to get it
+                     * back!
+                     */
                     void this.initConnection();
                 }
             }

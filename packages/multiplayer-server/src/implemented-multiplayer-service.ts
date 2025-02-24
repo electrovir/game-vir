@@ -249,7 +249,7 @@ function processQueueItem(
                 );
                 webSocket.send({
                     type: MultiplayerWebSocketMessageType.OfferResult,
-                    youAreTheHost: false,
+                    hostClientId: multiplayerRoom.hostClient.clientId,
                 });
                 multiplayerRoom.clientsAwaitingAnswer[currentClient.clientId] = currentClient;
                 multiplayerRoom.hostClient.webSocket.send(
@@ -280,7 +280,7 @@ function processQueueItem(
             updateRoomsForFetching(serverState);
             webSocket.send({
                 type: MultiplayerWebSocketMessageType.OfferResult,
-                youAreTheHost: true,
+                hostClientId: newRoom.hostClient.clientId,
             });
         }
     } else if (message.type === MultiplayerWebSocketMessageType.Answer) {

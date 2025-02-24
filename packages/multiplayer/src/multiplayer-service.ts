@@ -200,7 +200,7 @@ export const hostPingMessageShape = and(clientIdShape, {
  */
 export const offerResultShape = {
     type: exact(MultiplayerWebSocketMessageType.OfferResult),
-    youAreTheHost: false,
+    hostClientId: uuidShape,
 };
 
 /**
@@ -217,16 +217,16 @@ export type MultiplayerService = ReturnType<typeof defineMultiplayerService>;
  * @category Internal
  */
 export const defaultMultiplayerServicePort = 3500;
+export const defaultMultiplayerServiceOrigin = buildUrl('http://localhost', {
+    port: defaultMultiplayerServicePort,
+}).origin;
 
 /**
  * The multiplayer service definition.
  *
  * @category Internal
  */
-export function defineMultiplayerService(
-    serviceOrigin: string = buildUrl('http://localhost', {port: defaultMultiplayerServicePort})
-        .origin,
-) {
+export function defineMultiplayerService(serviceOrigin: string = defaultMultiplayerServiceOrigin) {
     return defineService({
         serviceName: 'multiplayer-service',
         requiredClientOrigin: AnyOrigin,

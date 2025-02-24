@@ -29,7 +29,7 @@
     "scripts": {
         "compile": "virmator compile",
         "start": "concurrently --colors --kill-others-on-fail -c auto --names backend,frontend \"npm run start:backend\" \"npm run start:frontend\"",
-        "start:backend": "tsx --watch src/server.ts",
+        "start:backend": "tsx --watch-path=\"../multiplayer-server/src\" src/server.ts",
         "start:frontend": "virmator frontend",
         "test": "exit 0"
     },

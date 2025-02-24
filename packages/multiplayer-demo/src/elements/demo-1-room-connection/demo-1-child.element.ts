@@ -1,6 +1,6 @@
 import {waitUntil} from '@augment-vir/assert';
-import {createUuidV4} from '@augment-vir/common';
 import {
+    createNewRoom,
     defineMultiplayerService,
     WebrtcMultiplayerController,
     type RoomInput,
@@ -28,18 +28,14 @@ export const Demo1Child = defineElementNoInputs({
                     seconds: 5,
                 },
             }).then(async (service) => {
-                const initRoom: RoomInput = {
-                    roomId: createUuidV4(),
-                    roomName: 'Demo Room',
-                    roomPassword: '',
-                };
+                const initRoom: RoomInput = createNewRoom({roomName: 'Demo Room'});
 
                 const api = generateApi(service);
 
                 let webrtcController = new WebrtcMultiplayerController(api, [], initRoom);
 
                 await webrtcController.initConnection();
-                await waitUntil.isTrue(() => webrtcController.isConnected);
+                await waitUntil.isTrue(() => webrtcController.isConnected());
 
                 const firstRoom = await waitUntil.isDefined(async () => {
                     const {data} = await api.endpoints['/rooms'].fetch();
@@ -55,7 +51,7 @@ export const Demo1Child = defineElementNoInputs({
                     });
                     await webrtcController.initConnection();
 
-                    await waitUntil.isTrue(() => webrtcController.isConnected);
+                    await waitUntil.isTrue(() => webrtcController.isConnected());
                 }
 
                 return webrtcController;
@@ -79,7 +75,7 @@ export const Demo1Child = defineElementNoInputs({
             Connected to ${state.webrtcController.value.multiplayerRoom.roomName}
             (${state.webrtcController.value.multiplayerRoom.roomId})
             <br />
-            ${state.webrtcController.value.isHost ? 'Host Client' : 'Member Client'}
+            ${state.webrtcController.value.isHost() ? 'Host Client' : 'Member Client'}
         `;
     },
 });
