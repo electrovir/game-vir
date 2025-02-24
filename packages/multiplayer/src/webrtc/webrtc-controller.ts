@@ -1,5 +1,12 @@
 import {assert, check} from '@augment-vir/assert';
-import {addPrefix, DeferredPromise, makeWritable, wrapInTry} from '@augment-vir/common';
+import {
+    addPrefix,
+    DeferredPromise,
+    makeWritable,
+    wrapInTry,
+    type JsonCompatibleValue,
+    type Uuid,
+} from '@augment-vir/common';
 import {assertValidShape} from 'object-shape-tester';
 import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
 import type {WebrtcOffer} from '../multiplayer-service.js';
@@ -10,9 +17,9 @@ import {WebrtcAnswer, webrtcAnswerShape, webrtcOfferShape} from '../multiplayer-
  *
  * @category Internal
  */
-export class WebrtcMessageEvent<MessageData> extends defineTypedCustomEvent<any>()(
-    'webrtc-message',
-) {
+export class WebrtcMessageEvent<
+    MessageData extends JsonCompatibleValue,
+> extends defineTypedCustomEvent<any>()('webrtc-message') {
     public declare detail: MessageData;
 }
 
@@ -29,7 +36,9 @@ export class WebrtcConnectEvent extends defineTypedCustomEvent<boolean>()('webrt
  *
  * @category Internal
  */
-export type WebrtcEvents<MessageData> = WebrtcMessageEvent<MessageData> | WebrtcConnectEvent;
+export type WebrtcEvents<MessageData extends JsonCompatibleValue> =
+    | WebrtcMessageEvent<MessageData>
+    | WebrtcConnectEvent;
 
 function formatStunServerUrls(stunServerUrls: ReadonlyArray<string>) {
     return stunServerUrls.map((stunServerUrl) => {
@@ -53,11 +62,17 @@ function formatStunServerUrls(stunServerUrls: ReadonlyArray<string>) {
  *
  * @category Internal
  */
-export class WebrtcController<MessageData> extends ListenTarget<WebrtcEvents<MessageData>> {
+export class WebrtcController<MessageData extends JsonCompatibleValue> extends ListenTarget<
+    WebrtcEvents<MessageData>
+> {
     private dataChannel: undefined | Readonly<RTCDataChannel>;
     private connection: undefined | Readonly<RTCPeerConnection>;
     /** Indicates whether the WebRTC connection is live or not. */
     public readonly isConnected: boolean = false;
+
+    constructor(public readonly clientId: Uuid) {
+        super();
+    }
 
     /** Create a WebRTC offer. This is the first step in the WebRTC handshake process. */
     public async createOffer(stunServerUrls: ReadonlyArray<string>): Promise<WebrtcOffer> {
@@ -119,15 +134,20 @@ export class WebrtcController<MessageData> extends ListenTarget<WebrtcEvents<Mes
      * connection has not been established yet.
      */
     public sendMessage(data: Readonly<MessageData>) {
-        assert.isTrue(this.isConnected, 'There is no WebRTC connection to send a message to.');
-        assert.isDefined(this.dataChannel, 'There is no WebRTC connection to send a message to.');
+        assert.isTrue(
+            this.isConnected,
+            `There is no WebRTC connection to send a message to from ${this.clientId}.`,
+        );
+        assert.isDefined(
+            this.dataChannel,
+            `There is no WebRTC connection to send a message to from ${this.clientId}.`,
+        );
         this.dataChannel.send(JSON.stringify(data));
     }
 
     public override destroy() {
         this.dataChannel?.close();
         this.connection?.close();
-        // this.isConnected = false;
         super.destroy();
     }
 

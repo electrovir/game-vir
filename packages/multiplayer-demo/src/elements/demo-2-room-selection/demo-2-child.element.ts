@@ -99,7 +99,7 @@ export const Demo2Child = defineElementNoInputs({
                     roomName: room.roomName,
                     roomPassword: '',
                 });
-                webrtcController.listen(WebrtcMultiplayerConnectionUpdateEvent, (event) => {
+                webrtcController.listen(WebrtcMultiplayerConnectionUpdateEvent, () => {
                     const connectedClients = webrtcController.getConnectedClientIds();
                     updateState({
                         connectedClients,

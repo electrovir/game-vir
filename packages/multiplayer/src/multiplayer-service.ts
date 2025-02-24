@@ -217,6 +217,11 @@ export type MultiplayerService = ReturnType<typeof defineMultiplayerService>;
  * @category Internal
  */
 export const defaultMultiplayerServicePort = 3500;
+/**
+ * The default multiplayer service origin.
+ *
+ * @category Internal
+ */
 export const defaultMultiplayerServiceOrigin = buildUrl('http://localhost', {
     port: defaultMultiplayerServicePort,
 }).origin;

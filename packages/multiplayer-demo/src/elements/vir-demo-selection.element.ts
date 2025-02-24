@@ -1,9 +1,17 @@
 import {check} from '@augment-vir/assert';
-import {defineElementNoInputs, html, nothing, type DeclarativeElementDefinition} from 'element-vir';
+import {
+    defineElementNoInputs,
+    html,
+    listen,
+    nothing,
+    renderIf,
+    type DeclarativeElementDefinition,
+} from 'element-vir';
 import {SpaRouter, type FullRoute} from 'spa-router-vir';
 import {ViraLink} from 'vira';
 import {Demo1App} from './demo-1-room-connection/demo-1-app.element.js';
 import {Demo2App} from './demo-2-room-selection/demo-2-app.element.js';
+import {Demo3App} from './demo-3-webrtc-speed/demo-3-app.element.js';
 
 const demoList = (
     [
@@ -15,6 +23,10 @@ const demoList = (
             name: 'Demo 2: Room Selection',
             element: Demo2App,
         },
+        {
+            name: 'Demo 3: WebRTC Speed',
+            element: Demo3App,
+        },
     ] satisfies {name: string; element: DeclarativeElementDefinition}[]
 ).map((entry) => {
     return {
@@ -24,7 +36,8 @@ const demoList = (
 });
 
 type DemoPaths = [] | [string];
-type DemoFullRoute = Required<FullRoute<DemoPaths, undefined, undefined>>;
+type DemoSearch = undefined | {child: string[]};
+type DemoFullRoute = Required<FullRoute<DemoPaths, DemoSearch, undefined>>;
 
 const defaultRoute: DemoFullRoute = {
     hash: undefined,
@@ -32,12 +45,17 @@ const defaultRoute: DemoFullRoute = {
     search: undefined,
 };
 
-const demoRouter = new SpaRouter<DemoPaths, undefined, undefined>({
+const demoRouter = new SpaRouter<DemoPaths, DemoSearch, undefined>({
     sanitizeRoute(rawRoute) {
         return {
             paths: [rawRoute.paths[0]].filter(check.isTruthy) as DemoPaths,
             hash: undefined,
-            search: undefined,
+            search:
+                rawRoute.search && rawRoute.search.child
+                    ? {
+                          child: rawRoute.search.child,
+                      }
+                    : undefined,
         };
     },
 });
@@ -67,6 +85,8 @@ export const VirDemoSelection = defineElementNoInputs({
         });
     },
     render({state}) {
+        const isChild = !!state.currentRoute.search?.child;
+
         if (state.currentRoute.paths[0]) {
             const currentDemo = demoList.find(
                 (demoEntry) => demoEntry.routeName === state.currentRoute.paths[0],
@@ -74,6 +94,20 @@ export const VirDemoSelection = defineElementNoInputs({
 
             if (currentDemo) {
                 return html`
+                    ${renderIf(
+                        !isChild,
+                        html`
+                            <button
+                                ${listen('click', () => {
+                                    state.router.setRoute({
+                                        paths: [],
+                                    });
+                                })}
+                            >
+                                🔙
+                            </button>
+                        `,
+                    )}
                     <${currentDemo.element}></${currentDemo.element}>
                 `;
             } else {

@@ -209,13 +209,13 @@ describe('multiplayer service', () => {
                     [rooms[0].clients['a-host'].clientName]: [
                         {
                             type: MultiplayerWebSocketMessageType.OfferResult,
-                            youAreTheHost: true,
+                            hostClientId: rooms[0].clients['a-host'].clientId,
                         },
                     ],
                     [rooms[1].clients['b-host'].clientName]: [
                         {
                             type: MultiplayerWebSocketMessageType.OfferResult,
-                            youAreTheHost: true,
+                            hostClientId: rooms[1].clients['b-host'].clientId,
                         },
                         {
                             clientId: rooms[1].clients['b-member-1'].clientId,
@@ -231,7 +231,7 @@ describe('multiplayer service', () => {
                     [rooms[1].clients['b-member-1'].clientName]: [
                         {
                             type: MultiplayerWebSocketMessageType.OfferResult,
-                            youAreTheHost: false,
+                            hostClientId: rooms[1].clients['b-host'].clientId,
                         },
                     ],
                 },

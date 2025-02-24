@@ -1,16 +1,16 @@
 import {assert, waitUntil} from '@augment-vir/assert';
 import {
+    JsonCompatibleValue,
+    PartialWithUndefined,
+    Uuid,
     createUuidV4,
     ensureErrorAndPrependMessage,
-    getObjectTypedEntries,
     getObjectTypedKeys,
     log,
     makeWritable,
     mergeDefinedProperties,
     randomString,
     stringify,
-    type PartialWithUndefined,
-    type Uuid,
 } from '@augment-vir/common';
 import type {ClientWebSocket} from '@rest-vir/define-service';
 import type {RequireExactlyOne} from 'type-fest';
@@ -74,9 +74,9 @@ export type RoomInput = Pick<
  *
  * @category Main
  */
-export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTarget<
-    WebrtcMessageEvent<MessageData> | WebrtcMultiplayerConnectionUpdateEvent
-> {
+export class WebrtcMultiplayerController<
+    MessageData extends JsonCompatibleValue = any,
+> extends ListenTarget<WebrtcMessageEvent<MessageData> | WebrtcMultiplayerConnectionUpdateEvent> {
     /** The randomized client id for this controller. */
     public readonly clientId: Uuid = createUuidV4();
     public readonly hostClientId: Uuid | undefined;
@@ -156,17 +156,9 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
          * When this client is a member client, there will only be one connection and it will be the
          * host client.
          */
-        getObjectTypedEntries(this.connections).forEach(
-            ([
-                clientId,
-                connection,
-            ]) => {
-                if (clientId === this.clientId) {
-                    return;
-                }
-                connection.sendMessage(data);
-            },
-        );
+        Object.values(this.connections).forEach((connection) => {
+            connection.sendMessage(data);
+        });
     }
 
     /**
@@ -337,7 +329,7 @@ export class WebrtcMultiplayerController<MessageData = unknown> extends ListenTa
     }
 
     private createNewConnection(uuid: Uuid): WebrtcController<MessageData> {
-        const newController = new WebrtcController<MessageData>();
+        const newController = new WebrtcController<MessageData>(this.clientId);
         this.connections[uuid] = newController;
         newController.listen(WebrtcConnectEvent, (event) => {
             const connectionEstablished = event.detail;
