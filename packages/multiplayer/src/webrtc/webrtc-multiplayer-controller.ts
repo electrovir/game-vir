@@ -20,6 +20,24 @@ import {MultiplayerWebSocketMessageType, type MultiplayerService} from '../multi
 import {WebrtcConnectEvent, WebrtcController, WebrtcMessageEvent} from './webrtc-controller.js';
 
 /**
+ * An event that is omitted from {@link WebrtcController} when a WebRTC message is received.
+ *
+ * @category Internal
+ */
+export class WebrtcMultiplayerMessageEvent<
+    MessageData extends JsonCompatibleValue,
+> extends defineTypedCustomEvent<any>()('webrtc-multiplayer-message') {
+    public declare detail: MessageData;
+
+    constructor(
+        public readonly sourceClientId: Uuid,
+        detail: MessageData,
+    ) {
+        super({detail});
+    }
+}
+
+/**
  * An event that is omitted from {@link WebrtcMultiplayerController} when the multiplayer room host
  * is updated.
  *
@@ -76,7 +94,9 @@ export type RoomInput = Pick<
  */
 export class WebrtcMultiplayerController<
     MessageData extends JsonCompatibleValue = any,
-> extends ListenTarget<WebrtcMessageEvent<MessageData> | WebrtcMultiplayerConnectionUpdateEvent> {
+> extends ListenTarget<
+    WebrtcMultiplayerMessageEvent<MessageData> | WebrtcMultiplayerConnectionUpdateEvent
+> {
     /** The randomized client id for this controller. */
     public readonly clientId: Uuid = createUuidV4();
     public readonly hostClientId: Uuid | undefined;
@@ -159,6 +179,23 @@ export class WebrtcMultiplayerController<
         Object.values(this.connections).forEach((connection) => {
             connection.sendMessage(data);
         });
+    }
+
+    /** Send a message to just a single client. This is only allowed on a host client. */
+    public sendToOnlyOneClient(clientId: Uuid, data: Readonly<MessageData>) {
+        if (!this.isHost()) {
+            log.error(new Error(`Cannot send to an individual client as not a host.`));
+            return;
+        }
+
+        const client = this.connections[clientId];
+
+        if (!client || !client.isConnected) {
+            log.error(new Error(`Cannot send to missing or disconnected client ('${clientId}')`));
+            return;
+        }
+
+        client.sendMessage(data);
     }
 
     /**
@@ -372,11 +409,13 @@ export class WebrtcMultiplayerController<
             }
         });
         newController.listen(WebrtcMessageEvent, (event) => {
-            this.dispatch(
-                new WebrtcMessageEvent<MessageData>({
-                    detail: event.detail,
-                }),
-            );
+            const sourceUuid = uuid === this.clientId ? this.hostClientId : uuid;
+
+            if (sourceUuid) {
+                this.dispatch(
+                    new WebrtcMultiplayerMessageEvent<MessageData>(sourceUuid, event.detail),
+                );
+            }
         });
 
         return newController;

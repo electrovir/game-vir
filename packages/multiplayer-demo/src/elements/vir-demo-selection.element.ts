@@ -24,7 +24,7 @@ const demoList = (
             element: Demo2App,
         },
         {
-            name: 'Demo 3: WebRTC Speed',
+            name: 'Demo 3: WebRTC lock-step latency',
             element: Demo3App,
         },
     ] satisfies {name: string; element: DeclarativeElementDefinition}[]

@@ -1,17 +1,31 @@
 import {createArray} from '@augment-vir/common';
 import {css, defineElementNoInputs, html} from 'element-vir';
 import {parseUrl} from 'url-vir';
+import {noNativeSpacing} from 'vira';
 import {Demo3Child} from './demo-3-child.element.js';
 import {Demo3Iframe} from './demo-3-iframe.element.js';
 
 const isParent = !parseUrl(window.location.href).searchParams.child;
 
-const iframeCount = 2;
+const iframeCount = 16;
 
 export const Demo3App = defineElementNoInputs({
     tagName: 'demo-3-app',
     styles: css`
         :host {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            min-height: 100%;
+            box-sizing: border-box;
+        }
+
+        p {
+            ${noNativeSpacing};
+        }
+
+        main {
             display: flex;
             width: 100%;
             min-height: 100%;
@@ -19,7 +33,7 @@ export const Demo3App = defineElementNoInputs({
             flex-wrap: wrap;
         }
 
-        :host > * {
+        main > * {
             flex-grow: 1;
             flex-shrink: 0;
         }
@@ -27,8 +41,11 @@ export const Demo3App = defineElementNoInputs({
         ${isParent
             ? css`
                   :host {
-                      justify-content: space-evenly;
                       padding: 64px;
+                  }
+
+                  main {
+                      justify-content: space-evenly;
                       gap: 64px;
                   }
               `
@@ -41,12 +58,16 @@ export const Demo3App = defineElementNoInputs({
     `,
     render() {
         if (isParent) {
-            return createArray(
+            const frameTemplates = createArray(
                 iframeCount,
                 () => html`
                     <${Demo3Iframe}></${Demo3Iframe}>
                 `,
             );
+            return html`
+                <p>${iframeCount} Iframes</p>
+                <main>${frameTemplates}</main>
+            `;
         } else {
             return html`
                 <${Demo3Child}></${Demo3Child}>

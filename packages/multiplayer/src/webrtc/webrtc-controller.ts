@@ -2,6 +2,7 @@ import {assert, check} from '@augment-vir/assert';
 import {
     addPrefix,
     DeferredPromise,
+    log,
     makeWritable,
     wrapInTry,
     type JsonCompatibleValue,
@@ -134,14 +135,14 @@ export class WebrtcController<MessageData extends JsonCompatibleValue> extends L
      * connection has not been established yet.
      */
     public sendMessage(data: Readonly<MessageData>) {
-        assert.isTrue(
-            this.isConnected,
-            `There is no WebRTC connection to send a message to from ${this.clientId}.`,
-        );
-        assert.isDefined(
-            this.dataChannel,
-            `There is no WebRTC connection to send a message to from ${this.clientId}.`,
-        );
+        if (!this.isConnected) {
+            log.error(`There is no WebRTC connection to send a message to from ${this.clientId}.`);
+            return;
+        } else if (!this.dataChannel) {
+            log.error(`There is no WebRTC connection to send a message to from ${this.clientId}.`);
+            return;
+        }
+
         this.dataChannel.send(JSON.stringify(data));
     }
 

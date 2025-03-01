@@ -1,14 +1,15 @@
-import {waitUntil} from '@augment-vir/assert';
-import {createUuidV4, DeferredPromise, log, wait, type AnyObject} from '@augment-vir/common';
+import {check, waitUntil} from '@augment-vir/assert';
+import {log, wait, type Uuid} from '@augment-vir/common';
 import {
     createNewRoom,
     defineMultiplayerService,
-    WebrtcMessageEvent,
+    WebrtcMultiplayerConnectionUpdateEvent,
     WebrtcMultiplayerController,
+    WebrtcMultiplayerMessageEvent,
     type RoomInput,
 } from '@game-vir/multiplayer';
 import {generateApi, mapServiceDevPort} from '@rest-vir/define-service';
-import {convertDuration, type Duration, type DurationUnit} from 'date-vir';
+import {type Duration, type DurationUnit} from 'date-vir';
 import {
     asyncProp,
     css,
@@ -17,7 +18,10 @@ import {
     isAsyncError,
     isResolved,
     nothing,
+    renderIf,
 } from 'element-vir';
+import {noNativeSpacing} from 'vira';
+import {calculateMedian} from '../../augments/median.js';
 
 export const Demo3Child = defineElementNoInputs({
     tagName: 'demo-3-child',
@@ -37,14 +41,39 @@ export const Demo3Child = defineElementNoInputs({
             color: red;
             font-weight: bold;
         }
+
+        p {
+            ${noNativeSpacing};
+        }
     `,
     stateInitStatic: {
         webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
             defaultValue: undefined,
         }),
         lastLatency: undefined as undefined | Duration<DurationUnit.Milliseconds>,
+        currentFrame: undefined as undefined | number,
+        clientCount: 0,
+        medianLatency: undefined as undefined | Duration<DurationUnit.Milliseconds>,
+        lastMedianUpdate: Date.now(),
+        lastFrameCount: 0,
+        framesPerSecond: 0,
     },
-    init({state, host, updateState}) {
+    init({state, updateState}) {
+        let latencies: number[] = [];
+
+        function updateMedianLatency(newLatency: Duration<DurationUnit.Milliseconds>) {
+            latencies.push(newLatency.milliseconds);
+            if (Date.now() > state.lastMedianUpdate + 1000) {
+                updateState({
+                    medianLatency: {milliseconds: calculateMedian(latencies) || 0},
+                    lastMedianUpdate: Date.now(),
+                    lastFrameCount: state.currentFrame || 0,
+                    framesPerSecond: (state.currentFrame || 0) - state.lastFrameCount,
+                });
+                latencies = [];
+            }
+        }
+
         state.webrtcController.setValue(
             mapServiceDevPort(defineMultiplayerService(), {
                 maxScanDistance: 10,
@@ -59,6 +88,14 @@ export const Demo3Child = defineElementNoInputs({
                 const api = generateApi(service);
 
                 let webrtcController = new WebrtcMultiplayerController(api, [], initRoom);
+
+                startLockStep(webrtcController, (newState) => {
+                    if ('lastLatency' in newState) {
+                        updateMedianLatency(newState.lastLatency);
+                    }
+
+                    updateState(newState);
+                });
 
                 await webrtcController.initConnection();
                 await waitUntil.isTrue(() => webrtcController.isConnected());
@@ -75,19 +112,27 @@ export const Demo3Child = defineElementNoInputs({
                         ...initRoom,
                         roomId: firstRoom.roomId,
                     });
+                    let lastFrameStart = Date.now();
+
+                    webrtcController.listen(
+                        WebrtcMultiplayerMessageEvent,
+                        ({detail: frameIndex}) => {
+                            const newFrameStart = Date.now();
+                            webrtcController.sendMessage(frameIndex);
+                            const lastLatency = {milliseconds: newFrameStart - lastFrameStart};
+                            updateState({
+                                lastLatency,
+                                currentFrame: frameIndex,
+                            });
+
+                            updateMedianLatency(lastLatency);
+                            lastFrameStart = newFrameStart;
+                        },
+                    );
                     await webrtcController.initConnection();
 
                     await waitUntil.isTrue(() => webrtcController.isConnected());
                 }
-
-                webrtcController.listen(WebrtcMessageEvent, (message) => {
-                    const data: AnyObject = message.detail || {};
-                    if (data.type === 'latency-test') {
-                        webrtcController.sendMessage({id: data.id, type: 'latency-response'});
-                    }
-                });
-
-                void detectWebrtcLatency(webrtcController, host, updateState);
 
                 return webrtcController;
             }),
@@ -112,59 +157,104 @@ export const Demo3Child = defineElementNoInputs({
             <br />
             ${state.webrtcController.value.isHost() ? 'Host Client' : 'Member Client'}
             <br />
+            Frame: ${state.currentFrame || 0}
+            <br />
+            FPS: ${state.framesPerSecond}
+            <br />
+            ${renderIf(
+                !!state.clientCount,
+                html`
+                    Client count: ${state.clientCount}
+                    <br />
+                `,
+            )}
+            ${state.medianLatency
+                ? html`
+                      <p>Median Latency: ${state.medianLatency.milliseconds} ms</p>
+                  `
+                : nothing}
             ${state.lastLatency
                 ? html`
-                      <p class="latency">
-                          Round-trip latency: ${state.lastLatency.milliseconds} ms
-                      </p>
+                      <p class="latency">Latency: ${state.lastLatency.milliseconds} ms</p>
                   `
                 : nothing}
         `;
     },
 });
 
-async function detectWebrtcLatency(
+function startLockStep(
     webrtcController: WebrtcMultiplayerController,
-    host: HTMLElement,
-    updateState: (params: {lastLatency: {milliseconds: number}}) => void,
+    updateState: (
+        newState: Partial<{
+            lastLatency: Duration<DurationUnit.Milliseconds>;
+            currentFrame: number;
+            clientCount: number;
+        }>,
+    ) => void,
 ) {
-    if (!webrtcController.isConnected() || !host.isConnected) {
-        return;
-    }
+    let clientMessages: Record<Uuid, unknown> = {};
+    let frameIndex = 0;
+    let frameStart = Date.now();
 
-    if (webrtcController.getConnectedClientIds().length) {
-        const latencyReceived = new DeferredPromise();
+    function maybeStartNextFrame() {
+        if (!webrtcController.isHost()) {
+            return;
+        }
 
-        const messageId = createUuidV4();
+        if (check.hasKeys(clientMessages, webrtcController.getConnectedClientIds())) {
+            const newFrameStart = Date.now();
 
-        const removeListener = webrtcController.listen(WebrtcMessageEvent, (message) => {
-            const data: AnyObject = message.detail || {};
-            if (data.id === messageId && data.type === 'latency-response') {
-                latencyReceived.resolve();
+            updateState({
+                lastLatency: {milliseconds: newFrameStart - frameStart},
+                currentFrame: frameIndex,
+            });
+            frameStart = newFrameStart;
+
+            ++frameIndex;
+            if (frameIndex > 1_000_000_000) {
+                frameIndex = 0;
             }
-        });
 
-        const start = Date.now();
-        webrtcController.sendMessage({
-            type: 'latency-test',
-            id: messageId,
-        });
-
-        await latencyReceived.promise;
-        updateState({
-            lastLatency: convertDuration({milliseconds: Date.now() - start}, {milliseconds: true}),
-        });
-        removeListener();
-    } else {
-        log.warning(`No clients to get latency from in ${webrtcController.clientId}`);
+            webrtcController.sendMessage(frameIndex as any);
+            clientMessages = {};
+        }
     }
 
-    window.setTimeout(
-        () => void detectWebrtcLatency(webrtcController, host, updateState),
-        /**
-         * Decreasing this value clogs up the duplex stream very quickly, preventing the host from
-         * detecting its own latency. Is this going to be a problem for gaming?
-         */
-        500,
-    );
+    webrtcController.listen(WebrtcMultiplayerMessageEvent, ({sourceClientId, detail: message}) => {
+        if (sourceClientId in clientMessages) {
+            log.error(
+                new Error(
+                    `Already received message from client '${sourceClientId}' for frame '${frameIndex}'.`,
+                ),
+            );
+            return;
+        } else if (message !== frameIndex) {
+            log.error(
+                new Error(
+                    `Received wrong frame ('${message}') from '${sourceClientId}'. Expected frame '${frameIndex}'.`,
+                ),
+            );
+            return;
+        }
+
+        clientMessages[sourceClientId] = message;
+
+        maybeStartNextFrame();
+    });
+
+    webrtcController.listen(WebrtcMultiplayerConnectionUpdateEvent, ({detail}) => {
+        maybeStartNextFrame();
+
+        updateState({
+            clientCount: webrtcController.getConnectedClientIds().length,
+        });
+
+        if (!('newHost' in detail)) {
+            console.log(detail);
+        }
+
+        if (detail.newMember) {
+            webrtcController.sendToOnlyOneClient(detail.newMember, frameIndex as any);
+        }
+    });
 }
