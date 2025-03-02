@@ -105,8 +105,6 @@ export class WebrtcMultiplayerController<
 > extends ListenTarget<
     WebrtcMultiplayerMessageEvent<MessageData> | WebrtcMultiplayerConnectionUpdateEvent
 > {
-    /** The randomized client id for this controller. */
-    public readonly clientId: Uuid = createUuidV4();
     public readonly hostClientId: Uuid | undefined;
 
     /**
@@ -127,6 +125,8 @@ export class WebrtcMultiplayerController<
          */
         public readonly stunServerUrls: ReadonlyArray<string>,
         public readonly multiplayerRoom: Readonly<RoomInput>,
+        /** The randomized client id for this controller and client. */
+        public readonly clientId: Uuid = createUuidV4(),
     ) {
         super();
     }

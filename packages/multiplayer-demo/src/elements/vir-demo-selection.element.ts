@@ -13,6 +13,7 @@ import {Demo1App} from './demo-1-room-connection/demo-1-app.element.js';
 import {Demo2App} from './demo-2-room-selection/demo-2-app.element.js';
 import {Demo3App} from './demo-3-webrtc-speed/demo-3-app.element.js';
 import {Demo4App} from './demo-4-multiplayer/demo-4-app.element.js';
+import {Demo5App} from './demo-5-singleplayer/demo-5-app.element.js';
 
 const demoList = (
     [
@@ -31,6 +32,10 @@ const demoList = (
         {
             name: 'Demo 4: Multiplayer Controller',
             element: Demo4App,
+        },
+        {
+            name: 'Demo 5: Singleplayer',
+            element: Demo5App,
         },
     ] satisfies {name: string; element: DeclarativeElementDefinition}[]
 ).map((entry) => {

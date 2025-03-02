@@ -1,11 +1,10 @@
 import {createUuidV4, randomInteger} from '@augment-vir/common';
-import {defaultMultiplayerServiceOrigin} from '@game-vir/multiplayer';
 import {
     MultiplayerConnectionState,
     MultiplayerController,
 } from '@game-vir/multiplayer/src/multiplayer-controller.js';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
-import {demoColors} from './demo-4-colors.js';
+import {demoColors} from './demo-5-colors.js';
 
 type DemoAction = {
     color: string;
@@ -13,8 +12,8 @@ type DemoAction = {
     y: number;
 };
 
-export const Demo4Child = defineElementNoInputs({
-    tagName: 'demo-4-child',
+export const Demo5Child = defineElementNoInputs({
+    tagName: 'demo-5-child',
     styles: () => css`
         :host {
             display: flex;
@@ -93,13 +92,7 @@ export const Demo4Child = defineElementNoInputs({
                         });
                     },
                 },
-                multiplayer: {
-                    portScanOptions: {
-                        maxScanDistance: 10,
-                    },
-                    serviceOrigin: defaultMultiplayerServiceOrigin,
-                    roomUpdateInterval: {milliseconds: 500},
-                },
+                singleplayer: true,
                 // // use longer frame durations for debugging
                 // frameDuration: {seconds: 1},
             });

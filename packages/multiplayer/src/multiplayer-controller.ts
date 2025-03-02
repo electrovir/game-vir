@@ -1,7 +1,8 @@
 import {JsonCompatibleValue, makeWritable, MaybePromise, type Uuid} from '@augment-vir/common';
 import {mapServiceDevPort} from '@rest-vir/define-service';
 import {convertDuration, type AnyDuration} from 'date-vir';
-import {LockStepFrameEvent, LockStepMultiplayerController} from './lock-step-controller.js';
+import type {RequireExactlyOne} from 'type-fest';
+import {LockStepFrameEvent, LockStepGameStateController} from './lock-step-controller.js';
 import {createMultiplayerApi, MultiplayerApi} from './multiplayer-api.js';
 import type {MultiplayerClientRooms} from './multiplayer-service.js';
 import {
@@ -49,6 +50,25 @@ export type MultiplayerControllerParams<Action> = {
         /** Fires when the controller's connection state is updated. */
         connectionUpdate?: (state: MultiplayerConnectionState) => MaybePromise<void>;
     };
+
+    /**
+     * The duration between each frame. This should probably always be smaller than your supported
+     * render frame duration (1/FPS).
+     *
+     * @default {milliseconds: 10}
+     */
+    frameDuration?: AnyDuration | undefined;
+} & RequireExactlyOne<{
+    singleplayer: true;
+    multiplayer: MultiplayerParams;
+}>;
+
+/**
+ * Multiplayer mode parameters for {@link MultiplayerController}.
+ *
+ * @category Internal
+ */
+export type MultiplayerParams = {
     /**
      * Set to `undefined` or `false` to disable port scanning. Set to `true` to enable port
      * scanning. Set to an options object to configure port scanning.
@@ -71,18 +91,12 @@ export type MultiplayerControllerParams<Action> = {
      * but might help with clients attempting to establish connections to each other.
      */
     stunServerUrls?: ReadonlyArray<string> | undefined;
-    /**
-     * The duration between each frame. This should probably always be smaller than your supported
-     * render frame duration (1/FPS).
-     *
-     * @default {milliseconds: 10}
-     */
-    frameDuration?: AnyDuration | undefined;
 };
 
 /**
- * An all-in-one controller for lock-step multiplayer messaging. This requires a Node.js service
- * running the {@link MultiplayerApi} to function.
+ * An all-in-one controller for singleplayer or lock-step multiplayer game state. Singleplayer mode
+ * requires no servers. Multiplayer mode requires a backend service running the
+ * {@link MultiplayerApi}.
  *
  * @category Main
  */
@@ -93,18 +107,43 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     public readonly connectionState: MultiplayerConnectionState =
         MultiplayerConnectionState.Disconnected;
 
-    private currentConnection: LockStepMultiplayerController | undefined;
-    private readonly multiplayerApi;
+    private currentConnection: LockStepGameStateController | undefined;
+    private multiplayerApi: Promise<MultiplayerApi> | undefined;
     private roomUpdateIntervalId: ReturnType<typeof globalThis.setInterval> | undefined;
 
     constructor(private readonly params: MultiplayerControllerParams<Action>) {
-        // eslint-disable-next-line sonarjs/no-async-constructor
+        if (params.multiplayer) {
+            this.startMultiplayer(params.multiplayer);
+        } else {
+            this.startSingleplayer();
+        }
+    }
+
+    private startMultiplayer(params: Readonly<MultiplayerParams>) {
         this.multiplayerApi = createMultiplayerApi({
             portScanOptions: params.portScanOptions,
             serviceOrigin: params.serviceOrigin,
         });
 
         this.startRoomInterval();
+    }
+
+    private startSingleplayer() {
+        if (this.currentConnection) {
+            throw new Error(`Cannot join or create a room, `);
+        }
+        this.updateConnectionState(MultiplayerConnectionState.Connecting);
+
+        this.currentConnection = new LockStepGameStateController(
+            this.params.frameDuration || {milliseconds: 10},
+        );
+        this.currentConnection.listen(LockStepFrameEvent, async (event) => {
+            await this.params.listeners.frame(event.detail);
+        });
+        this.currentConnection.startSingleplayer();
+
+        globalThis.clearInterval(this.roomUpdateIntervalId);
+        this.updateConnectionState(MultiplayerConnectionState.Connected);
     }
 
     /** The current FPS of the data flow. */
@@ -141,12 +180,15 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
         if (this.currentConnection) {
             throw new Error(`Cannot join or create a room, `);
         }
+        if (!this.multiplayerApi || !this.params.multiplayer) {
+            throw new Error(
+                'Cannot join room. Please construct this controller in multiplayer mode to join rooms.',
+            );
+        }
+
         this.updateConnectionState(MultiplayerConnectionState.Connecting);
 
-        this.currentConnection = new LockStepMultiplayerController(
-            await this.multiplayerApi,
-            this.params.stunServerUrls || [],
-            room,
+        this.currentConnection = new LockStepGameStateController(
             this.params.frameDuration || {milliseconds: 10},
         );
         this.currentConnection.listen(LockStepFrameEvent, async (event) => {
@@ -158,13 +200,17 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
             });
         }
 
-        await this.currentConnection.connect();
+        await this.currentConnection.multiplayerConnect(
+            await this.multiplayerApi,
+            this.params.multiplayer.stunServerUrls || [],
+            room,
+        );
         makeWritable(this).roomId = room.roomId;
         globalThis.clearInterval(this.roomUpdateIntervalId);
         this.updateConnectionState(MultiplayerConnectionState.Connected);
     }
 
-    /** Leave the current room. */
+    /** Leave the current room or single player connection. */
     public leaveRoom() {
         if (!this.currentConnection) {
             return;
@@ -183,13 +229,14 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     }
 
     private startRoomInterval() {
-        if (this.params.listeners.roomListUpdate) {
-            const roomUpdateMs: number = this.params.roomUpdateInterval
-                ? convertDuration(this.params.roomUpdateInterval, {milliseconds: true}).milliseconds
+        if (this.params.listeners.roomListUpdate && this.multiplayerApi) {
+            const roomUpdateMs: number = this.params.multiplayer?.roomUpdateInterval
+                ? convertDuration(this.params.multiplayer.roomUpdateInterval, {milliseconds: true})
+                      .milliseconds
                 : 10_000;
 
             this.roomUpdateIntervalId = globalThis.setInterval(async () => {
-                if (this.currentConnection) {
+                if (this.currentConnection || !this.multiplayerApi) {
                     return;
                 }
                 const {data: currentRooms} = await (

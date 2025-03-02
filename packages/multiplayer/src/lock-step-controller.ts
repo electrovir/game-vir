@@ -1,5 +1,5 @@
 import {waitUntil} from '@augment-vir/assert';
-import {JsonCompatibleValue, makeWritable, type Uuid} from '@augment-vir/common';
+import {createUuidV4, JsonCompatibleValue, makeWritable, type Uuid} from '@augment-vir/common';
 import {AnyDuration, convertDuration} from 'date-vir';
 import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
 import {MultiplayerApi} from './multiplayer-api.js';
@@ -21,7 +21,7 @@ export enum LockStepMessageType {
 }
 
 /**
- * Message for {@link LockStepMultiplayerController}.
+ * Message for {@link LockStepGameStateController}.
  *
  * @category Internal
  */
@@ -38,7 +38,7 @@ export type LockStepMessage<Action> =
       };
 
 /**
- * An event that is omitted from {@link LockStepMultiplayerController} when a frame is finalized.
+ * An event that is omitted from {@link LockStepGameStateController} when a frame is finalized.
  *
  * @category Internal
  */
@@ -50,14 +50,14 @@ export class LockStepFrameEvent<
 
 /**
  * A wrapper for {@link WebrtcMultiplayerController} that ensures messages are sent and arrive in a
- * lock-step fashion.
+ * lock-step fashion. Also supports singleplayer mode.
  *
  * @category Internal
  */
-export class LockStepMultiplayerController<
+export class LockStepGameStateController<
     Action extends JsonCompatibleValue = any,
 > extends ListenTarget<LockStepFrameEvent<Action> | WebrtcMultiplayerConnectionUpdateEvent> {
-    protected webrtcController;
+    protected webrtcController: WebrtcMultiplayerController<LockStepMessage<Action>> | undefined;
     /** The current client id. */
     public clientId;
     /** The current data flow FPS. */
@@ -73,36 +73,22 @@ export class LockStepMultiplayerController<
         timestamp: 0,
         frameCount: 0,
     };
+    private singleplayer: boolean = false;
 
-    constructor(
-        multiplayerApi: Readonly<MultiplayerApi>,
-        /**
-         * - 'stun.l.google.com:19302'
-         * - 'stun.stunprotocol.org'
-         * - 'stun.cloudflare.com:3478'
-         */
-        stunServerUrls: ReadonlyArray<string>,
-        multiplayerRoom: Readonly<RoomInput>,
-        frameDuration: AnyDuration,
-    ) {
+    constructor(frameDuration: AnyDuration) {
         super();
-        this.webrtcController = new WebrtcMultiplayerController<LockStepMessage<Action>>(
-            multiplayerApi,
-            stunServerUrls,
-            multiplayerRoom,
-        );
-        this.clientId = this.webrtcController.clientId;
+        this.clientId = createUuidV4();
         this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
     }
 
     /** Checks if the current controller is the room host. */
     public isHost() {
-        return this.webrtcController.isHost();
+        return this.singleplayer || this.webrtcController?.isHost();
     }
 
     /** Checks if the current controller is connected to the room. */
     public isConnected() {
-        return this.webrtcController.isConnected();
+        return this.singleplayer || this.webrtcController?.isConnected();
     }
 
     /** Perform an action for the current client. */
@@ -113,12 +99,40 @@ export class LockStepMultiplayerController<
     /** Cleanup everything. */
     public override destroy() {
         globalThis.clearInterval(this.timeoutId);
-        this.webrtcController.destroy();
+        this.webrtcController?.destroy();
         super.destroy();
     }
 
-    /** Connect to the room. */
-    public async connect() {
+    /**
+     * Startup the controller in singleplayer mode.
+     *
+     * @see {@link LockStepGameStateController.multiplayerConnect} for starting the controller in multiplayer mode.
+     */
+    public startSingleplayer() {
+        this.singleplayer = true;
+        this.finishFrame();
+    }
+    /**
+     * Startup the controller in multiplayer mode and connect to a room.
+     *
+     * @see {@link LockStepGameStateController.startSingleplayer} for starting the controller in singleplayer mode.
+     */
+    public async multiplayerConnect(
+        multiplayerApi: Readonly<MultiplayerApi>,
+        /**
+         * - 'stun.l.google.com:19302'
+         * - 'stun.stunprotocol.org'
+         * - 'stun.cloudflare.com:3478'
+         */
+        stunServerUrls: ReadonlyArray<string>,
+        multiplayerRoom: Readonly<RoomInput>,
+    ) {
+        this.webrtcController = new WebrtcMultiplayerController<LockStepMessage<Action>>(
+            multiplayerApi,
+            stunServerUrls,
+            multiplayerRoom,
+            this.clientId,
+        );
         this.webrtcController.listen(WebrtcMultiplayerMessageEvent, (event) => {
             this.handleReceivedMessage(event);
         });
@@ -127,13 +141,13 @@ export class LockStepMultiplayerController<
         });
 
         await this.webrtcController.initConnection();
-        await waitUntil.isTrue(() => this.webrtcController.isConnected());
+        await waitUntil.isTrue(() => this.webrtcController?.isConnected());
 
         this.finishFrame();
     }
 
     private handleConnection(event: WebrtcMultiplayerConnectionUpdateEvent) {
-        if (this.webrtcController.isHost() && 'newMember' in event.detail) {
+        if (this.webrtcController && this.isHost() && 'newMember' in event.detail) {
             this.webrtcController.sendToOnlyOneClient(event.detail.newMember, {
                 type: LockStepMessageType.Frame,
                 actions: [],
@@ -160,11 +174,15 @@ export class LockStepMultiplayerController<
         sourceClientId,
         detail: message,
     }: WebrtcMultiplayerMessageEvent<LockStepMessage<Action>>) {
-        if (this.webrtcController.isHost() && message.type === LockStepMessageType.Actions) {
+        if (!this.webrtcController) {
+            return;
+        }
+
+        if (this.isHost() && message.type === LockStepMessageType.Actions) {
             this.clientsResponded[sourceClientId] = true;
             this.frameActions.push(...message.actions);
             this.maybeFinishFrame();
-        } else if (!this.webrtcController.isHost() && message.type === LockStepMessageType.Frame) {
+        } else if (!this.isHost() && message.type === LockStepMessageType.Frame) {
             this.calculateFps();
             this.webrtcController.sendMessage({
                 actions: this.frameActions,
@@ -176,7 +194,7 @@ export class LockStepMultiplayerController<
         }
     }
     private finishFrame() {
-        this.webrtcController.sendMessage({
+        this.webrtcController?.sendMessage({
             type: LockStepMessageType.Frame,
             actions: this.frameActions,
         });
@@ -193,13 +211,15 @@ export class LockStepMultiplayerController<
     }
 
     private maybeFinishFrame() {
-        if (!this.webrtcController.isHost()) {
+        if (!this.isHost()) {
             return;
         }
 
-        const clientsReady = this.webrtcController
-            .getConnectedClientIds()
-            .every((clientId) => this.clientsResponded[clientId]);
+        const clientsReady =
+            this.singleplayer ||
+            this.webrtcController
+                ?.getConnectedClientIds()
+                .every((clientId) => this.clientsResponded[clientId]);
 
         if (
             !this.frameTimerReady ||
