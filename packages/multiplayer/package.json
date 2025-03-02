@@ -39,6 +39,7 @@
         "@augment-vir/assert": "^31.9.2",
         "@augment-vir/common": "^31.9.2",
         "@rest-vir/define-service": "^0.3.3",
+        "date-vir": "^7.2.1",
         "object-shape-tester": "^5.1.4",
         "type-fest": "^4.35.0",
         "typed-event-target": "^4.0.2",

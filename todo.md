@@ -1,0 +1,1 @@
+-   write code that runs `MultiplayerController` in a worker

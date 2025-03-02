@@ -249,10 +249,6 @@ function startLockStep(
             clientCount: webrtcController.getConnectedClientIds().length,
         });
 
-        if (!('newHost' in detail)) {
-            console.log(detail);
-        }
-
         if (detail.newMember) {
             webrtcController.sendToOnlyOneClient(detail.newMember, frameIndex as any);
         }

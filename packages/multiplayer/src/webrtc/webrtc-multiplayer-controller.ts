@@ -5,6 +5,7 @@ import {
     Uuid,
     createUuidV4,
     ensureErrorAndPrependMessage,
+    extractErrorMessage,
     getObjectTypedKeys,
     log,
     makeWritable,
@@ -38,24 +39,31 @@ export class WebrtcMultiplayerMessageEvent<
 }
 
 /**
+ * Type for data in {@link WebrtcMultiplayerConnectionUpdateEvent}.
+ *
+ * @category Internal
+ */
+export type MultiplayerConnectionUpdate = RequireExactlyOne<{
+    newHost: Uuid;
+    newMember: Uuid;
+    lostHost: Uuid;
+    lostMember: Uuid;
+}>;
+
+/**
  * An event that is omitted from {@link WebrtcMultiplayerController} when the multiplayer room host
  * is updated.
  *
  * @category Internal
  */
-export class WebrtcMultiplayerConnectionUpdateEvent extends defineTypedCustomEvent<
-    RequireExactlyOne<{
-        newHost: Uuid;
-        newMember: Uuid;
-        lostHost: Uuid;
-        lostMember: Uuid;
-    }>
->()('webrtc-multiplayer-connection-update') {}
+export class WebrtcMultiplayerConnectionUpdateEvent extends defineTypedCustomEvent<MultiplayerConnectionUpdate>()(
+    'webrtc-multiplayer-connection-update',
+) {}
 
 /**
  * A helper for creating a new empty room.
  *
- * @category Main
+ * @category Internal
  */
 export function createNewRoom(
     params: Readonly<PartialWithUndefined<Omit<RoomInput, 'roomId'>>> = {},
@@ -90,7 +98,7 @@ export type RoomInput = Pick<
  * Make sure, after constructing this class, to call
  * {@link WebrtcMultiplayerController.initConnection} when you're ready to being the connection.
  *
- * @category Main
+ * @category Internal
  */
 export class WebrtcMultiplayerController<
     MessageData extends JsonCompatibleValue = any,
@@ -177,7 +185,15 @@ export class WebrtcMultiplayerController<
          * host client.
          */
         Object.values(this.connections).forEach((connection) => {
-            connection.sendMessage(data);
+            if (!connection.isConnected) {
+                return;
+            }
+
+            try {
+                connection.sendMessage(data);
+            } catch (error) {
+                log.error(extractErrorMessage(error));
+            }
         });
     }
 

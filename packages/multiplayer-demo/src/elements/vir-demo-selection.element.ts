@@ -12,6 +12,7 @@ import {ViraLink} from 'vira';
 import {Demo1App} from './demo-1-room-connection/demo-1-app.element.js';
 import {Demo2App} from './demo-2-room-selection/demo-2-app.element.js';
 import {Demo3App} from './demo-3-webrtc-speed/demo-3-app.element.js';
+import {Demo4App} from './demo-4-multiplayer/demo-4-app.element.js';
 
 const demoList = (
     [
@@ -24,8 +25,12 @@ const demoList = (
             element: Demo2App,
         },
         {
-            name: 'Demo 3: WebRTC lock-step latency',
+            name: 'Demo 3: WebRTC latency',
             element: Demo3App,
+        },
+        {
+            name: 'Demo 4: Multiplayer Controller',
+            element: Demo4App,
         },
     ] satisfies {name: string; element: DeclarativeElementDefinition}[]
 ).map((entry) => {

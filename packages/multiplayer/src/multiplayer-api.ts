@@ -16,17 +16,21 @@ export type MultiplayerApi = Awaited<ReturnType<typeof createMultiplayerApi>>;
  */
 export async function createMultiplayerApi({
     serviceOrigin = defaultMultiplayerServiceOrigin,
-    devScanOptions,
+    portScanOptions,
 }: {
     serviceOrigin?: string;
-    devScanOptions: undefined | Parameters<typeof mapServiceDevPort>[1] | true;
+    /**
+     * Set to `undefined` or `false` to disable port scanning. Set to `true` to enable port
+     * scanning. Set to an options object to configure port scanning.
+     */
+    portScanOptions: undefined | Parameters<typeof mapServiceDevPort>[1] | boolean;
 }) {
     const initialService = defineMultiplayerService(serviceOrigin);
 
-    const service = devScanOptions
+    const service = portScanOptions
         ? await mapServiceDevPort(
               initialService,
-              check.isBoolean(devScanOptions) ? undefined : devScanOptions,
+              check.isBoolean(portScanOptions) ? undefined : portScanOptions,
           )
         : initialService;
 

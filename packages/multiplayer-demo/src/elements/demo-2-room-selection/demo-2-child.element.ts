@@ -51,7 +51,7 @@ export const Demo2Child = defineElementNoInputs({
         }),
         multiplayerApi: asyncProp({
             defaultValue: createMultiplayerApi({
-                devScanOptions: {
+                portScanOptions: {
                     maxScanDistance: 10,
                     timeout: {
                         seconds: 5,

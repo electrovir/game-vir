@@ -1,0 +1,213 @@
+import {waitUntil} from '@augment-vir/assert';
+import {JsonCompatibleValue, makeWritable, type Uuid} from '@augment-vir/common';
+import {AnyDuration, convertDuration} from 'date-vir';
+import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
+import {MultiplayerApi} from './multiplayer-api.js';
+import {
+    RoomInput,
+    WebrtcMultiplayerConnectionUpdateEvent,
+    WebrtcMultiplayerController,
+    WebrtcMultiplayerMessageEvent,
+} from './webrtc/webrtc-multiplayer-controller.js';
+
+/**
+ * Message type for {@link LockStepMessage}.
+ *
+ * @category Internal
+ */
+export enum LockStepMessageType {
+    Actions = 'actions',
+    Frame = 'frame',
+}
+
+/**
+ * Message for {@link LockStepMultiplayerController}.
+ *
+ * @category Internal
+ */
+export type LockStepMessage<Action> =
+    /** Sent from child clients to the host as actions happen. */
+    | {
+          type: LockStepMessageType.Actions;
+          sourceClientId: Uuid;
+          actions: Action[];
+      }
+    | {
+          type: LockStepMessageType.Frame;
+          actions: Action[];
+      };
+
+/**
+ * An event that is omitted from {@link LockStepMultiplayerController} when a frame is finalized.
+ *
+ * @category Internal
+ */
+export class LockStepFrameEvent<
+    Action extends JsonCompatibleValue,
+> extends defineTypedCustomEvent<any>()('lock-step-multiplayer-frame') {
+    public declare detail: Action;
+}
+
+/**
+ * A wrapper for {@link WebrtcMultiplayerController} that ensures messages are sent and arrive in a
+ * lock-step fashion.
+ *
+ * @category Internal
+ */
+export class LockStepMultiplayerController<
+    Action extends JsonCompatibleValue = any,
+> extends ListenTarget<LockStepFrameEvent<Action> | WebrtcMultiplayerConnectionUpdateEvent> {
+    protected webrtcController;
+    /** The current client id. */
+    public clientId;
+    /** The current data flow FPS. */
+    public readonly currentFps: number = 0;
+
+    /** This is only used if the current controller is the host. */
+    private clientsResponded: Record<Uuid, boolean> = {};
+    private frameActions: Action[] = [];
+    private timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+    private frameTimerReady = true;
+    private frameMs;
+    private lastFpsCalculation = {
+        timestamp: 0,
+        frameCount: 0,
+    };
+
+    constructor(
+        multiplayerApi: Readonly<MultiplayerApi>,
+        /**
+         * - 'stun.l.google.com:19302'
+         * - 'stun.stunprotocol.org'
+         * - 'stun.cloudflare.com:3478'
+         */
+        stunServerUrls: ReadonlyArray<string>,
+        multiplayerRoom: Readonly<RoomInput>,
+        frameDuration: AnyDuration,
+    ) {
+        super();
+        this.webrtcController = new WebrtcMultiplayerController<LockStepMessage<Action>>(
+            multiplayerApi,
+            stunServerUrls,
+            multiplayerRoom,
+        );
+        this.clientId = this.webrtcController.clientId;
+        this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
+    }
+
+    /** Checks if the current controller is the room host. */
+    public isHost() {
+        return this.webrtcController.isHost();
+    }
+
+    /** Checks if the current controller is connected to the room. */
+    public isConnected() {
+        return this.webrtcController.isConnected();
+    }
+
+    /** Perform an action for the current client. */
+    public act(actions: ReadonlyArray<Action>) {
+        this.frameActions.push(...actions);
+    }
+
+    /** Cleanup everything. */
+    public override destroy() {
+        globalThis.clearInterval(this.timeoutId);
+        this.webrtcController.destroy();
+        super.destroy();
+    }
+
+    /** Connect to the room. */
+    public async connect() {
+        this.webrtcController.listen(WebrtcMultiplayerMessageEvent, (event) => {
+            this.handleReceivedMessage(event);
+        });
+        this.webrtcController.listen(WebrtcMultiplayerConnectionUpdateEvent, (event) => {
+            this.handleConnection(event);
+        });
+
+        await this.webrtcController.initConnection();
+        await waitUntil.isTrue(() => this.webrtcController.isConnected());
+
+        this.finishFrame();
+    }
+
+    private handleConnection(event: WebrtcMultiplayerConnectionUpdateEvent) {
+        if (this.webrtcController.isHost() && 'newMember' in event.detail) {
+            this.webrtcController.sendToOnlyOneClient(event.detail.newMember, {
+                type: LockStepMessageType.Frame,
+                actions: [],
+            });
+        }
+        this.dispatch(event);
+    }
+
+    private calculateFps() {
+        const now = Date.now();
+        const diff = Date.now() - this.lastFpsCalculation.timestamp;
+        if (diff > 1000) {
+            makeWritable(this).currentFps = this.lastFpsCalculation.frameCount / (diff / 1000);
+            this.lastFpsCalculation = {
+                frameCount: 0,
+                timestamp: now,
+            };
+        } else {
+            this.lastFpsCalculation.frameCount++;
+        }
+    }
+
+    private handleReceivedMessage({
+        sourceClientId,
+        detail: message,
+    }: WebrtcMultiplayerMessageEvent<LockStepMessage<Action>>) {
+        if (this.webrtcController.isHost() && message.type === LockStepMessageType.Actions) {
+            this.clientsResponded[sourceClientId] = true;
+            this.frameActions.push(...message.actions);
+            this.maybeFinishFrame();
+        } else if (!this.webrtcController.isHost() && message.type === LockStepMessageType.Frame) {
+            this.calculateFps();
+            this.webrtcController.sendMessage({
+                actions: this.frameActions,
+                sourceClientId: this.clientId,
+                type: LockStepMessageType.Actions,
+            });
+            this.dispatch(new LockStepFrameEvent<Action>({detail: message.actions}));
+            this.frameActions = [];
+        }
+    }
+    private finishFrame() {
+        this.webrtcController.sendMessage({
+            type: LockStepMessageType.Frame,
+            actions: this.frameActions,
+        });
+        this.dispatch(new LockStepFrameEvent<Action>({detail: this.frameActions}));
+        this.frameActions = [];
+
+        this.frameTimerReady = false;
+        this.calculateFps();
+
+        this.timeoutId = globalThis.setTimeout(() => {
+            this.frameTimerReady = true;
+            this.maybeFinishFrame();
+        }, this.frameMs);
+    }
+
+    private maybeFinishFrame() {
+        if (!this.webrtcController.isHost()) {
+            return;
+        }
+
+        const clientsReady = this.webrtcController
+            .getConnectedClientIds()
+            .every((clientId) => this.clientsResponded[clientId]);
+
+        if (
+            !this.frameTimerReady ||
+            /** Still waiting on clients */
+            !clientsReady
+        ) {
+            return;
+        }
+        this.finishFrame();
+    }
+}
