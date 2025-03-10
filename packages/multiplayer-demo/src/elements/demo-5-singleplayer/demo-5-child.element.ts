@@ -122,11 +122,18 @@ export const Demo5Child = defineElementNoInputs({
                     Create Room
                 </button>
             `;
-        } else if (state.connectionState === MultiplayerConnectionState.Disconnected) {
+        } else if (
+            state.connectionState === MultiplayerConnectionState.ServiceFailure ||
+            state.connectionState === MultiplayerConnectionState.DisconnectedFromService ||
+            state.connectionState === MultiplayerConnectionState.DisconnectedFromRoom
+        ) {
             return html`
                 Disconnected.
             `;
-        } else if (state.connectionState === MultiplayerConnectionState.Connecting) {
+        } else if (
+            state.connectionState === MultiplayerConnectionState.ConnectingToRoom ||
+            state.connectionState === MultiplayerConnectionState.ConnectingToService
+        ) {
             return html`
                 Connecting...
             `;

@@ -17,9 +17,21 @@ import {
  * @category Internal
  */
 export enum MultiplayerConnectionState {
-    Disconnected = 'disconnected',
-    Connecting = 'connecting',
-    Connected = 'connected',
+    /** Failed to connect to the given service address. */
+    ServiceFailure = 'service-failure',
+    /** Not connected to anything at all. */
+    DisconnectedFromService = 'disconnected-from-service',
+    /** Attempting to connect to the multiplayer service. */
+    ConnectingToService = 'connecting-to-service',
+    /** Connected to the multiplayer service, but not connected to a room yet. */
+    ConnectedToService = 'connected-to-service',
+
+    /** Disconnected from a multiplayer room but still connected to the multiplayer service. */
+    DisconnectedFromRoom = 'disconnected-from-room',
+    /** Attempting to connect to a multiplayer room. */
+    ConnectingToRoom = 'connecting-to-room',
+    /** Connected to the a multiplayer (or singleplayer) room. Ready to play. */
+    ConnectedToRoom = 'connected-to-room',
 }
 
 /**
@@ -76,6 +88,8 @@ export type MultiplayerParams = {
      * It is useful to enable this so that clients can find the port that your multiplayer server is
      * running on in case it must change. Note that port scanning will not be active if your
      * `serviceOrigin` does not contain a port.
+     *
+     * @default undefined
      */
     portScanOptions?: undefined | Parameters<typeof mapServiceDevPort>[1] | boolean;
     /**
@@ -109,7 +123,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     public readonly roomId: Uuid | undefined;
     /** The current connection state of the controller. */
     public readonly connectionState: MultiplayerConnectionState =
-        MultiplayerConnectionState.Disconnected;
+        MultiplayerConnectionState.DisconnectedFromService;
 
     private currentConnection: LockStepGameStateController | undefined;
     private multiplayerApi: Promise<MultiplayerApi> | undefined;
@@ -124,19 +138,38 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     }
 
     private startMultiplayer(params: Readonly<MultiplayerParams>) {
+        this.updateConnectionState(MultiplayerConnectionState.ConnectingToService);
+
         this.multiplayerApi = createMultiplayerApi({
             portScanOptions: params.portScanOptions,
             serviceOrigin: params.serviceOrigin,
-        });
+        })
+            .then(async (api) => {
+                const output = await api.endpoints['/health'].fetch();
+                if (!output.ok) {
+                    throw new Error(
+                        `Failed to find multiplayer service at ${params.serviceOrigin}`,
+                    );
+                }
+
+                this.updateConnectionState(MultiplayerConnectionState.ConnectedToService);
+                return api;
+            })
+            .catch((error: unknown) => {
+                this.updateConnectionState(MultiplayerConnectionState.ServiceFailure);
+                throw error;
+            });
 
         this.startRoomInterval();
     }
 
     private startSingleplayer() {
         if (this.currentConnection) {
-            throw new Error(`Cannot join or create a room, `);
+            throw new Error(
+                `Cannot start singleplayer with a multiplayer connection already present.`,
+            );
         }
-        this.updateConnectionState(MultiplayerConnectionState.Connecting);
+        this.updateConnectionState(MultiplayerConnectionState.ConnectingToRoom);
 
         this.currentConnection = new LockStepGameStateController(
             this.params.frameDuration || {milliseconds: 10},
@@ -147,7 +180,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
         this.currentConnection.startSingleplayer();
 
         globalThis.clearInterval(this.roomUpdateIntervalId);
-        this.updateConnectionState(MultiplayerConnectionState.Connected);
+        this.updateConnectionState(MultiplayerConnectionState.ConnectedToRoom);
     }
 
     /** The current FPS of the data flow. */
@@ -172,6 +205,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     /** Cleanup everything. */
     public destroy() {
         this.currentConnection?.destroy();
+        this.updateConnectionState(MultiplayerConnectionState.DisconnectedFromService);
         globalThis.clearInterval(this.roomUpdateIntervalId);
     }
 
@@ -190,7 +224,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
             );
         }
 
-        this.updateConnectionState(MultiplayerConnectionState.Connecting);
+        this.updateConnectionState(MultiplayerConnectionState.ConnectingToRoom);
 
         this.currentConnection = new LockStepGameStateController(
             this.params.frameDuration || {milliseconds: 10},
@@ -211,7 +245,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
         );
         makeWritable(this).roomId = room.roomId;
         globalThis.clearInterval(this.roomUpdateIntervalId);
-        this.updateConnectionState(MultiplayerConnectionState.Connected);
+        this.updateConnectionState(MultiplayerConnectionState.ConnectedToRoom);
     }
 
     /** Leave the current room or single player connection. */
@@ -224,7 +258,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
         this.currentConnection.destroy();
         this.currentConnection = undefined;
         this.startRoomInterval();
-        this.updateConnectionState(MultiplayerConnectionState.Disconnected);
+        this.updateConnectionState(MultiplayerConnectionState.DisconnectedFromRoom);
     }
 
     private updateConnectionState(state: MultiplayerConnectionState) {
