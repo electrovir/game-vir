@@ -46,6 +46,12 @@ describe(stageIdToString(readRawInputStage.stageId), () => {
             {},
             {
                 'button-ArrowUp': {
+                    mapped: {
+                        deviceKey: 'keyboard',
+                        deviceName: 'keyboard',
+                        gamepadBrand: undefined,
+                        inputName: 'button-ArrowUp',
+                    },
                     deviceKey: 'keyboard',
                     deviceName: 'keyboard',
                     deviceType: InputDeviceType.Keyboard,

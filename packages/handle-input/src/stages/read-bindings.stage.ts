@@ -8,9 +8,8 @@ import {
 } from '@augment-vir/common';
 import {Duration, DurationUnit} from 'date-vir';
 import {InputDeviceKey} from 'input-device-handler';
-import {defineShape, enumShape, indexedKeys} from 'object-shape-tester';
+import {defineShape, enumShape, indexedKeys, optional, or} from 'object-shape-tester';
 import {VirLineStage} from 'vir-line';
-import {reverseObjectKeyValue} from '../augments/object.js';
 import {
     InputDirection,
     RawInputs,
@@ -21,29 +20,39 @@ import {
 /**
  * A shape definition corresponding to the {@link Binding} type.
  *
- * @category Types
+ * @category Internal
  */
 export const bindingShape = defineShape({
     deviceKey: enumShape(InputDeviceKey),
+    /**
+     * The raw input key or button (like `'button-keyW'` for keyboard buttons or `'button-12'` for
+     * gamepads).
+     */
     inputName: '',
+    /** The optional mapped input name, only relevant to gamepads (like `'d-pad-left'` or `'X'`). */
+    mappedInputName: optional(or(undefined, '')),
     direction: enumShape(InputDirection),
 });
 
 /**
  * An individual binding assignment. Used in {@link readBindingsStage} and {@link BindingsMap}.
  *
- * @category Types
+ * @category Internal
  */
 export type Binding = typeof bindingShape.runtimeType;
 
-/** Starts at `'1'`. */
+/**
+ * Starts at `'1'`.
+ *
+ * @category Internal
+ */
 export type PlayerPosition = `${number}`;
 
 /**
  * Generates a shape definition for {@link BindingsMap} with your specific set of allowed binding
  * names.
  *
- * @category Types
+ * @category Binding
  */
 export function generateBindingsMapShape(bindingNamesEnum: EnumBaseType) {
     return defineShape(
@@ -59,7 +68,7 @@ export function generateBindingsMapShape(bindingNamesEnum: EnumBaseType) {
  * A collection of bindings for a single player. Used in {@link readBindingsStage} and
  * {@link PlayersBindingsMap}.
  *
- * @category Types
+ * @category Internal
  */
 export type BindingsMap<BindingNames extends string = string> = Partial<
     Record<BindingNames, Binding[]>
@@ -69,7 +78,7 @@ export type BindingsMap<BindingNames extends string = string> = Partial<
  * Generates a shape definition for {@link PlayersBindingsMap} with your specific set of allowed
  * binding names.
  *
- * @category Types
+ * @category Binding
  */
 export function createPlayersBindingsMapShape(bindingNamesEnum: EnumBaseType) {
     return defineShape(
@@ -85,7 +94,7 @@ export function createPlayersBindingsMapShape(bindingNamesEnum: EnumBaseType) {
  * A collection of bindings for all players. Used in {@link readBindingsStage} and
  * {@link ReadBindingsStageState}.
  *
- * @category Types
+ * @category Internal
  */
 export type PlayersBindingsMap<BindingNames extends string = string> = Record<
     PlayerPosition,
@@ -93,19 +102,9 @@ export type PlayersBindingsMap<BindingNames extends string = string> = Record<
 >;
 
 /**
- * A mapping from `InputDeviceKey` to `InputDeviceKey` that simply allows devices to be interpreted
- * as different devices. This is mostly only useful for mapping a controller in any port to any
- * player. For example, mapping the controller in port 4 to player 1. Used in
- * {@link readBindingsStage} and {@link ReadBindingsStageState}.
- *
- * @category Types
- */
-export type DeviceKeyMap = Partial<Record<InputDeviceKey, InputDeviceKey>>;
-
-/**
  * An individual active binding. Used in {@link readBindingsStage} and {@link ActiveBindingsMap}.
  *
- * @category Types
+ * @category Internal
  */
 export type ActiveBinding = {
     /**
@@ -140,7 +139,7 @@ export type ActiveBinding = {
  * A collection of all active bindings for an individual player. Used in {@link readBindingsStage}
  * and {@link PlayersActiveBindingsMap}.
  *
- * @category Types
+ * @category Internal
  */
 export type ActiveBindingsMap<BindingNames extends string = string> = Partial<
     Record<BindingNames, ActiveBinding>
@@ -150,7 +149,7 @@ export type ActiveBindingsMap<BindingNames extends string = string> = Partial<
  * A collection of all active bindings for all players. Used in {@link readBindingsStage} and
  * {@link ReadBindingsStageState}.
  *
- * @category Types
+ * @category Internal
  */
 export type PlayersActiveBindingsMap<BindingNames extends string = string> = Record<
     PlayerPosition,
@@ -160,15 +159,13 @@ export type PlayersActiveBindingsMap<BindingNames extends string = string> = Rec
 /**
  * All state used and set by {@link readBindingsStage}.
  *
- * @category Types
+ * @category Internal
  */
 export type ReadBindingsStageState<BindingNames extends string = string> = Pick<
     ReadRawInputStageState,
     'rawInputs'
 > &
     PartialWithUndefined<{
-        /** Maps devices to different devices. See {@link DeviceKeyMap} for more information. */
-        deviceKeyMap: DeviceKeyMap;
         /** Bindings for all players. */
         playersBindings: PlayersBindingsMap<BindingNames>;
         /** All active bindings for all players. */
@@ -213,9 +210,6 @@ export const readBindingsStage = new VirLineStage<ReadBindingsStageState>(
             return;
         }
 
-        const reversedDeviceKeyMap: Partial<Record<InputDeviceKey, InputDeviceKey>> =
-            reverseObjectKeyValue(state.deviceKeyMap || {});
-
         const newPlayersActiveBindingsMap = mapObjectValues(
             state.playersBindings,
             (playerPosition, bindingsMap) => {
@@ -223,7 +217,6 @@ export const readBindingsStage = new VirLineStage<ReadBindingsStageState>(
                     bindingsMap,
                     activeBindingsMap: state.playersActiveBindings?.[playerPosition],
                     rawInputs: state.rawInputs,
-                    reversedDeviceKeyMap,
                     timeSinceLastUpdate,
                 });
             },
@@ -236,13 +229,11 @@ export const readBindingsStage = new VirLineStage<ReadBindingsStageState>(
 function readPlayerBindings<BindingNames extends string>({
     bindingsMap: bindingsMap,
     activeBindingsMap,
-    reversedDeviceKeyMap,
     rawInputs,
     timeSinceLastUpdate,
 }: {
     bindingsMap: Readonly<BindingsMap<BindingNames>>;
     activeBindingsMap: Readonly<ActiveBindingsMap<BindingNames>> | undefined;
-    reversedDeviceKeyMap: Readonly<Partial<Record<InputDeviceKey, InputDeviceKey>>>;
     rawInputs: Readonly<RawInputs> | undefined;
     timeSinceLastUpdate: Duration<DurationUnit.Milliseconds>;
 }): ActiveBindingsMap<BindingNames> {
@@ -257,9 +248,7 @@ function readPlayerBindings<BindingNames extends string>({
             const matchingInputs = filterMap(
                 bindings as Binding[],
                 (binding) => {
-                    const deviceKey = reversedDeviceKeyMap[binding.deviceKey] ?? binding.deviceKey;
-
-                    const matchingInput = rawInputs?.[deviceKey]?.[binding.inputName];
+                    const matchingInput = rawInputs?.[binding.deviceKey]?.[binding.inputName];
 
                     if (matchingInput?.direction === binding.direction) {
                         return matchingInput;

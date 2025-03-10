@@ -94,7 +94,7 @@ export const VirReadRawInputStageDebug = defineElement<
                 deviceKey,
                 values,
             ]) => {
-                const hasNoValues = !values || Object.keys(values).length === 0;
+                const hasNoValues = Object.keys(values).length === 0;
 
                 const valuesTemplate = hasNoValues
                     ? html`

@@ -1,5 +1,6 @@
 import {getObjectTypedEntries} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
+import {isGamepadDeviceKey} from 'input-device-handler';
 import {BindingsMap, PlayersBindingsMap} from '../../stages/read-bindings.stage.js';
 
 /**
@@ -56,9 +57,12 @@ export const VirBindingsDebug = defineElement<{
                 bindings,
             ]) => {
                 const bindingsRows = bindings.map((binding) => {
+                    const deviceKeyName = isGamepadDeviceKey(binding.deviceKey)
+                        ? `gamepad ${binding.deviceKey}`
+                        : binding.deviceKey;
                     return html`
                         <tr>
-                            <td>${binding.deviceKey}:</td>
+                            <td>${deviceKeyName}:</td>
                             <td>${binding.inputName}</td>
                         </tr>
                     `;

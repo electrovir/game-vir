@@ -27,7 +27,7 @@ import {deviceEmojis, directionEmojis} from './emoji.js';
 /**
  * Inputs for {@link VirSimplePlayerAssignBindings}.
  *
- * @category Types
+ * @category Internal
  */
 export type VirSimpleAssignBindingsInputs = Readonly<
     PartialWithUndefined<
@@ -43,8 +43,13 @@ export type VirSimpleAssignBindingsInputs = Readonly<
              */
             allowMouseMovement: boolean;
         } & Pick<InputDeviceHandlerOptions, 'globalDeadZone' | 'gamepadDeadZoneSettings'> &
-            Pick<ReadBindingsStageState, 'playersBindings' | 'deviceKeyMap'>
+            Pick<ReadBindingsStageState, 'playersBindings'>
     > & {
+        /**
+         * The names of each control to bind to.
+         *
+         * @example ['up', 'down', 'left', 'right', 'jump'];
+         */
         bindingNames: ReadonlyArray<string>;
         supportedPlayerCount: number;
     }
@@ -54,7 +59,7 @@ const virBindingChipHeight = 52;
 
 /**
  * An opinionated and inflexible binding assignment element that supports the {@link BindingsMap}
- * type for a single player. Used in {@link VirSimpleAssignBindings}.
+ * type for a _single_ player. Used in {@link VirSimpleAssignBindings}.
  *
  * This is intended to be simple for use in initial game development for the sake of quickness.
  *

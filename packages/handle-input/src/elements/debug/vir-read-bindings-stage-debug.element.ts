@@ -1,6 +1,6 @@
 import {PartialWithUndefined} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
-import {InputDeviceHandler} from 'input-device-handler';
+import {GamepadInputDeviceKey, InputDeviceHandler} from 'input-device-handler';
 import {VirLine} from 'vir-line';
 import {
     PlayersActiveBindingsMap,
@@ -18,10 +18,32 @@ const defaultBindings: Readonly<PlayersBindingsMap> = {
                 direction: InputDirection.Positive,
                 inputName: 'button-Space',
             },
+            {
+                deviceKey: GamepadInputDeviceKey.Gamepad1,
+                direction: InputDirection.Positive,
+                /** PlayStation */
+                inputName: 'X',
+            },
+            {
+                deviceKey: GamepadInputDeviceKey.Gamepad1,
+                direction: InputDirection.Positive,
+                /** Xbox and Nintendo */
+                inputName: 'A',
+            },
         ],
         left: [
             {
+                deviceKey: GamepadInputDeviceKey.Gamepad1,
+                direction: InputDirection.Positive,
+                inputName: 'd-pad-left',
+            },
+            {
                 deviceKey: 'keyboard',
+                direction: InputDirection.Positive,
+                inputName: 'button-KeyA',
+            },
+            {
+                deviceKey: GamepadInputDeviceKey.Gamepad1,
                 direction: InputDirection.Positive,
                 inputName: 'button-KeyA',
             },
@@ -37,6 +59,11 @@ const defaultBindings: Readonly<PlayersBindingsMap> = {
             },
         ],
         right: [
+            {
+                deviceKey: GamepadInputDeviceKey.Gamepad1,
+                direction: InputDirection.Positive,
+                inputName: 'd-pad-right',
+            },
             {
                 deviceKey: 'keyboard',
                 direction: InputDirection.Positive,

@@ -45,7 +45,7 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
                     ],
                     instantBinding: [
                         {
-                            deviceKey: InputDeviceKey.Gamepad2,
+                            deviceKey: InputDeviceKey.Gamepad1,
                             direction: InputDirection.Positive,
                             inputName: 'button-1',
                         },
@@ -83,13 +83,16 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
                     },
                 },
             },
-            deviceKeyMap: {
-                '0': '1',
-            },
             rawInputs: {
-                '0': {
+                [InputDeviceKey.Gamepad1]: {
                     'button-3': {
-                        deviceKey: '0',
+                        mapped: {
+                            deviceKey: InputDeviceKey.Gamepad1,
+                            deviceName: 'test gamepad',
+                            gamepadBrand: undefined,
+                            inputName: 'button-3',
+                        },
+                        deviceKey: InputDeviceKey.Gamepad1,
                         deviceName: 'test gamepad',
                         deviceType: InputDeviceType.Gamepad,
                         direction: InputDirection.Positive,
@@ -98,7 +101,13 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
                         inputValue: 2,
                     },
                     'button-1': {
-                        deviceKey: '0',
+                        mapped: {
+                            deviceKey: InputDeviceKey.Gamepad1,
+                            deviceName: 'test gamepad',
+                            gamepadBrand: undefined,
+                            inputName: 'button-1',
+                        },
+                        deviceKey: InputDeviceKey.Gamepad1,
                         deviceName: 'test gamepad',
                         deviceType: InputDeviceType.Gamepad,
                         direction: InputDirection.Positive,
@@ -109,6 +118,12 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
                 },
                 keyboard: {
                     'button-KeyA': {
+                        mapped: {
+                            deviceKey: 'keyboard',
+                            deviceName: 'keyboard',
+                            gamepadBrand: undefined,
+                            inputName: 'button-KeyA',
+                        },
                         deviceKey: 'keyboard',
                         deviceName: 'keyboard',
                         deviceType: InputDeviceType.Keyboard,
@@ -118,6 +133,12 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
                         inputValue: 0.5,
                     },
                     'button-KeyB': {
+                        mapped: {
+                            deviceKey: 'keyboard',
+                            deviceName: 'keyboard',
+                            gamepadBrand: undefined,
+                            inputName: 'button-KeyA',
+                        },
                         deviceKey: 'keyboard',
                         deviceName: 'keyboard',
                         deviceType: InputDeviceType.Keyboard,
@@ -127,6 +148,12 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
                         inputValue: 1,
                     },
                     'button-ArrowUp': {
+                        mapped: {
+                            deviceKey: 'keyboard',
+                            deviceName: 'keyboard',
+                            gamepadBrand: undefined,
+                            inputName: 'button-ArrowUp',
+                        },
                         deviceKey: 'keyboard',
                         deviceName: 'keyboard',
                         deviceType: InputDeviceType.Keyboard,
@@ -223,6 +250,12 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
             rawInputs: {
                 '0': {
                     'button-3': {
+                        mapped: {
+                            deviceKey: '0',
+                            deviceName: 'test gamepad',
+                            gamepadBrand: undefined,
+                            inputName: 'button-3',
+                        },
                         deviceKey: '0',
                         deviceName: 'test gamepad',
                         deviceType: InputDeviceType.Gamepad,
@@ -271,6 +304,12 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
             rawInputs: {
                 keyboard: {
                     'button-ArrowLeft': {
+                        mapped: {
+                            deviceKey: 'keyboard',
+                            deviceName: 'keyboard',
+                            gamepadBrand: undefined,
+                            inputName: 'button-ArrowLeft',
+                        },
                         deviceKey: 'keyboard',
                         deviceName: 'keyboard',
                         deviceType: InputDeviceType.Keyboard,
@@ -310,6 +349,12 @@ describe(stageIdToString(readBindingsStage.stageId), () => {
         virLine.currentState.rawInputs = {
             keyboard: {
                 'button-KeyA': {
+                    mapped: {
+                        deviceKey: 'keyboard',
+                        deviceName: 'keyboard',
+                        gamepadBrand: undefined,
+                        inputName: 'button-KeyA',
+                    },
                     deviceKey: 'keyboard',
                     deviceName: 'keyboard',
                     deviceType: InputDeviceType.Keyboard,
