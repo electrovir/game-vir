@@ -5,7 +5,7 @@ import {css, defineElement, html} from 'element-vir';
 /**
  * A timestamp used to trigger a pulse in {@link VirGlowPulse}.
  *
- * @category Types
+ * @category Internal
  */
 export type PulseTimestamp = {
     timestamp: number;

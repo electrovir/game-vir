@@ -16,9 +16,11 @@ export const typeDocConfig: Partial<TypeDocOptions> = {
     categoryOrder: [
         'Stages',
         'Elements',
-        'Types',
-        'Util',
+        'Binding',
+        'Input',
+        'Menu',
         'Debug',
-        'Internals',
+        'Util',
+        'Internal',
     ],
 };

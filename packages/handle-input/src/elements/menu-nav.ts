@@ -15,7 +15,7 @@ export {group, nav, NavController, navSelector} from 'device-navigation';
  * them. Any menus that don't have sufficient nestings to support any specific binding simply won't
  * do anything if they're active.
  *
- * @category Types
+ * @category Menu
  */
 export enum MenuNavBinding {
     Up = 'up',
@@ -47,7 +47,7 @@ export enum MenuNavBinding {
 /**
  * The state that `VirLine` must contain for {@link MenuNavController} to function.
  *
- * @category Types
+ * @category Internal
  */
 export type MenuNavState = PartialWithUndefined<{
     playersActiveBindings: PlayersActiveBindingsMap<MenuNavBinding>;
@@ -56,7 +56,7 @@ export type MenuNavState = PartialWithUndefined<{
 /**
  * Options for {@link MenuNavController}.
  *
- * @category Types
+ * @category Menu
  */
 export type MenuNavOptions = Readonly<
     Partial<{
@@ -88,19 +88,6 @@ export type MenuNavOptions = Readonly<
  * @category Elements
  */
 export class MenuNavController extends NavController {
-    private lastUnlisten: undefined | RemoveListenerCallback;
-    private paused = false;
-
-    /**
-     * The current options assigned to this {@link MenuNavController} instance. Override the defaults
-     * in the constructor, or mutate it at any time to affect all subsequent menu navigation.
-     */
-    public options: Required<MenuNavOptions> = {
-        repeatThreshold: {milliseconds: 500},
-        repeatInterval: {milliseconds: 60},
-        allowWrapping: true,
-    };
-
     constructor(
         host: HTMLElement,
         private readonly virLine: VirLineWithState<MenuNavState>,
@@ -114,6 +101,19 @@ export class MenuNavController extends NavController {
         this.listenToVirLineState();
     }
 
+    private lastUnlisten: undefined | RemoveListenerCallback;
+    private paused = false;
+
+    /**
+     * The current options assigned to this {@link MenuNavController} instance. Override the defaults
+     * in the constructor, or mutate it at any time to affect all subsequent menu navigation.
+     */
+    public options: Required<MenuNavOptions> = {
+        repeatThreshold: {milliseconds: 500},
+        repeatInterval: {milliseconds: 60},
+        allowWrapping: true,
+    };
+
     /** Stop reacting to user inputs. */
     public pause() {
         this.paused = true;
@@ -125,8 +125,9 @@ export class MenuNavController extends NavController {
     }
 
     /** Destroy all listeners to free up memory. */
-    public destroy() {
+    public override destroy() {
         this.lastUnlisten?.();
+        super.destroy();
     }
 
     private listenToVirLineState() {
@@ -136,7 +137,9 @@ export class MenuNavController extends NavController {
 
         this.lastUnlisten = this.virLine.listenToState(
             false,
-            {playersActiveBindings: true},
+            {
+                playersActiveBindings: true,
+            },
             (playersActiveBindings) => {
                 if (!playersActiveBindings || this.paused) {
                     return;
@@ -167,8 +170,12 @@ export class MenuNavController extends NavController {
                                     activeBinding.actCount++;
                                     activeBinding.lastActDuration = activeBinding.holdDuration;
                                 }
-                            } else if (!activeBinding.holdDuration.milliseconds) {
+                            } else if (
+                                !activeBinding.holdDuration.milliseconds &&
+                                !activeBinding.actCount
+                            ) {
                                 bindingsToAct[bindingName] = true;
+                                activeBinding.actCount++;
                             }
                         },
                     );

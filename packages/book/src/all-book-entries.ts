@@ -5,6 +5,7 @@ import {virDeviceListPage} from './book-pages/vir-device-list.element.book.js';
 import {virFpsPage} from './book-pages/vir-fps.element.book.js';
 import {virGlowPulseBookPage} from './book-pages/vir-glow-pulse.element.book.js';
 import {virSimpleAssignBindingsPage} from './book-pages/vir-simple-assign-bindings.element.book.js';
+import {virSimpleAssignControllerSlotPage} from './book-pages/vir-simple-assign-controller-slot.element.book.js';
 import {elementsPage, stagesPage} from './top-level-pages.js';
 
 export const allGameVirBookEntries = [
@@ -14,8 +15,10 @@ export const allGameVirBookEntries = [
 
     elementsPage,
     menuNavPage,
+
     virDeviceListPage,
     virFpsPage,
     virGlowPulseBookPage,
     virSimpleAssignBindingsPage,
+    virSimpleAssignControllerSlotPage,
 ];

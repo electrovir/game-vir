@@ -8,3 +8,4 @@ export * from './vir-device-chip.element.js';
 export * from './vir-device-list.element.js';
 export * from './vir-glow-pulse.element.js';
 export * from './vir-simple-assign-bindings.element.js';
+export * from './vir-simple-assign-controller-slot.element.js';

@@ -2,7 +2,7 @@ import {InputDeviceType} from 'input-device-handler';
 import {InputDirection} from '../stages/read-raw-input.stage.js';
 
 /**
- * Input device types mapped to corresponding emojis.
+ * Input device types mapped to corresponding emojis (🎮, ⌨️, or 🖱).
  *
  * @category Util
  */
@@ -13,7 +13,7 @@ export const deviceEmojis: Readonly<Record<InputDeviceType, string>> = {
 };
 
 /**
- * Input directions mapped to corresponding emojis.
+ * Input directions mapped to corresponding emojis (➖, or ➕).
  *
  * @category Util
  */
