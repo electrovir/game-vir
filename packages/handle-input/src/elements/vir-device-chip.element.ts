@@ -18,9 +18,14 @@ export const VirDeviceChip = defineElement<{
     lastInputTime: Readonly<{timestamp: number}> | undefined;
     hideGamepadPort?: boolean | undefined;
     activityColors?: ReadonlyArray<string> | undefined;
+    /** If set to true, the only thing displayed will be the device emoji. */
+    plainStyles?: boolean | undefined;
 }>()({
     tagName: 'vir-device-chip',
-    styles: css`
+    hostClasses: {
+        'vir-device-chip-plain': ({inputs}) => !!inputs.plainStyles,
+    },
+    styles: ({hostClasses}) => css`
         :host {
             height: 80px;
             box-sizing: border-box;
@@ -36,6 +41,14 @@ export const VirDeviceChip = defineElement<{
         .device-emoji {
             font-size: 2em;
         }
+
+        ${hostClasses['vir-device-chip-plain'].selector} {
+            height: unset;
+            box-sizing: border-box;
+            border: none;
+            border-radius: unset;
+            padding: 0;
+        }
     `,
     render({inputs, host}) {
         const deviceType = inputDeviceKeyToInputDeviceType[inputs.deviceKey];
@@ -43,7 +56,7 @@ export const VirDeviceChip = defineElement<{
         /** Only relevant to gamepads. */
         const devicePort = Number(inputs.deviceKey) + 1;
         const labelTemplate =
-            deviceType === InputDeviceType.Gamepad && !inputs.hideGamepadPort
+            deviceType === InputDeviceType.Gamepad && !inputs.hideGamepadPort && !inputs.plainStyles
                 ? html`
                       <span>${devicePort}</span>
                   `
