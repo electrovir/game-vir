@@ -27,6 +27,7 @@
     "module": "src/index.ts",
     "types": "src/index.ts",
     "scripts": {
+        "build": "exit 0",
         "compile": "virmator compile",
         "start": "concurrently --colors --kill-others-on-fail -c auto --names backend,frontend \"npm run start:backend\" \"npm run start:frontend\"",
         "start:backend": "tsx --watch-path=\"../multiplayer-server/src\" src/server.ts",

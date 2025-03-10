@@ -74,8 +74,10 @@ export const Demo2Child = defineElementNoInputs({
                     return;
                 }
 
-                const {data} = await api.endpoints['/rooms'].fetch();
-                state.rooms.setValue(data);
+                const output = await api.endpoints['/rooms'].fetch();
+                if (output.ok) {
+                    state.rooms.setValue(output.data);
+                }
             }, 1000);
 
             updateState({

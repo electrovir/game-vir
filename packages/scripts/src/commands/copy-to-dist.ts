@@ -7,12 +7,16 @@ const packagesToCopy = [
     'book',
     'handle-input',
     'render',
+    'multiplayer',
+    'multiplayer-server',
 ] as const satisfies (keyof typeof packageDirs)[];
 
 const packageCopyFromPaths: Readonly<Record<ArrayElement<typeof packagesToCopy>, string>> = {
     'handle-input': 'dist-docs',
     book: 'dist-book',
     render: 'dist-docs',
+    multiplayer: 'dist-docs',
+    'multiplayer-server': 'dist-docs',
 };
 
 export async function copyToDist() {

@@ -239,10 +239,10 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
                 if (this.currentConnection || !this.multiplayerApi) {
                     return;
                 }
-                const {data: currentRooms} = await (
-                    await this.multiplayerApi
-                ).endpoints['/rooms'].fetch();
-                await this.params.listeners.roomListUpdate?.(currentRooms);
+                const output = await (await this.multiplayerApi).endpoints['/rooms'].fetch();
+                if (output.ok) {
+                    await this.params.listeners.roomListUpdate?.(output.data);
+                }
             }, roomUpdateMs);
         }
     }

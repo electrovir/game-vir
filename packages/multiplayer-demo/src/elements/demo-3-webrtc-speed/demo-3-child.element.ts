@@ -101,7 +101,10 @@ export const Demo3Child = defineElementNoInputs({
                 await waitUntil.isTrue(() => webrtcController.isConnected());
 
                 const firstRoom = await waitUntil.isDefined(async () => {
-                    const {data} = await api.endpoints['/rooms'].fetch();
+                    const {ok, data} = await api.endpoints['/rooms'].fetch();
+                    if (!ok) {
+                        throw new Error('fetch failed');
+                    }
                     const firstRoom = Object.values(data)[0];
                     return firstRoom;
                 });

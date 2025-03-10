@@ -7,7 +7,7 @@ import {
     renderIf,
     type DeclarativeElementDefinition,
 } from 'element-vir';
-import {SpaRouter, type FullRoute} from 'spa-router-vir';
+import {SpaRouter, type FullSpaRoute} from 'spa-router-vir';
 import {ViraLink} from 'vira';
 import {Demo1App} from './demo-1-room-connection/demo-1-app.element.js';
 import {Demo2App} from './demo-2-room-selection/demo-2-app.element.js';
@@ -45,9 +45,9 @@ const demoList = (
     };
 });
 
-type DemoPaths = [] | [string];
-type DemoSearch = undefined | {child: string[]};
-type DemoFullRoute = Required<FullRoute<DemoPaths, DemoSearch, undefined>>;
+type DemoPaths = Readonly<[] | [string]>;
+type DemoSearch = undefined | Readonly<{child: ReadonlyArray<string>}>;
+type DemoFullRoute = FullSpaRoute<DemoPaths, DemoSearch, undefined>;
 
 const defaultRoute: DemoFullRoute = {
     hash: undefined,
@@ -58,7 +58,7 @@ const defaultRoute: DemoFullRoute = {
 const demoRouter = new SpaRouter<DemoPaths, DemoSearch, undefined>({
     sanitizeRoute(rawRoute) {
         return {
-            paths: [rawRoute.paths[0]].filter(check.isTruthy) as DemoPaths,
+            paths: [rawRoute.paths[0]].filter(check.isTruthy) as ReadonlyArray<string> as DemoPaths,
             hash: undefined,
             search:
                 rawRoute.search && rawRoute.search.child

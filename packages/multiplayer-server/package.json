@@ -25,6 +25,7 @@
     "module": "src/index.ts",
     "types": "src/index.ts",
     "scripts": {
+        "build": "npm run docs",
         "compile": "virmator compile",
         "docs": "virmator docs",
         "start": "tsx src/index.ts",
