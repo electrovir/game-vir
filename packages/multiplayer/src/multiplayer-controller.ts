@@ -77,8 +77,12 @@ export type MultiplayerParams = {
      * running on in case it must change. Note that port scanning will not be active if your
      * `serviceOrigin` does not contain a port.
      */
-    portScanOptions: undefined | Parameters<typeof mapServiceDevPort>[1] | true;
-    /** @example 'http://localhost:3000' */
+    portScanOptions?: undefined | Parameters<typeof mapServiceDevPort>[1] | boolean;
+    /**
+     * The origin of the server running the multiplayer connection service.
+     *
+     * @example 'http://localhost:3000'
+     */
     serviceOrigin: string;
     /**
      * How long to wait before fetching the list of rooms again.
