@@ -11,6 +11,7 @@ export const readBindingsStagePage = defineBookPage({
             title: 'Debugging',
             render() {
                 return html`
+                    <p>Using stage readBindingsStage and element VirReadBindingsStageDebug.</p>
                     <${VirReadBindingsStageDebug}></${VirReadBindingsStageDebug}>
                 `;
             },

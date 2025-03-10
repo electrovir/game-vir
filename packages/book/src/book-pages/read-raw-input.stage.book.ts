@@ -11,6 +11,7 @@ export const readRawInputStagePage = defineBookPage({
             title: 'Debugging',
             render() {
                 return html`
+                    <p>Using stage readRawInputStage and element VirReadRawInputStageDebug.</p>
                     <${VirReadRawInputStageDebug}></${VirReadRawInputStageDebug}>
                 `;
             },

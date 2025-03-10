@@ -99,6 +99,9 @@ export const virGlowPulseBookPage = defineBookPage({
                     <${VirGlowPulse.assign({
                         pulse: state.animation,
                     })}
+                        style=${css`
+                            cursor: pointer;
+                        `}
                         ${listen('click', () => {
                             updateState({
                                 animation: {

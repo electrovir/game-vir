@@ -10,5 +10,6 @@ module.exports = {
         'themself',
         'stunprotocol',
         'singleplayer',
+        'wasd',
     ],
 };

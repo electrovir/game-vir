@@ -154,6 +154,9 @@ export const menuNavPage = defineBookPage({
             title: 'example',
             render() {
                 return html`
+                    (use wasd + qe)
+                    <br />
+                    <br />
                     <${VirMenuNavTest}></${VirMenuNavTest}>
                 `;
             },
