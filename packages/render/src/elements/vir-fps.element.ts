@@ -28,10 +28,12 @@ export const VirFps = defineElement<{
             display: flex;
         }
     `,
-    stateInitStatic: {
-        /** Removes listeners so this element can be garbage collected. */
-        cleanup: undefined as undefined | (() => void),
-        fps: 0,
+    state() {
+        return {
+            /** Removes listeners so this element can be garbage collected. */
+            cleanup: undefined as undefined | (() => void),
+            fps: 0,
+        };
     },
     init({updateState, state, inputs}) {
         if (!state.cleanup) {

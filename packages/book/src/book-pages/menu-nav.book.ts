@@ -9,7 +9,7 @@ import {
     readRawInputStage,
 } from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
-import {css, defineElementNoInputs, html, perInstance} from 'element-vir';
+import {css, defineElementNoInputs, html} from 'element-vir';
 import {InputDeviceHandler, InputDeviceKey} from 'input-device-handler';
 import {VirLine, VirLineWithState} from 'vir-line';
 import {elementsPage} from '../top-level-pages.js';
@@ -47,10 +47,12 @@ const VirMenuNavTest = defineElementNoInputs({
             justify-content: center;
         }
     `,
-    stateInitStatic: {
-        menuNavController: undefined as undefined | MenuNavController,
-        virLine: undefined as undefined | VirLineWithState<MenuNavState>,
-        deviceHandler: perInstance(() => new InputDeviceHandler({disableMouseMovement: true})),
+    state() {
+        return {
+            menuNavController: undefined as undefined | MenuNavController,
+            virLine: undefined as undefined | VirLineWithState<MenuNavState>,
+            deviceHandler: new InputDeviceHandler({disableMouseMovement: true}),
+        };
     },
     init({host, state, updateState}) {
         const virLine =

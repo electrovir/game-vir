@@ -152,8 +152,10 @@ export const VirSimplePlayerAssignBindings = defineElement<
         inputListen: defineElementEvent<boolean>(),
         bindingsUpdate: defineElementEvent<BindingsMap>(),
     },
-    stateInitStatic: {
-        listeningForBinding: undefined as undefined | string,
+    state() {
+        return {
+            listeningForBinding: undefined as undefined | string,
+        };
     },
     render({inputs, dispatch, events, state, updateState}) {
         const rowTemplates = inputs.bindingNames.map((bindingName) => {
@@ -399,12 +401,14 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
     events: {
         playersBindingsUpdate: defineElementEvent<PlayersBindingsMap>(),
     },
-    stateInitStatic: {
-        deviceHandler: undefined as VirSimpleAssignBindingsInputs['inputDeviceHandler'],
-        /** Removes device handler listers. */
-        cleanup: undefined as undefined | (() => void),
-        currentDevices: {} as Partial<Record<InputDeviceKey, SimpleInputDevice>>,
-        listeningToInput: false,
+    state() {
+        return {
+            deviceHandler: undefined as VirSimpleAssignBindingsInputs['inputDeviceHandler'],
+            /** Removes device handler listers. */
+            cleanup: undefined as undefined | (() => void),
+            currentDevices: {} as Partial<Record<InputDeviceKey, SimpleInputDevice>>,
+            listeningToInput: false,
+        };
     },
     init({inputs, state, updateState}) {
         const deviceHandler =

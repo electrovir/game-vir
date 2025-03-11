@@ -31,10 +31,12 @@ export const VirReadRawInputStageDebug = defineElement<
             font-weight: bold;
         }
     `,
-    stateInitStatic: {
-        deviceHandler: undefined as undefined | InputDeviceHandler,
-        pipeline: undefined as undefined | VirLine<[typeof readRawInputStage]>,
-        rawInputs: {} as RawInputs,
+    state() {
+        return {
+            deviceHandler: undefined as undefined | InputDeviceHandler,
+            pipeline: undefined as undefined | VirLine<[typeof readRawInputStage]>,
+            rawInputs: {} as RawInputs,
+        };
     },
     init({state, updateState, inputs}) {
         const deviceHandler =

@@ -9,16 +9,7 @@ import {
     type MultiplayerApi,
     type RoomInput,
 } from '@game-vir/multiplayer';
-import {
-    asyncProp,
-    css,
-    defineElementNoInputs,
-    html,
-    isAsyncError,
-    isResolved,
-    listen,
-    resolvedOrUndefined,
-} from 'element-vir';
+import {asyncProp, css, defineElementNoInputs, html, listen} from 'element-vir';
 import {noNativeSpacing} from 'vira';
 
 export const Demo2Child = defineElementNoInputs({
@@ -45,36 +36,40 @@ export const Demo2Child = defineElementNoInputs({
             border: 2px solid green;
         }
     `,
-    stateInitStatic: {
-        webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
-            defaultValue: undefined,
-        }),
-        multiplayerApi: asyncProp({
-            defaultValue: createMultiplayerApi({
-                portScanOptions: {
-                    maxScanDistance: 10,
-                    timeout: {
-                        seconds: 5,
-                    },
-                },
+    state() {
+        return {
+            webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
+                defaultValue: undefined,
             }),
-        }),
-        rooms: asyncProp<MultiplayerClientRooms>({
-            defaultValue: {},
-        }),
-        cleanup: undefined as undefined | (() => void),
-        connectedClients: [] as Uuid[],
+            multiplayerApi: asyncProp({
+                defaultValue: createMultiplayerApi({
+                    portScanOptions: {
+                        maxScanDistance: 10,
+                        timeout: {
+                            seconds: 5,
+                        },
+                    },
+                }),
+            }),
+            rooms: asyncProp<MultiplayerClientRooms>({
+                defaultValue: {},
+            }),
+            cleanup: undefined as undefined | (() => void),
+            connectedClients: [] as Uuid[],
+        };
     },
     init({state, updateState}) {
         if (!state.cleanup) {
             const intervalId = window.setInterval(async () => {
-                const api = state.multiplayerApi.value;
-
-                if (!isResolved(api) || isAsyncError(api) || state.webrtcController.value) {
+                if (
+                    !state.multiplayerApi.settledValue ||
+                    state.multiplayerApi.settledValue instanceof Error ||
+                    state.webrtcController.value
+                ) {
                     return;
                 }
 
-                const output = await api.endpoints['/rooms'].fetch();
+                const output = await state.multiplayerApi.settledValue.endpoints['/rooms'].fetch();
                 if (output.ok) {
                     state.rooms.setValue(output.data);
                 }
@@ -113,15 +108,15 @@ export const Demo2Child = defineElementNoInputs({
                 );
             }
         }
-        const api = resolvedOrUndefined(state.multiplayerApi.value);
-        if (isAsyncError(api)) {
+        const api = state.multiplayerApi.settledValue;
+        if (api instanceof Error) {
             return html`
                 <p>Failed to connect to multiplayer server.</p>
             `;
         }
 
         const rooms: MultiplayerClientRooms =
-            checkWrap.notInstanceOf(resolvedOrUndefined(state.rooms.value), Error) || {};
+            checkWrap.notInstanceOf(state.rooms.settledValue, Error) || {};
 
         const roomTemplates = Object.values(rooms).map((room) => {
             assert.isDefined(room);
@@ -146,14 +141,14 @@ export const Demo2Child = defineElementNoInputs({
             `;
         });
 
-        const webrtcController = state.webrtcController.value;
+        const webrtcController = state.webrtcController.settledValue;
 
-        if (webrtcController) {
-            if (!isResolved(webrtcController)) {
+        if (state.webrtcController.value) {
+            if (!webrtcController) {
                 return html`
                     <p>Connecting to room...</p>
                 `;
-            } else if (isAsyncError(webrtcController)) {
+            } else if (webrtcController instanceof Error) {
                 return html`
                     <p>Failed to connect to room.</p>
                 `;

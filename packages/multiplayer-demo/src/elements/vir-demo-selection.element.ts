@@ -72,10 +72,12 @@ const demoRouter = new SpaRouter<DemoPaths, DemoSearch, undefined>({
 
 export const VirDemoSelection = defineElementNoInputs({
     tagName: 'vir-demo-selection',
-    stateInitStatic: {
-        router: demoRouter,
-        currentRoute: defaultRoute,
-        cleanup: undefined as undefined | (() => void),
+    state() {
+        return {
+            router: demoRouter,
+            currentRoute: defaultRoute,
+            cleanup: undefined as undefined | (() => void),
+        };
     },
     init({state, updateState}) {
         if (!state.cleanup) {

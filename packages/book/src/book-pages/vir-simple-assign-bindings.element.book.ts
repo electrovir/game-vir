@@ -16,30 +16,32 @@ export const virSimpleAssignBindingsPage = defineBookPage({
                     max-width: 100%;
                 }
             `,
-            stateInitStatic: {
-                playersBindings: ensureType<PlayersBindingsMap>({
-                    '1': {
-                        up: [
-                            {
-                                deviceKey: '0',
-                                direction: InputDirection.Positive,
-                                inputName: 'button-2',
-                            },
-                            {
-                                deviceKey: 'keyboard',
-                                direction: InputDirection.Positive,
-                                inputName: 'button-ArrowUp',
-                            },
-                        ],
-                        down: [
-                            {
-                                deviceKey: '0',
-                                direction: InputDirection.Positive,
-                                inputName: 'axe-1',
-                            },
-                        ],
-                    },
-                }),
+            state() {
+                return {
+                    playersBindings: ensureType<PlayersBindingsMap>({
+                        '1': {
+                            up: [
+                                {
+                                    deviceKey: '0',
+                                    direction: InputDirection.Positive,
+                                    inputName: 'button-2',
+                                },
+                                {
+                                    deviceKey: 'keyboard',
+                                    direction: InputDirection.Positive,
+                                    inputName: 'button-ArrowUp',
+                                },
+                            ],
+                            down: [
+                                {
+                                    deviceKey: '0',
+                                    direction: InputDirection.Positive,
+                                    inputName: 'axe-1',
+                                },
+                            ],
+                        },
+                    }),
+                };
             },
             render({state, updateState}) {
                 return html`

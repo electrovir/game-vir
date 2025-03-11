@@ -6,7 +6,7 @@ import {
     type RoomInput,
 } from '@game-vir/multiplayer';
 import {generateApi, mapServiceDevPort} from '@rest-vir/define-service';
-import {asyncProp, css, defineElementNoInputs, html, isAsyncError, isResolved} from 'element-vir';
+import {asyncProp, css, defineElementNoInputs, html} from 'element-vir';
 
 export const Demo1Child = defineElementNoInputs({
     tagName: 'demo-1-child',
@@ -15,10 +15,12 @@ export const Demo1Child = defineElementNoInputs({
             display: flex;
         }
     `,
-    stateInitStatic: {
-        webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
-            defaultValue: undefined,
-        }),
+    state() {
+        return {
+            webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
+                defaultValue: undefined,
+            }),
+        };
     },
     init({state}) {
         state.webrtcController.setValue(
@@ -62,23 +64,23 @@ export const Demo1Child = defineElementNoInputs({
         );
     },
     render({state}) {
-        if (!state.webrtcController.value || !isResolved(state.webrtcController.value)) {
+        if (!state.webrtcController.settledValue) {
             return html`
                 <p>Loading...</p>
             `;
-        } else if (isAsyncError(state.webrtcController.value)) {
+        } else if (state.webrtcController.settledValue instanceof Error) {
             return html`
                 <p>Failed to connect to multiplayer server.</p>
             `;
         }
 
         return html`
-            Client ${state.webrtcController.value.clientId}
+            Client ${state.webrtcController.settledValue.clientId}
             <br />
-            Connected to ${state.webrtcController.value.multiplayerRoom.roomName}
-            (${state.webrtcController.value.multiplayerRoom.roomId})
+            Connected to ${state.webrtcController.settledValue.multiplayerRoom.roomName}
+            (${state.webrtcController.settledValue.multiplayerRoom.roomId})
             <br />
-            ${state.webrtcController.value.isHost() ? 'Host Client' : 'Member Client'}
+            ${state.webrtcController.settledValue.isHost() ? 'Host Client' : 'Member Client'}
         `;
     },
 });

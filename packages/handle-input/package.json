@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/handle-input",
-    "version": "8.0.0",
+    "version": "9.0.0",
     "description": "",
     "keywords": [],
     "homepage": "https://github.com/electrovir/game-vir",
@@ -34,12 +34,12 @@
         "@augment-vir/web": "^31.10.0",
         "date-vir": "^7.3.1",
         "device-navigation": "^3.1.0",
-        "element-vir": "^23.4.2",
+        "element-vir": "^25.0.1",
         "gamepad-type": "^2.0.1",
         "input-device-handler": "^9.0.0",
         "object-shape-tester": "^5.1.5",
         "vir-line": "^2.0.1",
-        "vira": "^23.4.2"
+        "vira": "^25.0.1"
     },
     "devDependencies": {
         "@augment-vir/test": "^31.10.0",

@@ -39,11 +39,13 @@ export const VirDeviceList = defineElement<
             gap: 16px;
         }
     `,
-    stateInitStatic: {
-        deviceHandler: undefined as undefined | Readonly<InputDeviceHandler>,
-        deviceTimestamps: {} as DeviceTimestampMap,
-        /** Used to clean up device handler listeners. */
-        cleanup: undefined as undefined | (() => void),
+    state() {
+        return {
+            deviceHandler: undefined as undefined | Readonly<InputDeviceHandler>,
+            deviceTimestamps: {} as DeviceTimestampMap,
+            /** Used to clean up device handler listeners. */
+            cleanup: undefined as undefined | (() => void),
+        };
     },
     init({inputs, state, updateState}) {
         const deviceHandler =

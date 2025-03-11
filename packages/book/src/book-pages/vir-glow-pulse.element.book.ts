@@ -9,9 +9,11 @@ const VirGlowPulseBookWrapper = defineElement<{
     colors?: ReadonlyArray<string>;
 }>()({
     tagName: 'vir-glow-pulse-book-wrapper',
-    stateInitStatic: {
-        intervalId: undefined as undefined | number,
-        animation: undefined as undefined | Readonly<PulseTimestamp>,
+    state() {
+        return {
+            intervalId: undefined as undefined | number,
+            animation: undefined as undefined | Readonly<PulseTimestamp>,
+        };
     },
     init({state, updateState, inputs}) {
         if (state.intervalId == undefined) {
@@ -86,8 +88,10 @@ export const virGlowPulseBookPage = defineBookPage({
         });
         defineExample({
             title: 'on click',
-            stateInitStatic: {
-                animation: undefined as undefined | Readonly<PulseTimestamp>,
+            state() {
+                return {
+                    animation: undefined as undefined | Readonly<PulseTimestamp>,
+                };
             },
             styles: css`
                 :host {

@@ -9,8 +9,10 @@ export const virSimpleAssignControllerSlotPage = defineBookPage({
     defineExamples({defineExample}) {
         defineExample({
             title: 'example',
-            stateInitStatic: {
-                gamepadMap: defaultGamepadKeyMap,
+            state() {
+                return {
+                    gamepadMap: defaultGamepadKeyMap,
+                };
             },
             render({updateState, state}) {
                 return html`

@@ -7,7 +7,7 @@ import {VirFps, VirFpsTestId} from './vir-fps.element.js';
 
 describe(VirFps.tagName, () => {
     it('renders fps', async () => {
-        function extractFps(element: (typeof VirFps)['instanceType']): number {
+        function extractFps(element: (typeof VirFps)['InstanceType']): number {
             const fpsDisplay = element.shadowRoot.querySelector(
                 testIdSelector(VirFpsTestId.fpsDisplay),
             );

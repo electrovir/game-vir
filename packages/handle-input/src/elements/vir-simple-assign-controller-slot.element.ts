@@ -101,15 +101,17 @@ export const VirSimpleAssignControllerSlot = defineElement<
     events: {
         deviceMapChange: defineElementEvent<GamepadKeyMap>(),
     },
-    stateInitStatic: {
-        deviceHandler: undefined as undefined | Readonly<InputDeviceHandler>,
-        deviceTimestamps: {} as DeviceTimestampMap,
-        /** Used to clean up device handler listeners. */
-        cleanup: undefined as undefined | (() => void),
-        menuNavController: undefined as undefined | MenuNavController,
-        internalVirLine: undefined as
-            | undefined
-            | VirLineWithState<ReadRawInputStageState & ReadBindingsStageState>,
+    state() {
+        return {
+            deviceHandler: undefined as undefined | Readonly<InputDeviceHandler>,
+            deviceTimestamps: {} as DeviceTimestampMap,
+            /** Used to clean up device handler listeners. */
+            cleanup: undefined as undefined | (() => void),
+            menuNavController: undefined as undefined | MenuNavController,
+            internalVirLine: undefined as
+                | undefined
+                | VirLineWithState<ReadRawInputStageState & ReadBindingsStageState>,
+        };
     },
     init({inputs, state, updateState, host, dispatch, events}) {
         const deviceHandler =

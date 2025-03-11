@@ -38,12 +38,14 @@ export const Demo4Child = defineElementNoInputs({
             height: 20px;
         }
     `,
-    stateInitStatic: {
-        multiplayerController: undefined as undefined | MultiplayerController<DemoAction>,
-        items: [] as (DemoAction & {timestamp: number})[],
-        connectionState: undefined as undefined | MultiplayerConnectionState,
-        color: 'black',
-        fps: 0,
+    state() {
+        return {
+            multiplayerController: undefined as undefined | MultiplayerController<DemoAction>,
+            items: [] as (DemoAction & {timestamp: number})[],
+            connectionState: undefined as undefined | MultiplayerConnectionState,
+            color: 'black',
+            fps: 0,
+        };
     },
     init({state, updateState}) {
         /** Always clear the item array on init. */

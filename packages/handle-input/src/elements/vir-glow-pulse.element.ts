@@ -52,9 +52,11 @@ export const VirGlowPulse = defineElement<{
             display: inline-flex;
         }
     `,
-    stateInitStatic: {
-        lastTimestamp: 0,
-        colorIndex: 0,
+    state() {
+        return {
+            lastTimestamp: 0,
+            colorIndex: 0,
+        };
     },
     render({inputs, host, state, updateState}) {
         const colors =

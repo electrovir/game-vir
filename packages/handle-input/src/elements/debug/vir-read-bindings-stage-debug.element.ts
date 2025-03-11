@@ -112,12 +112,14 @@ export const VirReadBindingsStageDebug = defineElement<
             font-weight: bold;
         }
     `,
-    stateInitStatic: {
-        deviceHandler: undefined as undefined | InputDeviceHandler,
-        pipeline: undefined as
-            | undefined
-            | VirLine<[typeof readRawInputStage, typeof readBindingsStage]>,
-        activeBindings: {} as PlayersActiveBindingsMap,
+    state() {
+        return {
+            deviceHandler: undefined as undefined | InputDeviceHandler,
+            pipeline: undefined as
+                | undefined
+                | VirLine<[typeof readRawInputStage, typeof readBindingsStage]>,
+            activeBindings: {} as PlayersActiveBindingsMap,
+        };
     },
     init({state, updateState, inputs}) {
         const deviceHandler =

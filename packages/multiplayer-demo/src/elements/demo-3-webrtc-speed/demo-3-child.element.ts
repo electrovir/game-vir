@@ -10,21 +10,26 @@ import {
 } from '@game-vir/multiplayer';
 import {generateApi, mapServiceDevPort} from '@rest-vir/define-service';
 import {type Duration, type DurationUnit} from 'date-vir';
-import {
-    asyncProp,
-    css,
-    defineElementNoInputs,
-    html,
-    isAsyncError,
-    isResolved,
-    nothing,
-    renderIf,
-} from 'element-vir';
+import {asyncProp, css, defineElementNoInputs, html, nothing, renderIf} from 'element-vir';
 import {noNativeSpacing} from 'vira';
 import {calculateMedian} from '../../augments/median.js';
 
 export const Demo3Child = defineElementNoInputs({
     tagName: 'demo-3-child',
+    state() {
+        return {
+            webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
+                defaultValue: undefined,
+            }),
+            lastLatency: undefined as undefined | Duration<DurationUnit.Milliseconds>,
+            currentFrame: undefined as undefined | number,
+            clientCount: 0,
+            medianLatency: undefined as undefined | Duration<DurationUnit.Milliseconds>,
+            lastMedianUpdate: Date.now(),
+            lastFrameCount: 0,
+            framesPerSecond: 0,
+        };
+    },
     hostClasses: {
         'demo-3-child-big-latency': ({state}) => (state.lastLatency?.milliseconds || 0) >= 10,
     },
@@ -46,18 +51,6 @@ export const Demo3Child = defineElementNoInputs({
             ${noNativeSpacing};
         }
     `,
-    stateInitStatic: {
-        webrtcController: asyncProp<WebrtcMultiplayerController | undefined>({
-            defaultValue: undefined,
-        }),
-        lastLatency: undefined as undefined | Duration<DurationUnit.Milliseconds>,
-        currentFrame: undefined as undefined | number,
-        clientCount: 0,
-        medianLatency: undefined as undefined | Duration<DurationUnit.Milliseconds>,
-        lastMedianUpdate: Date.now(),
-        lastFrameCount: 0,
-        framesPerSecond: 0,
-    },
     init({state, updateState}) {
         let latencies: number[] = [];
 
@@ -142,23 +135,23 @@ export const Demo3Child = defineElementNoInputs({
         );
     },
     render({state}) {
-        if (!state.webrtcController.value || !isResolved(state.webrtcController.value)) {
+        if (!state.webrtcController.value || !state.webrtcController.settledValue) {
             return html`
                 <p>Loading...</p>
             `;
-        } else if (isAsyncError(state.webrtcController.value)) {
+        } else if (state.webrtcController.settledValue instanceof Error) {
             return html`
                 <p>Failed to connect to multiplayer server.</p>
             `;
         }
 
         return html`
-            Client ${state.webrtcController.value.clientId}
+            Client ${state.webrtcController.settledValue.clientId}
             <br />
-            Connected to ${state.webrtcController.value.multiplayerRoom.roomName}
-            (${state.webrtcController.value.multiplayerRoom.roomId})
+            Connected to ${state.webrtcController.settledValue.multiplayerRoom.roomName}
+            (${state.webrtcController.settledValue.multiplayerRoom.roomId})
             <br />
-            ${state.webrtcController.value.isHost() ? 'Host Client' : 'Member Client'}
+            ${state.webrtcController.settledValue.isHost() ? 'Host Client' : 'Member Client'}
             <br />
             Frame: ${state.currentFrame || 0}
             <br />
