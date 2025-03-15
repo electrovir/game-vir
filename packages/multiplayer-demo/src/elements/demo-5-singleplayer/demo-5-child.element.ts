@@ -2,9 +2,9 @@ import {createUuidV4, randomInteger} from '@augment-vir/common';
 import {
     MultiplayerConnectionState,
     MultiplayerController,
-} from '@game-vir/multiplayer/src/multiplayer-controller.js';
+    ServiceAndRoomConnectionState,
+} from '@game-vir/multiplayer';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
-import {ServiceAndRoomConnectionState} from '../../../../multiplayer/src/multiplayer-controller.js';
 import {demoColors} from './demo-5-colors.js';
 
 type DemoAction = {

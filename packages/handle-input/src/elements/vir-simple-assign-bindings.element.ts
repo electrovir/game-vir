@@ -517,8 +517,4 @@ export const VirSimpleAssignBindings = defineElement<VirSimpleAssignBindingsInpu
             `;
         });
     },
-    options: {
-        /** So this can directly be used as a top-level element. */
-        ignoreUnsetInputs: true,
-    },
 });

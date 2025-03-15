@@ -112,7 +112,4 @@ export const VirDeviceList = defineElement<
 
         return deviceTemplates;
     },
-    options: {
-        ignoreUnsetInputs: true,
-    },
 });

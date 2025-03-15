@@ -115,7 +115,4 @@ export const VirReadRawInputStageDebug = defineElement<
             },
         );
     },
-    options: {
-        ignoreUnsetInputs: true,
-    },
 });

@@ -209,7 +209,4 @@ export const VirReadBindingsStageDebug = defineElement<
                 : activeBindingTemplates}
         `;
     },
-    options: {
-        ignoreUnsetInputs: true,
-    },
 });

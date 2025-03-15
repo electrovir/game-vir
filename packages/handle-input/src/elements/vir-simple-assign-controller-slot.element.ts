@@ -379,9 +379,6 @@ export const VirSimpleAssignControllerSlot = defineElement<
             <div class="devices-wrapper" ${nav(group)}>${deviceTemplates}</div>
         `;
     },
-    options: {
-        ignoreUnsetInputs: true,
-    },
 });
 
 async function playRumble(gamepadKey: GamepadInputDeviceKey) {
