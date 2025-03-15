@@ -4,6 +4,7 @@ import {
     MultiplayerController,
 } from '@game-vir/multiplayer/src/multiplayer-controller.js';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
+import {ServiceAndRoomConnectionState} from '../../../../multiplayer/src/multiplayer-controller.js';
 import {demoColors} from './demo-5-colors.js';
 
 type DemoAction = {
@@ -41,7 +42,7 @@ export const Demo5Child = defineElementNoInputs({
         return {
             multiplayerController: undefined as undefined | MultiplayerController<DemoAction>,
             items: [] as (DemoAction & {timestamp: number})[],
-            connectionState: undefined as undefined | MultiplayerConnectionState,
+            connectionState: undefined as undefined | ServiceAndRoomConnectionState,
             color: 'black',
             fps: 0,
         };
@@ -125,16 +126,15 @@ export const Demo5Child = defineElementNoInputs({
                 </button>
             `;
         } else if (
-            state.connectionState === MultiplayerConnectionState.ServiceFailure ||
-            state.connectionState === MultiplayerConnectionState.DisconnectedFromService ||
-            state.connectionState === MultiplayerConnectionState.DisconnectedFromRoom
+            state.connectionState.service === MultiplayerConnectionState.Error ||
+            state.connectionState.service === MultiplayerConnectionState.Disconnected
         ) {
             return html`
                 Disconnected.
             `;
         } else if (
-            state.connectionState === MultiplayerConnectionState.ConnectingToRoom ||
-            state.connectionState === MultiplayerConnectionState.ConnectingToService
+            state.connectionState.room === MultiplayerConnectionState.Connecting ||
+            state.connectionState.service === MultiplayerConnectionState.Connecting
         ) {
             return html`
                 Connecting...

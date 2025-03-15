@@ -1,9 +1,10 @@
 import {createUuidV4, randomInteger} from '@augment-vir/common';
-import {defaultMultiplayerServiceOrigin} from '@game-vir/multiplayer';
 import {
+    defaultMultiplayerServiceOrigin,
     MultiplayerConnectionState,
     MultiplayerController,
-} from '@game-vir/multiplayer/src/multiplayer-controller.js';
+    type ServiceAndRoomConnectionState,
+} from '@game-vir/multiplayer';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
 import {demoColors} from './demo-4-colors.js';
 
@@ -42,7 +43,7 @@ export const Demo4Child = defineElementNoInputs({
         return {
             multiplayerController: undefined as undefined | MultiplayerController<DemoAction>,
             items: [] as (DemoAction & {timestamp: number})[],
-            connectionState: undefined as undefined | MultiplayerConnectionState,
+            connectionState: undefined as undefined | ServiceAndRoomConnectionState,
             color: 'black',
             fps: 0,
         };
@@ -132,16 +133,15 @@ export const Demo4Child = defineElementNoInputs({
                 </button>
             `;
         } else if (
-            state.connectionState === MultiplayerConnectionState.ServiceFailure ||
-            state.connectionState === MultiplayerConnectionState.DisconnectedFromService ||
-            state.connectionState === MultiplayerConnectionState.DisconnectedFromRoom
+            state.connectionState.service === MultiplayerConnectionState.Error ||
+            state.connectionState.service === MultiplayerConnectionState.Disconnected
         ) {
             return html`
                 Disconnected.
             `;
         } else if (
-            state.connectionState === MultiplayerConnectionState.ConnectingToRoom ||
-            state.connectionState === MultiplayerConnectionState.ConnectingToService
+            state.connectionState.room === MultiplayerConnectionState.Connecting ||
+            state.connectionState.service === MultiplayerConnectionState.Connecting
         ) {
             return html`
                 Connecting...
