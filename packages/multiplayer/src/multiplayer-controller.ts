@@ -134,7 +134,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
      */
     protected currentConnection: LockStepGameStateController | undefined;
     /** The current MultiplayerApi. This will be `undefined` if playing in single player. */
-    protected multiplayerApi: Promise<MultiplayerApi> | undefined;
+    public multiplayerApi: Promise<MultiplayerApi> | undefined;
     /**
      * Used to keep track of the room update interval. This will be set when the controller is
      * constructed in multiplayer mode or when a room is left. This will be cleared when a room is
