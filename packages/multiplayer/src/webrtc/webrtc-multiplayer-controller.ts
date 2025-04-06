@@ -98,8 +98,9 @@ export type RoomInput = Pick<
  *
  * @category Internal
  */
-export type ShouldAllowConnectionCheck = (data: {
+export type ShouldAllowConnectionCheck<Controller> = (data: {
     connectingClientId: Uuid;
+    controller: Controller;
 }) => MaybePromise<boolean>;
 
 /**
@@ -145,7 +146,9 @@ export class WebrtcMultiplayerController<
          *
          * @default accept all connections
          */
-        private readonly shouldAllowConnectionCheck: ShouldAllowConnectionCheck = () => true,
+        private readonly shouldAllowConnectionCheck: ShouldAllowConnectionCheck<
+            WebrtcMultiplayerController<MessageData>
+        > = () => true,
     ) {
         super();
     }
@@ -315,6 +318,7 @@ export class WebrtcMultiplayerController<
                             if (
                                 !this.shouldAllowConnectionCheck({
                                     connectingClientId: message.clientId,
+                                    controller: this,
                                 })
                             ) {
                                 log.warning('offer rejected');

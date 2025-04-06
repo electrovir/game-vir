@@ -39,7 +39,7 @@ export type ServiceAndRoomConnectionState = {
  *
  * @category Internal
  */
-export type MultiplayerControllerParams<Action> = {
+export type MultiplayerControllerParams<Action extends JsonCompatibleValue> = {
     /** Listen to multiplayer events. */
     listeners: {
         /** This is fired whenever a new frame is received from the host client. */
@@ -68,7 +68,7 @@ export type MultiplayerControllerParams<Action> = {
          *
          * @default accept all connections
          */
-        acceptConnection?: ShouldAllowConnectionCheck;
+        acceptConnection?: ShouldAllowConnectionCheck<MultiplayerController<Action>>;
     };
 
     /**
@@ -270,9 +270,18 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
 
         this.updateConnectionState({room: MultiplayerConnectionState.Connecting});
 
+        const acceptConnectionListener = this.params.listeners.acceptConnection;
+
         this.currentConnection = new LockStepGameStateController(
             this.params.frameDuration || {milliseconds: 10},
-            this.params.listeners.acceptConnection,
+            acceptConnectionListener
+                ? (data) => {
+                      return acceptConnectionListener({
+                          ...data,
+                          controller: this,
+                      });
+                  }
+                : undefined,
         );
         this.currentConnection.listen(LockStepFrameEvent, async (event) => {
             await this.params.listeners.frame(event.detail);

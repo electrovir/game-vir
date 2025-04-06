@@ -78,7 +78,9 @@ export class LockStepGameStateController<
 
     constructor(
         frameDuration: AnyDuration,
-        private readonly allowMultiplayerConnectionCheck: ShouldAllowConnectionCheck = () => true,
+        private readonly allowMultiplayerConnectionCheck: ShouldAllowConnectionCheck<
+            LockStepGameStateController<Action>
+        > = () => true,
     ) {
         super();
         this.clientId = createUuidV4();
@@ -141,7 +143,12 @@ export class LockStepGameStateController<
             stunServerUrls,
             multiplayerRoom,
             this.clientId,
-            this.allowMultiplayerConnectionCheck,
+            (data) => {
+                return this.allowMultiplayerConnectionCheck({
+                    ...data,
+                    controller: this,
+                });
+            },
         );
         this.webrtcController.listen(WebrtcMultiplayerMessageEvent, (event) => {
             this.handleReceivedMessage(event);
