@@ -34,12 +34,12 @@
         "@augment-vir/web": "^31.10.1",
         "date-vir": "^7.3.1",
         "device-navigation": "^3.1.1",
-        "element-vir": "^25.1.0",
+        "element-vir": "^25.2.0",
         "gamepad-type": "^2.0.1",
         "input-device-handler": "^9.0.0",
         "object-shape-tester": "^5.1.5",
         "vir-line": "^2.0.1",
-        "vira": "^25.1.0"
+        "vira": "^25.2.0"
     },
     "devDependencies": {
         "@augment-vir/test": "^31.10.1",
@@ -50,7 +50,7 @@
         "@web/test-runner-visual-regression": "^0.10.0",
         "istanbul-smart-text-reporter": "^1.1.5",
         "markdown-code-example-inserter": "^3.0.3",
-        "typedoc": "^0.28.0"
+        "typedoc": "^0.28.1"
     },
     "engines": {
         "node": ">=22"
