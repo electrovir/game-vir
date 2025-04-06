@@ -156,6 +156,11 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
         return this.currentConnection?.clientId;
     }
 
+    /** Get all connected client ids. */
+    public getConnectedClientIds(): Uuid[] {
+        return this.currentConnection?.getConnectedClientIds() || [];
+    }
+
     constructor(protected readonly params: MultiplayerControllerParams<Action>) {
         if (params.multiplayer) {
             this.startMultiplayer(params.multiplayer);

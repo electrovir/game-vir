@@ -85,6 +85,11 @@ export class LockStepGameStateController<
         this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
     }
 
+    /** Get all connected client ids. */
+    public getConnectedClientIds(): Uuid[] {
+        return this.webrtcController?.getConnectedClientIds() || [];
+    }
+
     /** Checks if the current controller is the room host. */
     public isHost() {
         return this.singleplayer || this.webrtcController?.isHost();
