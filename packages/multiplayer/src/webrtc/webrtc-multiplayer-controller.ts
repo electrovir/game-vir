@@ -12,6 +12,7 @@ import {
     mergeDefinedProperties,
     randomString,
     stringify,
+    type MaybePromise,
 } from '@augment-vir/common';
 import type {ClientWebSocket} from '@rest-vir/define-service';
 import type {RequireExactlyOne} from 'type-fest';
@@ -92,6 +93,16 @@ export type RoomInput = Pick<
 >;
 
 /**
+ * This is used to check if a new WebRTC connection should be allowed. This will only be triggered
+ * on a room host client. Return `true`
+ *
+ * @category Internal
+ */
+export type ShouldAllowConnectionCheck = (data: {
+    connectingClientId: Uuid;
+}) => MaybePromise<boolean>;
+
+/**
  * A controller that connects to the multiplayer api and establishes a WebRTC connection to the
  * selected room, or, if the room does not exist yet, creates the room and becomes the host.
  *
@@ -127,6 +138,14 @@ export class WebrtcMultiplayerController<
         public readonly multiplayerRoom: Readonly<RoomInput>,
         /** The randomized client id for this controller and client. */
         public readonly clientId: Uuid = createUuidV4(),
+        /**
+         * This is fired when a WebRTC peer attempts to connect to the host client (this will only
+         * be fired if your client is the host). Return `true` to accept the connection. Return
+         * `false` to reject it.
+         *
+         * @default accept all connections
+         */
+        private readonly shouldAllowConnectionCheck: ShouldAllowConnectionCheck = () => true,
     ) {
         super();
     }
@@ -291,6 +310,15 @@ export class WebrtcMultiplayerController<
                                 throw new Error(
                                     `Non-host multiplayer client received a WebRTC offer.`,
                                 );
+                            }
+
+                            if (
+                                !this.shouldAllowConnectionCheck({
+                                    connectingClientId: message.clientId,
+                                })
+                            ) {
+                                log.warning('offer rejected');
+                                return;
                             }
                             log.faint('received offer');
 

@@ -5,6 +5,7 @@ import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
 import {MultiplayerApi} from './multiplayer-api.js';
 import {
     RoomInput,
+    ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
     WebrtcMultiplayerController,
     WebrtcMultiplayerMessageEvent,
@@ -75,7 +76,10 @@ export class LockStepGameStateController<
     };
     private singleplayer: boolean = false;
 
-    constructor(frameDuration: AnyDuration) {
+    constructor(
+        frameDuration: AnyDuration,
+        private readonly allowMultiplayerConnectionCheck: ShouldAllowConnectionCheck = () => true,
+    ) {
         super();
         this.clientId = createUuidV4();
         this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
@@ -132,6 +136,7 @@ export class LockStepGameStateController<
             stunServerUrls,
             multiplayerRoom,
             this.clientId,
+            this.allowMultiplayerConnectionCheck,
         );
         this.webrtcController.listen(WebrtcMultiplayerMessageEvent, (event) => {
             this.handleReceivedMessage(event);

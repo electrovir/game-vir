@@ -8,6 +8,7 @@ import type {MultiplayerClientRooms} from './multiplayer-service.js';
 import {
     MultiplayerConnectionUpdate,
     RoomInput,
+    ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
 } from './webrtc/webrtc-multiplayer-controller.js';
 
@@ -60,6 +61,14 @@ export type MultiplayerControllerParams<Action> = {
         clientUpdate?: (update: Readonly<MultiplayerConnectionUpdate>) => MaybePromise<void>;
         /** Fires when the controller's connection state is updated. */
         connectionUpdate?: (state: ServiceAndRoomConnectionState) => MaybePromise<void>;
+        /**
+         * This is fired when a WebRTC peer attempts to connect to the host client (this will only
+         * be fired if your client is the host). Return `true` to accept the connection. Return
+         * `false` to reject it.
+         *
+         * @default accept all connections
+         */
+        acceptConnection?: ShouldAllowConnectionCheck;
     };
 
     /**
@@ -199,6 +208,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
 
         this.currentConnection = new LockStepGameStateController(
             this.params.frameDuration || {milliseconds: 10},
+            () => false,
         );
         this.currentConnection.listen(LockStepFrameEvent, async (event) => {
             await this.params.listeners.frame(event.detail);
@@ -257,6 +267,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
 
         this.currentConnection = new LockStepGameStateController(
             this.params.frameDuration || {milliseconds: 10},
+            this.params.listeners.acceptConnection,
         );
         this.currentConnection.listen(LockStepFrameEvent, async (event) => {
             await this.params.listeners.frame(event.detail);
