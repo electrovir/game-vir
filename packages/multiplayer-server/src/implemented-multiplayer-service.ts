@@ -62,7 +62,7 @@ export type MultiplayerClient = Pick<ClientIdentification, 'clientId'> & {
 export type MultiplayerServerRoom = {
     clientsAwaitingAnswer: Record<Uuid, MultiplayerClient>;
     hostClient: MultiplayerClient;
-    connectedClientCount: number;
+    clientCount: number;
     roomPassword: string;
     lastHostPingTimestamp: number;
 } & Pick<MultiplayerClientRoom, 'roomName' | 'roomId'>;
@@ -215,7 +215,7 @@ function updateRoomsForFetching(
         serverState.multiplayerRooms,
         (roomId, multiplayerRoom): MultiplayerClientRoom => {
             return {
-                clientCount: multiplayerRoom.connectedClientCount,
+                clientCount: multiplayerRoom.clientCount,
                 hasRoomPassword: !!multiplayerRoom.roomPassword,
                 roomId,
                 roomName: multiplayerRoom.roomName,
@@ -284,7 +284,7 @@ function processQueueItem(
                 roomName: message.roomName,
                 roomId: message.roomId,
                 roomPassword: message.roomPassword,
-                connectedClientCount: 1,
+                clientCount: 1,
                 lastHostPingTimestamp: Date.now(),
             };
             serverState.logger.info(
@@ -330,7 +330,7 @@ function processQueueItem(
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (message.type === MultiplayerWebSocketMessageType.HostPing) {
         if (multiplayerRoom && multiplayerRoom.hostClient.clientSecret === message.clientSecret) {
-            multiplayerRoom.connectedClientCount = message.clientCount;
+            multiplayerRoom.clientCount = message.clientCount;
             multiplayerRoom.roomName = message.roomName;
             multiplayerRoom.roomPassword = message.roomPassword;
             multiplayerRoom.lastHostPingTimestamp = Date.now();

@@ -316,9 +316,7 @@ export class WebrtcMultiplayerController<
             this.webSocket.send({
                 messageId: createUuidV4(),
                 type: MultiplayerWebSocketMessageType.HostPing,
-                clientCount: Object.keys(this.connections).filter(
-                    (clientId) => clientId !== this.clientId,
-                ).length,
+                clientCount: this.getAllClientIds().length,
                 clientId: this.clientId,
                 clientSecret: this.clientSecret,
                 ...this.multiplayerRoom,

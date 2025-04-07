@@ -242,7 +242,7 @@ function startLockStep(
         maybeStartNextFrame();
 
         updateState({
-            clientCount: webrtcController.getConnectedClientIds().length,
+            clientCount: webrtcController.getAllClientIds().length,
         });
 
         if (detail.newMember) {
