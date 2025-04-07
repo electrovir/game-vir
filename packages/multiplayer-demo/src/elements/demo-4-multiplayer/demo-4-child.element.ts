@@ -1,9 +1,9 @@
-import {createUuidV4, randomInteger} from '@augment-vir/common';
+import {createUuidV4, extractErrorMessage, randomInteger} from '@augment-vir/common';
 import {
     defaultMultiplayerServiceOrigin,
+    emptyServiceAndRoomConnectionState,
     MultiplayerConnectionState,
     MultiplayerController,
-    type ServiceAndRoomConnectionState,
 } from '@game-vir/multiplayer';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
 import {demoColors} from './demo-4-colors.js';
@@ -19,8 +19,11 @@ export const Demo4Child = defineElementNoInputs({
     styles: () => css`
         :host {
             display: flex;
-            align-items: flex-start;
             flex-direction: column;
+        }
+
+        button {
+            align-self: flex-start;
         }
 
         .game-wrapper {
@@ -38,12 +41,17 @@ export const Demo4Child = defineElementNoInputs({
             width: 20px;
             height: 20px;
         }
+        .error {
+            font-weight: bold;
+            color: red;
+            text-align: center;
+        }
     `,
     state() {
         return {
             multiplayerController: undefined as undefined | MultiplayerController<DemoAction>,
             items: [] as (DemoAction & {timestamp: number})[],
-            connectionState: undefined as undefined | ServiceAndRoomConnectionState,
+            connectionState: emptyServiceAndRoomConnectionState,
             color: 'black',
             fps: 0,
         };
@@ -52,7 +60,7 @@ export const Demo4Child = defineElementNoInputs({
         /** Always clear the item array on init. */
         updateState({
             items: [],
-            connectionState: undefined,
+            connectionState: emptyServiceAndRoomConnectionState,
             color: demoColors[randomInteger({min: 0, max: demoColors.length - 1})] || 'black',
         });
 
@@ -81,7 +89,7 @@ export const Demo4Child = defineElementNoInputs({
                     },
                     async roomListUpdate(rooms) {
                         const firstRoom = Object.values(rooms)[0];
-                        if (firstRoom) {
+                        if (firstRoom && !(controller.roomConnectionState instanceof Error)) {
                             await controller.joinOrCreateRoom({
                                 roomId: firstRoom.roomId,
                                 roomName: firstRoom.roomName,
@@ -94,6 +102,9 @@ export const Demo4Child = defineElementNoInputs({
                         updateState({
                             connectionState: state,
                         });
+                    },
+                    acceptConnection({controller}) {
+                        return controller.getAllClientIds().length < 16;
                     },
                 },
                 multiplayer: {
@@ -118,7 +129,7 @@ export const Demo4Child = defineElementNoInputs({
             return html`
                 Loading...
             `;
-        } else if (!state.connectionState) {
+        } else if (state.connectionState.room === MultiplayerConnectionState.Disconnected) {
             return html`
                 <button
                     ${listen('click', async () => {
@@ -132,12 +143,17 @@ export const Demo4Child = defineElementNoInputs({
                     Create Room
                 </button>
             `;
-        } else if (
-            state.connectionState.service === MultiplayerConnectionState.Error ||
-            state.connectionState.service === MultiplayerConnectionState.Disconnected
-        ) {
+        } else if (state.connectionState.service === MultiplayerConnectionState.Disconnected) {
             return html`
                 Disconnected.
+            `;
+        } else if (state.connectionState.service instanceof Error) {
+            return html`
+                <p class="error">${extractErrorMessage(state.connectionState.service)}</p>
+            `;
+        } else if (state.connectionState.room instanceof Error) {
+            return html`
+                <p class="error">${extractErrorMessage(state.connectionState.room)}</p>
             `;
         } else if (
             state.connectionState.room === MultiplayerConnectionState.Connecting ||
@@ -159,7 +175,11 @@ export const Demo4Child = defineElementNoInputs({
                     });
                 })}
             >
-                Click to play ${renderIf(controller.isHost(), '(host)')}
+                Click to play
+                ${renderIf(
+                    controller.isHost(),
+                    `(host ${controller.getConnectedClientIds().length})`,
+                )}
                 <br />
                 ${state.fps} FPS
                 ${state.items.map((item) => {

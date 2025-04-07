@@ -7,7 +7,7 @@ import {Demo4Iframe} from './demo-4-iframe.element.js';
 
 const isParent = !parseUrl(window.location.href).searchParams.child;
 
-const iframeCount = 16;
+const iframeCount = 18;
 
 export const Demo4App = defineElementNoInputs({
     tagName: 'demo-4-app',
@@ -75,7 +75,7 @@ export const Demo4App = defineElementNoInputs({
                 `,
             );
             return html`
-                <p>${iframeCount} Iframes</p>
+                <p>${iframeCount} Iframes (Some rejected)</p>
                 <main>${frameTemplates}</main>
             `;
         } else {

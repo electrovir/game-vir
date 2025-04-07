@@ -1,4 +1,4 @@
-import {createUuidV4, randomInteger} from '@augment-vir/common';
+import {createUuidV4, extractErrorMessage, randomInteger} from '@augment-vir/common';
 import {
     MultiplayerConnectionState,
     MultiplayerController,
@@ -36,6 +36,11 @@ export const Demo5Child = defineElementNoInputs({
             position: absolute;
             width: 20px;
             height: 20px;
+        }
+
+        .error {
+            font-weight: bold;
+            color: red;
         }
     `,
     state() {
@@ -125,10 +130,15 @@ export const Demo5Child = defineElementNoInputs({
                     Create Room
                 </button>
             `;
-        } else if (
-            state.connectionState.service === MultiplayerConnectionState.Error ||
-            state.connectionState.service === MultiplayerConnectionState.Disconnected
-        ) {
+        } else if (state.connectionState.service instanceof Error) {
+            return html`
+                <p class="error">${extractErrorMessage(state.connectionState.service)}</p>
+            `;
+        } else if (state.connectionState.room instanceof Error) {
+            return html`
+                <p class="error">${extractErrorMessage(state.connectionState.room)}</p>
+            `;
+        } else if (state.connectionState.service === MultiplayerConnectionState.Disconnected) {
             return html`
                 Disconnected.
             `;

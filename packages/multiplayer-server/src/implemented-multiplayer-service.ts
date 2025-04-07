@@ -1,5 +1,6 @@
 import {
     callAsynchronously,
+    createUuidV4,
     mapObjectValues,
     omitObjectKeys,
     stringify,
@@ -21,6 +22,7 @@ import {
     implementService,
     ServerWebSocket,
     ServiceLogger,
+    silentServiceLogger,
 } from '@rest-vir/implement-service';
 import {convertDuration} from 'date-vir';
 
@@ -97,6 +99,16 @@ export type MultiplayerServerState = {
 };
 
 /**
+ * The default logger for {@link ImplementedMultiplayerService}.
+ *
+ * @category Internal
+ */
+export const defaultMultiplayerServiceLogger: ServiceLogger = {
+    error: defaultServiceLogger.error,
+    info: silentServiceLogger.info,
+};
+
+/**
  * The implemented service returned from {@link implementMultiplayerService}.
  *
  * @category Internal
@@ -112,7 +124,7 @@ export type ImplementedMultiplayerService = ReturnType<
  */
 export function implementMultiplayerService(options: MultiplayerServerOptions = {}) {
     const serverState: MultiplayerServerState = {
-        logger: options.logger || defaultServiceLogger,
+        logger: options.logger || defaultMultiplayerServiceLogger,
         multiplayerRooms: {},
         webSocketMessageQueue: [],
         isProcessingQueue: false,
@@ -240,6 +252,7 @@ function processQueueItem(
                 message.roomPassword !== multiplayerRoom.roomPassword
             ) {
                 webSocket.send({
+                    messageId: message.messageId,
                     type: MultiplayerWebSocketMessageType.Error,
                     errorMessage: 'Invalid password.',
                 });
@@ -247,10 +260,6 @@ function processQueueItem(
                 serverState.logger.info(
                     `Sending offer to host ${multiplayerRoom.hostClient.clientId} in room ${multiplayerRoom.roomName} (${multiplayerRoom.roomId})`,
                 );
-                webSocket.send({
-                    type: MultiplayerWebSocketMessageType.OfferResult,
-                    hostClientId: multiplayerRoom.hostClient.clientId,
-                });
                 multiplayerRoom.clientsAwaitingAnswer[currentClient.clientId] = currentClient;
                 multiplayerRoom.hostClient.webSocket.send(
                     omitObjectKeys(message, [
@@ -258,6 +267,11 @@ function processQueueItem(
                         'roomPassword',
                     ]),
                 );
+                webSocket.send({
+                    messageId: message.messageId,
+                    type: MultiplayerWebSocketMessageType.OfferResult,
+                    hostClientId: multiplayerRoom.hostClient.clientId,
+                });
             }
         } else {
             /**
@@ -279,6 +293,7 @@ function processQueueItem(
             serverState.multiplayerRooms[newRoom.roomId] = newRoom;
             updateRoomsForFetching(serverState);
             webSocket.send({
+                messageId: message.messageId,
                 type: MultiplayerWebSocketMessageType.OfferResult,
                 hostClientId: newRoom.hostClient.clientId,
             });
@@ -306,6 +321,7 @@ function processQueueItem(
             const errorMessage = `No client found waiting for an answer by id ${message.clientId}`;
             serverState.logger.error(new Error(errorMessage));
             webSocket.send({
+                messageId: message.messageId,
                 type: MultiplayerWebSocketMessageType.Error,
                 errorMessage: errorMessage,
             });
@@ -320,12 +336,14 @@ function processQueueItem(
             multiplayerRoom.lastHostPingTimestamp = Date.now();
         } else {
             webSocket.send({
+                messageId: message.messageId,
                 type: MultiplayerWebSocketMessageType.Error,
                 errorMessage: `Invalid room to ping.`,
             });
         }
     } else {
         webSocket.send({
+            messageId: createUuidV4(),
             type: MultiplayerWebSocketMessageType.Error,
             errorMessage: `Invalid message: ${stringify(message)}`,
         });

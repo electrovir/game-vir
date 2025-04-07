@@ -7,7 +7,7 @@ import {Demo3Iframe} from './demo-3-iframe.element.js';
 
 const isParent = !parseUrl(window.location.href).searchParams.child;
 
-const iframeCount = 16;
+const iframeCount = 10;
 
 export const Demo3App = defineElementNoInputs({
     tagName: 'demo-3-app',

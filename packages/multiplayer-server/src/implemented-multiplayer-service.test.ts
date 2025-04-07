@@ -3,6 +3,7 @@ import {
     awaitedForEach,
     createUuidV4,
     extractErrorMessage,
+    omitObjectKeys,
     randomString,
     type ArrayElement,
     type MaybePromise,
@@ -17,6 +18,7 @@ import {
 } from '@game-vir/multiplayer';
 import {ClientWebSocket} from '@rest-vir/define-service';
 import {testService, type FetchTestService} from '@rest-vir/run-service';
+import {DistributedOmit} from 'type-fest';
 import {
     ImplementedMultiplayerService,
     implementMultiplayerService,
@@ -44,7 +46,10 @@ type MultiplayerServiceCallbackParams = Readonly<{
     createClient: (name: string) => Promise<TestClient>;
     webSocketMessages: Record<
         string,
-        MultiplayerService['webSockets']['/connect']['MessageFromHostType'][]
+        DistributedOmit<
+            MultiplayerService['webSockets']['/connect']['MessageFromHostType'],
+            'messageId'
+        >[]
     >;
     setupRooms: <const Rooms extends string[][]>(rooms: Rooms) => Promise<SetupRoomsOutput<Rooms>>;
     logs: {
@@ -79,7 +84,10 @@ function testMultiplayerService(
 
         const webSocketMessages: Record<
             string,
-            MultiplayerService['webSockets']['/connect']['MessageFromHostType'][]
+            DistributedOmit<
+                MultiplayerService['webSockets']['/connect']['MessageFromHostType'],
+                'messageId'
+            >[]
         > = {};
 
         async function createClient(
@@ -91,7 +99,14 @@ function testMultiplayerService(
                         webSocketMessages[clientName] = [];
                     },
                     message({message}) {
-                        assertWrap.isDefined(webSocketMessages[clientName]).push(message);
+                        assertWrap
+                            .isDefined(webSocketMessages[clientName])
+                            .push(
+                                omitObjectKeys(message, ['messageId']) as DistributedOmit<
+                                    MultiplayerService['webSockets']['/connect']['MessageFromHostType'],
+                                    'messageId'
+                                >,
+                            );
                     },
                 },
             });
@@ -127,6 +142,7 @@ function testMultiplayerService(
                                 clients[clientName] = client;
 
                                 client.webSocket.send({
+                                    messageId: createUuidV4(),
                                     clientId: client.clientId,
                                     data: {
                                         sdp: 'test',
@@ -241,6 +257,7 @@ describe('multiplayer service', () => {
             );
 
             rooms[1].clients['b-host'].webSocket.send({
+                messageId: createUuidV4(),
                 type: MultiplayerWebSocketMessageType.HostPing,
                 clientCount: 2,
                 clientId: rooms[1].clients['b-host'].clientId,

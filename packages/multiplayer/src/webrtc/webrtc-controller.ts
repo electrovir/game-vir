@@ -9,8 +9,12 @@ import {
 } from '@augment-vir/common';
 import {assertValidShape} from 'object-shape-tester';
 import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
-import type {WebrtcOffer} from '../multiplayer-service.js';
-import {WebrtcAnswer, webrtcAnswerShape, webrtcOfferShape} from '../multiplayer-service.js';
+import {
+    webrtcAnswerShape,
+    webrtcOfferShape,
+    type WebrtcAnswer,
+    type WebrtcOffer,
+} from './web-rtc-communication.js';
 
 /**
  * An event that is omitted from {@link WebrtcController} when a WebRTC message is received.

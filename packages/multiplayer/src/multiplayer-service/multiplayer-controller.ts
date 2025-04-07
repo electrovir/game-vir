@@ -1,16 +1,23 @@
-import {JsonCompatibleValue, makeWritable, MaybePromise, type Uuid} from '@augment-vir/common';
+import {
+    ensureError,
+    JsonCompatibleValue,
+    makeWritable,
+    MaybePromise,
+    type Uuid,
+} from '@augment-vir/common';
 import {mapServiceDevPort} from '@rest-vir/define-service';
 import {convertDuration, type AnyDuration} from 'date-vir';
 import type {RequireExactlyOne} from 'type-fest';
-import {LockStepFrameEvent, LockStepGameStateController} from './lock-step-controller.js';
-import {createMultiplayerApi, MultiplayerApi} from './multiplayer-api.js';
-import type {MultiplayerClientRooms} from './multiplayer-service.js';
 import {
     MultiplayerConnectionUpdate,
     RoomInput,
     ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
-} from './webrtc/webrtc-multiplayer-controller.js';
+} from '../webrtc/webrtc-multiplayer-controller.js';
+import {RoomRejectionError} from './errors.js';
+import {LockStepFrameEvent, LockStepGameStateController} from './lock-step-controller.js';
+import {createMultiplayerApi, MultiplayerApi} from './multiplayer-api.js';
+import type {MultiplayerClientRooms} from './multiplayer-service.js';
 
 /**
  * Connection state for {@link MultiplayerController}.
@@ -20,8 +27,8 @@ import {
 export enum MultiplayerConnectionState {
     Connecting = 'connecting',
     Connected = 'connected',
+    /** The connection has not been started or has been gracefully terminated. */
     Disconnected = 'disconnected',
-    Error = 'error',
 }
 
 /**
@@ -30,8 +37,18 @@ export enum MultiplayerConnectionState {
  * @category Internal
  */
 export type ServiceAndRoomConnectionState = {
-    service: MultiplayerConnectionState;
-    room: MultiplayerConnectionState;
+    service: MultiplayerConnectionState | Error;
+    room: MultiplayerConnectionState | Error;
+};
+
+/**
+ * Empty or totally disconnected state for {@link ServiceAndRoomConnectionState}.
+ *
+ * @category Internal
+ */
+export const emptyServiceAndRoomConnectionState: Readonly<ServiceAndRoomConnectionState> = {
+    room: MultiplayerConnectionState.Disconnected,
+    service: MultiplayerConnectionState.Disconnected,
 };
 
 /**
@@ -130,10 +147,10 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     /** Currently joined room id. If a room has not been joined yet, this will be empty. */
     public readonly roomId: Uuid | undefined;
     /** The current connection state of the controller's connection to a backend service. */
-    public readonly serviceConnectionState: MultiplayerConnectionState =
+    public readonly serviceConnectionState: ServiceAndRoomConnectionState['service'] =
         MultiplayerConnectionState.Disconnected;
     /** The current connection state of the controller's connection to a multiplayer room. */
-    public readonly roomConnectionState: MultiplayerConnectionState =
+    public readonly roomConnectionState: ServiceAndRoomConnectionState['room'] =
         MultiplayerConnectionState.Disconnected;
 
     /**
@@ -142,6 +159,11 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
      * {@link MultiplayerController.joinOrCreateRoom}.
      */
     protected currentConnection: LockStepGameStateController | undefined;
+    /**
+     * Rooms that have rejected the current player, so the player doesn't keep trying to connect to
+     * them.
+     */
+    protected rejectedRoomIds = new Set<Uuid>();
     /** The current MultiplayerApi. This will be `undefined` if playing in single player. */
     public multiplayerApi: Promise<MultiplayerApi> | undefined;
     /**
@@ -151,14 +173,40 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
      */
     protected roomUpdateIntervalId: ReturnType<typeof globalThis.setInterval> | undefined;
 
-    /** Get the current client's WebRTC client id. */
-    public get clientId(): Uuid | undefined {
+    /**
+     * Get the current client's WebRTC client id. This will return `undefined` if there is no
+     * current connection.
+     */
+    public getClientId(): Uuid | undefined {
         return this.currentConnection?.clientId;
     }
 
-    /** Get all connected client ids. */
+    /**
+     * Get all connected client ids.
+     *
+     * - For host clients, this will indicate how many member clients are connected to the host
+     *   client, _not_ including the host itself.
+     * - For non-host clients, this will only list the host's client.
+     *
+     * For host clients, this does ont include the host client id whereas
+     * {@link MultiplayerController.getAllClientIds} does.
+     */
     public getConnectedClientIds(): Uuid[] {
         return this.currentConnection?.getConnectedClientIds() || [];
+    }
+
+    /**
+     * Get all room client ids.
+     *
+     * - For host clients, this will indicate how many clients are connected to the room, including
+     *   the host client itself.
+     * - For non-host clients, this will only list the host's client.
+     *
+     * For host clients, this includes the host client id whereas
+     * {@link MultiplayerController.getConnectedClientIds} does not.
+     */
+    public getAllClientIds(): Uuid[] {
+        return this.currentConnection?.getAllClientIds() || [];
     }
 
     constructor(protected readonly params: MultiplayerControllerParams<Action>) {
@@ -192,7 +240,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
                 return api;
             })
             .catch((error: unknown) => {
-                this.updateConnectionState({service: MultiplayerConnectionState.Error});
+                this.updateConnectionState({service: ensureError(error)});
                 throw error;
             });
 
@@ -245,11 +293,11 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
 
     /** Cleanup everything. */
     public destroy() {
-        this.currentConnection?.destroy();
         this.updateConnectionState({
             room: MultiplayerConnectionState.Disconnected,
             service: MultiplayerConnectionState.Disconnected,
         });
+        this.currentConnection?.destroy();
         globalThis.clearInterval(this.roomUpdateIntervalId);
     }
 
@@ -261,11 +309,12 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     public async joinOrCreateRoom(room: Readonly<RoomInput>) {
         if (this.currentConnection) {
             throw new Error(`Cannot join or create a room, `);
-        }
-        if (!this.multiplayerApi || !this.params.multiplayer) {
+        } else if (!this.multiplayerApi || !this.params.multiplayer) {
             throw new Error(
                 'Cannot join room. Please construct this controller in multiplayer mode to join rooms.',
             );
+        } else if (this.rejectedRoomIds.has(room.roomId)) {
+            throw new RoomRejectionError(room);
         }
 
         this.updateConnectionState({room: MultiplayerConnectionState.Connecting});
@@ -292,14 +341,24 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
             });
         }
 
-        await this.currentConnection.multiplayerConnect(
-            await this.multiplayerApi,
-            this.params.multiplayer.stunServerUrls || [],
-            room,
-        );
-        makeWritable(this).roomId = room.roomId;
-        globalThis.clearInterval(this.roomUpdateIntervalId);
-        this.updateConnectionState({room: MultiplayerConnectionState.Connected});
+        if (
+            await this.currentConnection.multiplayerConnect(
+                await this.multiplayerApi,
+                this.params.multiplayer.stunServerUrls || [],
+                room,
+            )
+        ) {
+            makeWritable(this).roomId = room.roomId;
+            globalThis.clearInterval(this.roomUpdateIntervalId);
+            this.updateConnectionState({room: MultiplayerConnectionState.Connected});
+        } else {
+            this.rejectedRoomIds.add(room.roomId);
+            this.currentConnection = undefined;
+            const error = new RoomRejectionError(room);
+
+            this.updateConnectionState({room: error});
+            throw error;
+        }
     }
 
     /** Leave the current room or single player connection. */
@@ -316,12 +375,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
     }
 
     /** Set the current connection state and fire listeners. */
-    protected updateConnectionState(
-        state: Partial<{
-            service: MultiplayerConnectionState;
-            room: MultiplayerConnectionState;
-        }>,
-    ) {
+    protected updateConnectionState(state: Partial<ServiceAndRoomConnectionState>) {
         if (state.service) {
             makeWritable(this).serviceConnectionState = state.service;
         }

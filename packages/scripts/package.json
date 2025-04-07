@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/scripts",
-    "version": "10.2.0",
+    "version": "11.0.0",
     "private": true,
     "description": "",
     "keywords": [],
@@ -26,12 +26,12 @@
         "test:update": "npm test update"
     },
     "dependencies": {
-        "@augment-vir/assert": "^31.10.1",
-        "@augment-vir/common": "^31.10.1",
-        "@augment-vir/node": "^31.10.1"
+        "@augment-vir/assert": "^31.10.2",
+        "@augment-vir/common": "^31.10.2",
+        "@augment-vir/node": "^31.10.2"
     },
     "devDependencies": {
-        "@augment-vir/test": "^31.10.1",
+        "@augment-vir/test": "^31.10.2",
         "@types/node": "^22.14.0",
         "tsx": "^4.19.3"
     },

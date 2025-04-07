@@ -1,10 +1,6 @@
 import {waitUntil} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
-import {
-    MultiplayerConnectionState,
-    MultiplayerController,
-    ServiceAndRoomConnectionState,
-} from './multiplayer-controller.js';
+import {MultiplayerController, ServiceAndRoomConnectionState} from './multiplayer-controller.js';
 
 describe(MultiplayerController.name, () => {
     it('handles failure to connect to a room with port scanning', async () => {
@@ -28,10 +24,7 @@ describe(MultiplayerController.name, () => {
             },
         });
 
-        await waitUntil.strictEquals(
-            MultiplayerConnectionState.Error,
-            () => externalState?.service,
-        );
+        await waitUntil.instanceOf(Error, () => externalState?.service);
     });
     it('handles failure to connect to a room', async () => {
         let externalState: undefined | ServiceAndRoomConnectionState;
@@ -49,14 +42,10 @@ describe(MultiplayerController.name, () => {
             },
         });
 
-        await waitUntil.strictEquals(
-            MultiplayerConnectionState.Error,
-            () => externalState?.service,
-            {
-                timeout: {
-                    seconds: 20,
-                },
+        await waitUntil.instanceOf(Error, () => externalState?.service, {
+            timeout: {
+                seconds: 20,
             },
-        );
+        });
     });
 });

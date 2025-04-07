@@ -6,7 +6,7 @@ export const Demo3Iframe = defineElementNoInputs({
     styles: css`
         :host {
             display: flex;
-            height: 200px;
+            height: 300px;
         }
         iframe {
             flex-grow: 1;

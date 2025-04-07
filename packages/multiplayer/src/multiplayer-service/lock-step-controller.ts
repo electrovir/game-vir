@@ -2,14 +2,14 @@ import {waitUntil} from '@augment-vir/assert';
 import {createUuidV4, JsonCompatibleValue, makeWritable, type Uuid} from '@augment-vir/common';
 import {AnyDuration, convertDuration} from 'date-vir';
 import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
-import {MultiplayerApi} from './multiplayer-api.js';
 import {
     RoomInput,
     ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
     WebrtcMultiplayerController,
     WebrtcMultiplayerMessageEvent,
-} from './webrtc/webrtc-multiplayer-controller.js';
+} from '../webrtc/webrtc-multiplayer-controller.js';
+import {MultiplayerApi} from './multiplayer-api.js';
 
 /**
  * Message type for {@link LockStepMessage}.
@@ -87,9 +87,32 @@ export class LockStepGameStateController<
         this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
     }
 
-    /** Get all connected client ids. */
+    /**
+     * Get all connected client ids.
+     *
+     * - For host clients, this will indicate how many member clients are connected to the host
+     *   client, _not_ including the host itself.
+     * - For non-host clients, this will only list the host's client.
+     *
+     * For host clients, this does ont include the host client id whereas
+     * {@link LockStepGameStateController.getAllClientIds} does.
+     */
     public getConnectedClientIds(): Uuid[] {
         return this.webrtcController?.getConnectedClientIds() || [];
+    }
+
+    /**
+     * Get all room client ids.
+     *
+     * - For host clients, this will indicate how many clients are connected to the room, including
+     *   the host client itself.
+     * - For non-host clients, this will only list the host's client.
+     *
+     * For host clients, this includes the host client id whereas
+     * {@link LockStepGameStateController.getConnectedClientIds} does not.
+     */
+    public getAllClientIds(): Uuid[] {
+        return this.webrtcController?.getAllClientIds() || [];
     }
 
     /** Checks if the current controller is the room host. */
@@ -111,6 +134,7 @@ export class LockStepGameStateController<
     public override destroy() {
         globalThis.clearInterval(this.timeoutId);
         this.webrtcController?.destroy();
+        this.webrtcController = undefined;
         super.destroy();
     }
 
@@ -126,6 +150,7 @@ export class LockStepGameStateController<
     /**
      * Startup the controller in multiplayer mode and connect to a room.
      *
+     * @returns Whether the connection was a successful or not.
      * @see {@link LockStepGameStateController.startSingleplayer} for starting the controller in singleplayer mode.
      */
     public async multiplayerConnect(
@@ -137,8 +162,8 @@ export class LockStepGameStateController<
          */
         stunServerUrls: ReadonlyArray<string>,
         multiplayerRoom: Readonly<RoomInput>,
-    ) {
-        this.webrtcController = new WebrtcMultiplayerController<LockStepMessage<Action>>(
+    ): Promise<boolean> {
+        const webrtcController = new WebrtcMultiplayerController<LockStepMessage<Action>>(
             multiplayerApi,
             stunServerUrls,
             multiplayerRoom,
@@ -150,6 +175,8 @@ export class LockStepGameStateController<
                 });
             },
         );
+
+        this.webrtcController = webrtcController;
         this.webrtcController.listen(WebrtcMultiplayerMessageEvent, (event) => {
             this.handleReceivedMessage(event);
         });
@@ -158,9 +185,26 @@ export class LockStepGameStateController<
         });
 
         await this.webrtcController.initConnection();
-        await waitUntil.isTrue(() => this.webrtcController?.isConnected());
+        const connectionResult = await waitUntil.isDefined(() => {
+            const connected = webrtcController.isConnected();
+            const destroyed = webrtcController.isDestroyed;
 
-        this.finishFrame();
+            if (!connected && !destroyed) {
+                return undefined;
+            } else {
+                return {
+                    connected,
+                    destroyed,
+                };
+            }
+        });
+        if (connectionResult.destroyed) {
+            this.destroy();
+            return false;
+        } else {
+            this.finishFrame();
+            return true;
+        }
     }
 
     private handleConnection(event: WebrtcMultiplayerConnectionUpdateEvent) {
@@ -234,9 +278,9 @@ export class LockStepGameStateController<
 
         const clientsReady =
             this.singleplayer ||
-            this.webrtcController
-                ?.getConnectedClientIds()
-                .every((clientId) => this.clientsResponded[clientId]);
+            this.webrtcController?.getConnectedClientIds().every((clientId) => {
+                return this.clientsResponded[clientId];
+            });
 
         if (
             !this.frameTimerReady ||
