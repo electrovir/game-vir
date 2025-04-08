@@ -244,23 +244,33 @@ export class LockStepGameStateController<
             this.frameActions.push(...message.actions);
             this.maybeFinishFrame();
         } else if (!this.isHost() && message.type === LockStepMessageType.Frame) {
+            const currentFrameActions = this.frameActions;
+            /**
+             * This must be cleared before {@link LockStepFrameEvent} is emitted in case that event
+             * triggers more actions.
+             */
+            this.frameActions = [];
             this.calculateFps();
             this.webrtcController.sendMessage({
-                actions: this.frameActions,
+                actions: currentFrameActions,
                 sourceClientId: this.clientId,
                 type: LockStepMessageType.Actions,
             });
             this.dispatch(new LockStepFrameEvent<Action>({detail: message.actions}));
-            this.frameActions = [];
         }
     }
     private finishFrame() {
+        const currentFrameActions = this.frameActions;
+        /**
+         * This must be cleared before {@link LockStepFrameEvent} is emitted in case that event
+         * triggers more actions.
+         */
+        this.frameActions = [];
         this.webrtcController?.sendMessage({
             type: LockStepMessageType.Frame,
-            actions: this.frameActions,
+            actions: currentFrameActions,
         });
-        this.dispatch(new LockStepFrameEvent<Action>({detail: this.frameActions}));
-        this.frameActions = [];
+        this.dispatch(new LockStepFrameEvent<Action>({detail: currentFrameActions}));
 
         this.frameTimerReady = false;
         this.calculateFps();
