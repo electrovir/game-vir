@@ -1,13 +1,13 @@
 import {check} from '@augment-vir/assert';
-import {filterOutIndexes, mapObjectValues, PartialWithUndefined} from '@augment-vir/common';
+import {filterOutIndexes, mapObjectValues, type PartialWithUndefined} from '@augment-vir/common';
 import {classMap, css, defineElement, defineElementEvent, html, listen, nothing} from 'element-vir';
 import {
     CurrentInputsChangedEvent,
     DeviceInputType,
     DevicesRemovedEvent,
     InputDeviceHandler,
-    InputDeviceHandlerOptions,
-    InputDeviceKey,
+    type InputDeviceHandlerOptions,
+    type InputDeviceKey,
     inputDeviceKeyToInputDeviceType,
     InputDeviceType,
     NewDevicesAddedEvent,
@@ -15,12 +15,12 @@ import {
 } from 'input-device-handler';
 import {noUserSelect, viraAnimationDurations, ViraButton, viraDisabledStyles} from 'vira';
 import {
-    Binding,
-    BindingsMap,
-    PlayersBindingsMap,
-    ReadBindingsStageState,
+    type Binding,
+    type BindingsMap,
+    type PlayersBindingsMap,
+    type ReadBindingsStageState,
 } from '../stages/read-bindings.stage.js';
-import {calculateInputDirection, SimpleInputDevice} from '../stages/read-raw-input.stage.js';
+import {calculateInputDirection, type SimpleInputDevice} from '../stages/read-raw-input.stage.js';
 import {isMouseMovement} from '../util/is-mouse-movement.js';
 import {deviceEmojis, directionEmojis} from './emoji.js';
 

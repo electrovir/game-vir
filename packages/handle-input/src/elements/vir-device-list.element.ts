@@ -1,6 +1,14 @@
-import {getObjectTypedEntries, mapObjectValues, PartialWithUndefined} from '@augment-vir/common';
+import {
+    getObjectTypedEntries,
+    mapObjectValues,
+    type PartialWithUndefined,
+} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
-import {CurrentInputsChangedEvent, InputDeviceHandler, InputDeviceKey} from 'input-device-handler';
+import {
+    CurrentInputsChangedEvent,
+    InputDeviceHandler,
+    type InputDeviceKey,
+} from 'input-device-handler';
 import {isMouseMovement} from '../util/is-mouse-movement.js';
 import {VirDeviceChip} from './vir-device-chip.element.js';
 

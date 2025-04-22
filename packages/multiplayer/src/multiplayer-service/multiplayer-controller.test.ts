@@ -1,6 +1,9 @@
 import {waitUntil} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
-import {MultiplayerController, ServiceAndRoomConnectionState} from './multiplayer-controller.js';
+import {
+    MultiplayerController,
+    type ServiceAndRoomConnectionState,
+} from './multiplayer-controller.js';
 
 describe(MultiplayerController.name, () => {
     it('handles failure to connect to a room with port scanning', async () => {

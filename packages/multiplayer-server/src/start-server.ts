@@ -1,4 +1,4 @@
-import type {SetRequired} from '@augment-vir/common';
+import {type SetRequired} from '@augment-vir/common';
 import {
     startService,
     type StartServiceOutput,
@@ -6,7 +6,7 @@ import {
 } from '@rest-vir/run-service';
 import {
     implementMultiplayerService,
-    MultiplayerServerOptions,
+    type MultiplayerServerOptions,
 } from './implemented-multiplayer-service.js';
 
 /**

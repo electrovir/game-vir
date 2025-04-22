@@ -1,5 +1,5 @@
 import {shuffleArray, wrapNumber} from '@augment-vir/common';
-import {AnyDuration, convertDuration} from 'date-vir';
+import {type AnyDuration, convertDuration} from 'date-vir';
 import {css, defineElement, html} from 'element-vir';
 
 /**

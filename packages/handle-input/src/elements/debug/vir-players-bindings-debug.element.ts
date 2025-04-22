@@ -1,7 +1,7 @@
 import {getObjectTypedEntries} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
 import {isGamepadDeviceKey} from 'input-device-handler';
-import {BindingsMap, PlayersBindingsMap} from '../../stages/read-bindings.stage.js';
+import {type BindingsMap, type PlayersBindingsMap} from '../../stages/read-bindings.stage.js';
 
 /**
  * An element for debugging that displays all given bindings for all players.

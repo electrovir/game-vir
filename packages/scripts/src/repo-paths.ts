@@ -1,4 +1,4 @@
-import type {ArrayElement} from '@augment-vir/common';
+import {type ArrayElement} from '@augment-vir/common';
 import {join, resolve} from 'node:path';
 
 export const monoRepoDir = resolve(import.meta.dirname, '..', '..', '..');

@@ -1,5 +1,9 @@
 import {ensureType} from '@augment-vir/common';
-import {InputDirection, PlayersBindingsMap, VirSimpleAssignBindings} from '@game-vir/handle-input';
+import {
+    InputDirection,
+    type PlayersBindingsMap,
+    VirSimpleAssignBindings,
+} from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, html, listen} from 'element-vir';
 import {elementsPage} from '../top-level-pages.js';

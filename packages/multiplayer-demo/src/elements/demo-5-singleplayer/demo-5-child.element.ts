@@ -2,7 +2,7 @@ import {createUuidV4, extractErrorMessage, randomInteger} from '@augment-vir/com
 import {
     MultiplayerConnectionState,
     MultiplayerController,
-    ServiceAndRoomConnectionState,
+    type ServiceAndRoomConnectionState,
 } from '@game-vir/multiplayer';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
 import {demoColors} from './demo-5-colors.js';

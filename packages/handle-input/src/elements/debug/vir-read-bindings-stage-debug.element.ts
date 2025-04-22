@@ -1,10 +1,10 @@
-import {PartialWithUndefined} from '@augment-vir/common';
+import {type PartialWithUndefined} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {GamepadInputDeviceKey, InputDeviceHandler} from 'input-device-handler';
 import {VirLine} from 'vir-line';
 import {
-    PlayersActiveBindingsMap,
-    PlayersBindingsMap,
+    type PlayersActiveBindingsMap,
+    type PlayersBindingsMap,
     readBindingsStage,
 } from '../../stages/read-bindings.stage.js';
 import {InputDirection, readRawInputStage} from '../../stages/read-raw-input.stage.js';

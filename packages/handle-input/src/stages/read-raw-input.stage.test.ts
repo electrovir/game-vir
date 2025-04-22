@@ -7,7 +7,7 @@ import {stageIdToString, VirLine} from 'vir-line';
 import {
     calculateInputDirection,
     InputDirection,
-    RawInputs,
+    type RawInputs,
     readRawInputStage,
 } from './read-raw-input.stage.js';
 

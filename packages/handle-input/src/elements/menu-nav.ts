@@ -5,8 +5,8 @@ import {
 } from '@augment-vir/common';
 import {type AnyDuration, convertDuration} from 'date-vir';
 import {NavController, NavDirection} from 'device-navigation';
-import type {RemoveListenerCallback, VirLineWithState} from 'vir-line';
-import type {PlayersActiveBindingsMap} from '../stages/read-bindings.stage.js';
+import {type RemoveListenerCallback, type VirLineWithState} from 'vir-line';
+import {type PlayersActiveBindingsMap} from '../stages/read-bindings.stage.js';
 
 export {group, nav, NavController, navSelector} from 'device-navigation';
 

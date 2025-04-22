@@ -12,16 +12,16 @@ import {
 } from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {
-    MultiplayerService,
     MultiplayerWebSocketMessageType,
     type MultiplayerClientRooms,
+    type MultiplayerService,
 } from '@game-vir/multiplayer';
-import {ClientWebSocket} from '@rest-vir/define-service';
+import {type ClientWebSocket} from '@rest-vir/define-service';
 import {testService, type FetchTestService} from '@rest-vir/run-service';
-import {DistributedOmit} from 'type-fest';
+import {type DistributedOmit} from 'type-fest';
 import {
-    ImplementedMultiplayerService,
     implementMultiplayerService,
+    type ImplementedMultiplayerService,
     type MultiplayerServerState,
 } from './implemented-multiplayer-service.js';
 

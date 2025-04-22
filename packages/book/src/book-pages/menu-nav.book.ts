@@ -4,14 +4,14 @@ import {
     InputDirection,
     MenuNavBinding,
     MenuNavController,
-    MenuNavState,
+    type MenuNavState,
     nav,
     readRawInputStage,
 } from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, defineElementNoInputs, html} from 'element-vir';
 import {InputDeviceHandler, InputDeviceKey} from 'input-device-handler';
-import {VirLine, VirLineWithState} from 'vir-line';
+import {VirLine, type VirLineWithState} from 'vir-line';
 import {elementsPage} from '../top-level-pages.js';
 
 const VirMenuNavTest = defineElementNoInputs({

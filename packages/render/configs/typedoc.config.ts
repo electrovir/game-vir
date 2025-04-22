@@ -2,7 +2,7 @@ import {baseTypedocConfig} from '@virmator/docs/configs/typedoc.config.base';
 import {join} from 'node:path';
 import {dirname} from 'node:path/posix';
 import {fileURLToPath} from 'node:url';
-import type {TypeDocOptions} from 'typedoc';
+import {type TypeDocOptions} from 'typedoc';
 
 const indexTsFile = join(dirname(dirname(fileURLToPath(import.meta.url))), 'src', 'index.ts');
 const outDirPath = join(dirname(dirname(fileURLToPath(import.meta.url))), 'dist-docs');

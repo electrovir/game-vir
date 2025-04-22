@@ -1,4 +1,4 @@
-import {PulseTimestamp, VirGlowPulse} from '@game-vir/handle-input';
+import {type PulseTimestamp, VirGlowPulse} from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, defineElement, html, listen} from 'element-vir';
 import {noUserSelect} from 'vira';

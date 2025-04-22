@@ -1,5 +1,5 @@
 import {omitObjectKeys, type SetOptionalAndNullable} from '@augment-vir/common';
-import type {RoomInput} from '../webrtc/webrtc-multiplayer-controller.js';
+import {type RoomInput} from '../webrtc/webrtc-multiplayer-controller.js';
 
 /**
  * This error is thrown when a multiplayer room connection is established but then intentionally

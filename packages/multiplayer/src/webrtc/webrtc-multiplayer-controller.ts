@@ -1,9 +1,10 @@
 import {assert, waitUntil} from '@augment-vir/assert';
 import {
-    JsonCompatibleValue,
-    PartialWithUndefined,
+    type JsonCompatibleValue,
+    type MaybePromise,
+    type PartialWithUndefined,
     PromiseQueue,
-    Uuid,
+    type Uuid,
     createUuidV4,
     ensureErrorAndPrependMessage,
     extractErrorMessage,
@@ -14,12 +15,11 @@ import {
     mergeDefinedProperties,
     randomString,
     stringify,
-    type MaybePromise,
 } from '@augment-vir/common';
-import type {ClientWebSocket} from '@rest-vir/define-service';
-import type {RequireExactlyOne} from 'type-fest';
+import {type ClientWebSocket} from '@rest-vir/define-service';
+import {type RequireExactlyOne} from 'type-fest';
 import {ListenTarget, defineTypedCustomEvent} from 'typed-event-target';
-import type {MultiplayerApi} from '../multiplayer-service/multiplayer-api.js';
+import {type MultiplayerApi} from '../multiplayer-service/multiplayer-api.js';
 import {type MultiplayerService} from '../multiplayer-service/multiplayer-service.js';
 import {MultiplayerWebSocketMessageType} from './web-rtc-communication.js';
 import {WebrtcConnectEvent, WebrtcController, WebrtcMessageEvent} from './webrtc-controller.js';

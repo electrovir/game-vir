@@ -1,20 +1,20 @@
 import {check} from '@augment-vir/assert';
 import {
+    type EnumBaseType,
     filterMap,
     getObjectTypedEntries,
     mapObjectValues,
-    PartialWithUndefined,
-    type EnumBaseType,
+    type PartialWithUndefined,
 } from '@augment-vir/common';
-import {Duration, DurationUnit} from 'date-vir';
+import {type Duration, type DurationUnit} from 'date-vir';
 import {InputDeviceKey} from 'input-device-handler';
 import {defineShape, enumShape, indexedKeys, optional, or} from 'object-shape-tester';
 import {VirLineStage} from 'vir-line';
 import {
     InputDirection,
-    RawInputs,
+    type RawInputs,
     readRawInputStage,
-    ReadRawInputStageState,
+    type ReadRawInputStageState,
 } from './read-raw-input.stage.js';
 
 /**

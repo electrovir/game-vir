@@ -1,8 +1,8 @@
-import {PartialWithUndefined} from '@augment-vir/common';
+import {type PartialWithUndefined} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {VirLine} from 'vir-line';
-import {RawInputs, readRawInputStage} from '../../stages/read-raw-input.stage.js';
+import {type RawInputs, readRawInputStage} from '../../stages/read-raw-input.stage.js';
 
 /**
  * An element for debugging {@link readRawInputStage} that displays all current inputs.

@@ -1,4 +1,4 @@
-import {ArrayElement, awaitedForEach, log} from '@augment-vir/common';
+import {type ArrayElement, awaitedForEach, log} from '@augment-vir/common';
 import {cp, mkdir, rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {packageDirs, rootDistDir} from '../repo-paths.js';

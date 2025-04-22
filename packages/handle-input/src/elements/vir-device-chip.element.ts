@@ -1,6 +1,6 @@
 import {css, defineElement, html, nothing} from 'element-vir';
 import {
-    InputDeviceKey,
+    type InputDeviceKey,
     inputDeviceKeyToInputDeviceType,
     InputDeviceType,
 } from 'input-device-handler';

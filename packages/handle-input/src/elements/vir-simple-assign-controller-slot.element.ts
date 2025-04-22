@@ -24,14 +24,14 @@ import {VirLine, type VirLineWithState} from 'vir-line';
 import {noNativeFormStyles, noNativeSpacing} from 'vira';
 import {
     createTypedReadBindingsStage,
-    ReadBindingsStageState,
+    type ReadBindingsStageState,
 } from '../stages/read-bindings.stage.js';
 import {
     defaultGamepadKeyMap,
     InputDirection,
     readRawInputStage,
-    ReadRawInputStageState,
     type GamepadKeyMap,
+    type ReadRawInputStageState,
 } from '../stages/read-raw-input.stage.js';
 import {MenuNavBinding, MenuNavController} from './menu-nav.js';
 import {VirDeviceChip} from './vir-device-chip.element.js';

@@ -1,23 +1,23 @@
 import {
     ensureError,
-    JsonCompatibleValue,
+    type JsonCompatibleValue,
     makeWritable,
-    MaybePromise,
+    type MaybePromise,
     type Uuid,
 } from '@augment-vir/common';
-import {mapServiceDevPort} from '@rest-vir/define-service';
-import {convertDuration, type AnyDuration} from 'date-vir';
-import type {RequireExactlyOne} from 'type-fest';
+import {type mapServiceDevPort} from '@rest-vir/define-service';
+import {type AnyDuration, convertDuration} from 'date-vir';
+import {type RequireExactlyOne} from 'type-fest';
 import {
-    MultiplayerConnectionUpdate,
-    RoomInput,
-    ShouldAllowConnectionCheck,
+    type MultiplayerConnectionUpdate,
+    type RoomInput,
+    type ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
 } from '../webrtc/webrtc-multiplayer-controller.js';
 import {RoomRejectionError} from './errors.js';
 import {LockStepFrameEvent, LockStepGameStateController} from './lock-step-controller.js';
-import {createMultiplayerApi, MultiplayerApi} from './multiplayer-api.js';
-import type {MultiplayerClientRooms} from './multiplayer-service.js';
+import {createMultiplayerApi, type MultiplayerApi} from './multiplayer-api.js';
+import {type MultiplayerClientRooms} from './multiplayer-service.js';
 
 /**
  * Connection state for {@link MultiplayerController}.

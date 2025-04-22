@@ -20,9 +20,9 @@ import {
     defaultServiceLogger,
     HttpStatus,
     implementService,
-    ServerWebSocket,
-    ServiceLogger,
     silentServiceLogger,
+    type ServerWebSocket,
+    type ServiceLogger,
 } from '@rest-vir/implement-service';
 import {convertDuration} from 'date-vir';
 

@@ -1,5 +1,5 @@
 import {css, defineElement, html, testId} from 'element-vir';
-import {VirLine, VirLineUpdateRateEvent} from 'vir-line';
+import {type VirLine, VirLineUpdateRateEvent} from 'vir-line';
 
 /**
  * Test ids for {@link VirFps}.

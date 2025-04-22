@@ -3,9 +3,9 @@ import {omitObjectKeys, wait} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {InputDeviceKey, InputDeviceType} from 'input-device-handler';
 import {isValidShape} from 'object-shape-tester';
-import {stageIdToString, StagesToFullState, VirLine} from 'vir-line';
+import {stageIdToString, type StagesToFullState, VirLine} from 'vir-line';
 import {
-    BindingsMap,
+    type BindingsMap,
     createPlayersBindingsMapShape,
     createTypedReadBindingsStage,
     readBindingsStage,

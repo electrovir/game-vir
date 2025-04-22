@@ -1,15 +1,15 @@
 import {waitUntil} from '@augment-vir/assert';
-import {createUuidV4, JsonCompatibleValue, makeWritable, type Uuid} from '@augment-vir/common';
-import {AnyDuration, convertDuration} from 'date-vir';
+import {createUuidV4, type JsonCompatibleValue, makeWritable, type Uuid} from '@augment-vir/common';
+import {type AnyDuration, convertDuration} from 'date-vir';
 import {defineTypedCustomEvent, ListenTarget} from 'typed-event-target';
 import {
-    RoomInput,
-    ShouldAllowConnectionCheck,
+    type RoomInput,
+    type ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
     WebrtcMultiplayerController,
     WebrtcMultiplayerMessageEvent,
 } from '../webrtc/webrtc-multiplayer-controller.js';
-import {MultiplayerApi} from './multiplayer-api.js';
+import {type MultiplayerApi} from './multiplayer-api.js';
 
 /**
  * Message type for {@link LockStepMessage}.

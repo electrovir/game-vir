@@ -1,4 +1,4 @@
-import {DeviceInputValue, InputDeviceKey} from 'input-device-handler';
+import {type DeviceInputValue, InputDeviceKey} from 'input-device-handler';
 
 /**
  * Determines if the given device input is for mouse movement or not.
