@@ -1,4 +1,4 @@
-import {type SetRequired} from '@augment-vir/common';
+import {omitObjectKeys, type SetRequired} from '@augment-vir/common';
 import {
     startService,
     type StartServiceOutput,
@@ -25,7 +25,10 @@ export async function startMultiplayerServer(
 ) {
     const {service, serverState} = implementMultiplayerService(options);
     const startOutput = (await startService(service, {
-        ...options,
+        ...omitObjectKeys(options, [
+            'backendOrigin',
+            'frontendOrigin',
+        ]),
         /** This server cannot currently be distributed. */
         workerCount: 1,
     })) as Required<Omit<StartServiceOutput, 'cluster' | 'worker'>>;
