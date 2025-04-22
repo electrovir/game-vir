@@ -2,7 +2,7 @@ import {describe, it} from '@augment-vir/test';
 import {assertValidShape} from 'object-shape-tester';
 import {defineMultiplayerService} from './multiplayer-service.js';
 
-const multiplayerService = defineMultiplayerService('http://localhost:3000');
+const multiplayerService = defineMultiplayerService({backendOrigin: 'http://localhost:3000'});
 
 describe(multiplayerService.serviceName, () => {
     it('allows valid rooms response', () => {

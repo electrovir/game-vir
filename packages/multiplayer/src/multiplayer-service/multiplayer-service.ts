@@ -1,4 +1,10 @@
-import {AnyOrigin, defineService, HttpMethod} from '@rest-vir/define-service';
+import {type PartialWithUndefined} from '@augment-vir/common';
+import {
+    AnyOrigin,
+    defineService,
+    HttpMethod,
+    type OriginRequirement,
+} from '@rest-vir/define-service';
 import {defineShape, indexedKeys, or, uuidShape} from 'object-shape-tester';
 import {buildUrl} from 'url-vir';
 import {
@@ -72,15 +78,28 @@ export const defaultMultiplayerServiceOrigin = buildUrl('http://localhost', {
 }).origin;
 
 /**
+ * Options for {@link defineMultiplayerService}.
+ *
+ * @category Internal
+ */
+export type MultiplayerServiceOptions = PartialWithUndefined<{
+    frontendOrigin: OriginRequirement;
+    backendOrigin: string;
+}>;
+
+/**
  * The multiplayer service definition.
  *
  * @category Internal
  */
-export function defineMultiplayerService(serviceOrigin: string = defaultMultiplayerServiceOrigin) {
+export function defineMultiplayerService({
+    backendOrigin = defaultMultiplayerServiceOrigin,
+    frontendOrigin = AnyOrigin,
+}: MultiplayerServiceOptions = {}) {
     return defineService({
         serviceName: 'multiplayer-service',
-        requiredClientOrigin: AnyOrigin,
-        serviceOrigin,
+        requiredClientOrigin: frontendOrigin,
+        serviceOrigin: backendOrigin,
         endpoints: {
             '/health': {
                 methods: {

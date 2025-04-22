@@ -18,7 +18,7 @@ describe(MultiplayerController.name, () => {
                 },
             },
             multiplayer: {
-                serviceOrigin: 'http://localhost:0',
+                backendOrigin: 'http://localhost:0',
                 portScanOptions: {
                     timeout: {
                         seconds: 5,
@@ -41,7 +41,7 @@ describe(MultiplayerController.name, () => {
                 },
             },
             multiplayer: {
-                serviceOrigin: 'http://localhost:0',
+                backendOrigin: 'http://localhost:0',
             },
         });
 

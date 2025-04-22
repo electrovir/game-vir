@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/mono-repo",
-    "version": "11.0.2",
+    "version": "11.1.0",
     "private": true,
     "homepage": "https://github.com/electrovir/game-vir",
     "bugs": {
@@ -22,6 +22,7 @@
     "scripts": {
         "build": "npm run compile && mono-vir for-each-async npm run build && npm run script copy-to-dist",
         "compile": "virmator compile",
+        "docs": "npm run docs --workspaces --if-present",
         "format": "virmator format",
         "lint": "virmator lint fix",
         "publish": "virmator publish npm run test:all",

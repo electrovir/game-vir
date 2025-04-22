@@ -122,7 +122,7 @@ export type MultiplayerParams = {
      *
      * @example 'http://localhost:3000'
      */
-    serviceOrigin: string;
+    backendOrigin: string;
     /**
      * How long to wait before fetching the list of rooms again.
      *
@@ -228,7 +228,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
 
         this.multiplayerApi = createMultiplayerApi({
             portScanOptions: params.portScanOptions,
-            serviceOrigin: params.serviceOrigin,
+            backendOrigin: params.backendOrigin,
         })
             .then(async (api) => {
                 const output = await api.endpoints['/health'].fetch();

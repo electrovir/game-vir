@@ -23,7 +23,7 @@ const myController = new MultiplayerController<GameAction>({
     },
     multiplayer: {
         /** The origin of your multiplayer connection server. */
-        serviceOrigin: 'http://localhost:3000',
+        backendOrigin: 'http://localhost:3000',
     },
 });
 

@@ -111,7 +111,7 @@ export const Demo4Child = defineElementNoInputs({
                     portScanOptions: {
                         maxScanDistance: 10,
                     },
-                    serviceOrigin: defaultMultiplayerServiceOrigin,
+                    backendOrigin: defaultMultiplayerServiceOrigin,
                     roomUpdateInterval: {milliseconds: 500},
                 },
                 // // use longer frame durations for debugging

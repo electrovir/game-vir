@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/multiplayer",
-    "version": "11.0.2",
+    "version": "11.1.0",
     "description": "Client side definitions and types for @game-vir/multiplayer-server",
     "keywords": [
         "WebRTC",

@@ -14,6 +14,7 @@ import {
     type MultiplayerClientRoom,
     type MultiplayerClientRooms,
     type MultiplayerService,
+    type MultiplayerServiceOptions,
 } from '@game-vir/multiplayer';
 import {CommonWebSocketState} from '@rest-vir/define-service';
 import {
@@ -42,7 +43,7 @@ export type MultiplayerServerOptions = {
      * - `createServiceLogger`
      */
     logger?: ServiceLogger;
-};
+} & MultiplayerServiceOptions;
 
 /**
  * An individual multiplayer client.
@@ -133,35 +134,35 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
         roomsForFetching: {},
     };
 
-    const service = implementService(
-        {
-            service: defineMultiplayerService(),
-            logger: serverState.logger,
-        },
-        {
-            endpoints: {
-                '/health'() {
-                    return {
-                        statusCode: HttpStatus.Ok,
-                    };
-                },
-                '/rooms'() {
-                    return {
-                        statusCode: HttpStatus.Ok,
-                        responseData: serverState.roomsForFetching,
-                    };
-                },
+    const service = implementService({
+        service: defineMultiplayerService({
+            backendOrigin: options.backendOrigin,
+            frontendOrigin: options.frontendOrigin,
+        }),
+        logger: serverState.logger,
+    })({
+        endpoints: {
+            '/health'() {
+                return {
+                    statusCode: HttpStatus.Ok,
+                };
             },
-            webSockets: {
-                '/connect': {
-                    message({message, webSocket}) {
-                        serverState.webSocketMessageQueue.push({message, webSocket});
-                        void callAsynchronously(() => processQueue(serverState));
-                    },
-                },
+            '/rooms'() {
+                return {
+                    statusCode: HttpStatus.Ok,
+                    responseData: serverState.roomsForFetching,
+                };
             },
         },
-    );
+        webSockets: {
+            '/connect': {
+                message({message, webSocket}) {
+                    serverState.webSocketMessageQueue.push({message, webSocket});
+                    void callAsynchronously(() => processQueue(serverState));
+                },
+            },
+        },
+    });
 
     return {
         serverState,
