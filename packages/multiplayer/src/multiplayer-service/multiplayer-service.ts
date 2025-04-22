@@ -5,7 +5,7 @@ import {
     HttpMethod,
     type OriginRequirement,
 } from '@rest-vir/define-service';
-import {defineShape, indexedKeys, or, uuidShape} from 'object-shape-tester';
+import {defineShape, exact, indexedKeys, or, uuidShape} from 'object-shape-tester';
 import {buildUrl} from 'url-vir';
 import {
     answerMessageShape,
@@ -101,12 +101,22 @@ export function defineMultiplayerService({
         requiredClientOrigin: frontendOrigin,
         serviceOrigin: backendOrigin,
         endpoints: {
+            /** Same as health. */
+            '/': {
+                methods: {
+                    [HttpMethod.Get]: true,
+                },
+                requestDataShape: undefined,
+                responseDataShape: exact('ok'),
+                requiredClientOrigin: AnyOrigin,
+            },
             '/health': {
                 methods: {
                     [HttpMethod.Get]: true,
                 },
                 requestDataShape: undefined,
-                responseDataShape: undefined,
+                responseDataShape: exact('ok'),
+                requiredClientOrigin: AnyOrigin,
             },
             /** List all current public rooms. */
             '/rooms': {

@@ -142,9 +142,16 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
         logger: serverState.logger,
     })({
         endpoints: {
+            '/'() {
+                return {
+                    statusCode: HttpStatus.Ok,
+                    responseData: 'ok',
+                };
+            },
             '/health'() {
                 return {
                     statusCode: HttpStatus.Ok,
+                    responseData: 'ok',
                 };
             },
             '/rooms'() {
