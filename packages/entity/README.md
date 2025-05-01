@@ -12,16 +12,19 @@ npm i @game-vir/entity
 
 ## Usage
 
-Use [`createEntitySuite`](https://electrovir.github.io/game-vir/entity/functions/createEntitySuite.html) to get an `entityStore` instance to storing entities and a `defineEntity` method for defining entities.
+Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions/defineEntitySuite.html) to get an `entityStore` instance to storing entities and a `defineEntity` method for defining entities.
 
 -   [`defineEntity`](https://electrovir.github.io/game-vir/entity/types/EntitySuite.html#defineentity): use this as the super class of a new entity class definition.
 
-    ```ts
-    import {createEntitySuite, createPixiApp} from '@game-vir/entity';
+    <!-- example-link: src/readme-examples/define-entity.example.ts -->
 
-    const {defineEntity} = createEntitySuite(await createPixiApp());
+    ```TypeScript
+    import {Graphics, type ViewContainer} from 'pixi.js';
+    import {defineEntitySuite, entityPositionParamsShape} from '@game-vir/entity';
 
-    class Block extends defineEntity({
+    const {defineEntity} = defineEntitySuite<{movementSpeed: number}>();
+
+    export class Block extends defineEntity({
         key: 'Block',
         serializationShape: entityPositionParamsShape,
     }) {
@@ -42,13 +45,32 @@ Use [`createEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
     ```
 
 -   `entityStore` is primarily interacted with via the [`addEntity`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#addentity) and [`updateAllEntities`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#updateallentities) methods.
+
     -   [`addEntity`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#addentity): construct a new instance of the given entity class and add it to the entity store. This should be called to construct new entities.
-        ```ts
+        <!-- example-link: src/readme-examples/add-entity.example.ts -->
+
+        ```TypeScript
+        import {createPixiApp, defineEntitySuite} from '@game-vir/entity';
+        import {Block} from './define-entity.example.js';
+
+        const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
+
+        const entityStore = new EntityStore(await createPixiApp(), {movementSpeed: 6});
+
         entityStore.addEntity(Block, {x: 15, y: 20});
         ```
+
     -   [`updateAllEntities`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#updateallentities): update all entities. This should be called on every game tick or animation frame.
-        ```ts
-        pixiApp.ticker.add(() => {
+        <!-- example-link: src/readme-examples/update-entities.example.ts -->
+
+        ```TypeScript
+        import {createPixiApp, defineEntitySuite} from '@game-vir/entity';
+
+        const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
+
+        const entityStore = new EntityStore(await createPixiApp(), {movementSpeed: 6});
+
+        entityStore.pixiApp.ticker.add(() => {
             entityStore.updateAllEntities();
         });
         ```
@@ -69,28 +91,16 @@ Here's a full usage example. This can be seen in action through the following st
 import {assertWrap} from '@augment-vir/assert';
 import {and, defineShape} from 'object-shape-tester';
 import {Graphics, GraphicsContext, type ViewContainer} from 'pixi.js';
-import {createEntitySuite} from '../entity/entity-suite.js';
-import {entityPositionParamsShape} from '../entity/entity.js';
-import {Angle} from '../math/angle.js';
-import {Vector} from '../math/vector.js';
-import {createPixiApp} from '../pixi.js';
+import {
+    Angle,
+    createPixiApp,
+    defineEntitySuite,
+    entityPositionParamsShape,
+    Vector,
+} from '@game-vir/entity';
 
 /** Create an entity suite. */
-const {defineEntity, entityStore, defineLogicEntity, pixiApp} = createEntitySuite(
-    await createPixiApp({
-        background: 'black',
-        height: 500,
-        width: 500,
-    }),
-    /**
-     * Optional: Provide a context variable. This can be a primitive or an object or whatever you
-     * want.
-     */
-    {
-        movementSpeed: 6,
-    },
-);
-document.body.append(pixiApp.canvas);
+const {defineEntity, defineLogicEntity, EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
 /** Define entities. */
 
@@ -211,6 +221,20 @@ class Fps extends defineLogicEntity({
     }
 }
 
+/** Create the view */
+
+const entityStore = new EntityStore(
+    await createPixiApp({
+        background: 'black',
+        height: 500,
+        width: 500,
+    }),
+    {
+        movementSpeed: 6,
+    },
+);
+document.body.append(entityStore.pixiApp.canvas);
+
 /** Add entities to the view. */
 entityStore.addEntity(Block, {direction: 1, x: 0, y: 0});
 entityStore.addEntity(Block, {direction: -1, x: 250, y: 0});
@@ -218,7 +242,7 @@ entityStore.addEntity(Block, {direction: 1, x: 0, y: 250});
 entityStore.addEntity(Fps);
 
 /** Start updates. */
-pixiApp.ticker.add(() => {
+entityStore.pixiApp.ticker.add(() => {
     entityStore.updateAllEntities();
 });
 ```

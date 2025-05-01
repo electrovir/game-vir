@@ -1,28 +1,16 @@
 import {assertWrap} from '@augment-vir/assert';
 import {and, defineShape} from 'object-shape-tester';
 import {Graphics, GraphicsContext, type ViewContainer} from 'pixi.js';
-import {createEntitySuite} from '../entity/entity-suite.js';
-import {entityPositionParamsShape} from '../entity/entity.js';
-import {Angle} from '../math/angle.js';
-import {Vector} from '../math/vector.js';
-import {createPixiApp} from '../pixi.js';
+import {
+    Angle,
+    createPixiApp,
+    defineEntitySuite,
+    entityPositionParamsShape,
+    Vector,
+} from '../index.js';
 
 /** Create an entity suite. */
-const {defineEntity, entityStore, defineLogicEntity, pixiApp} = createEntitySuite(
-    await createPixiApp({
-        background: 'black',
-        height: 500,
-        width: 500,
-    }),
-    /**
-     * Optional: Provide a context variable. This can be a primitive or an object or whatever you
-     * want.
-     */
-    {
-        movementSpeed: 6,
-    },
-);
-document.body.append(pixiApp.canvas);
+const {defineEntity, defineLogicEntity, EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
 /** Define entities. */
 
@@ -143,6 +131,20 @@ class Fps extends defineLogicEntity({
     }
 }
 
+/** Create the view */
+
+const entityStore = new EntityStore(
+    await createPixiApp({
+        background: 'black',
+        height: 500,
+        width: 500,
+    }),
+    {
+        movementSpeed: 6,
+    },
+);
+document.body.append(entityStore.pixiApp.canvas);
+
 /** Add entities to the view. */
 entityStore.addEntity(Block, {direction: 1, x: 0, y: 0});
 entityStore.addEntity(Block, {direction: -1, x: 250, y: 0});
@@ -150,6 +152,6 @@ entityStore.addEntity(Block, {direction: 1, x: 0, y: 250});
 entityStore.addEntity(Fps);
 
 /** Start updates. */
-pixiApp.ticker.add(() => {
+entityStore.pixiApp.ticker.add(() => {
     entityStore.updateAllEntities();
 });

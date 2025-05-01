@@ -1,8 +1,8 @@
 import {assert} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
-import {Container, Graphics, type ViewContainer} from 'pixi.js';
-import {createEntitySuite} from './entity/entity-suite.js';
-import {createMockPixiApp} from './pixi.js';
+import {Application, Container, Graphics, type ViewContainer} from 'pixi.js';
+import {defineEntitySuite} from './entity/entity-suite.js';
+import {createMockPixiApp, createPixiApp} from './pixi.js';
 
 describe(createMockPixiApp.name, () => {
     it('creates a mock', () => {
@@ -24,7 +24,8 @@ describe(createMockPixiApp.name, () => {
         assert.isDefined(createMockPixiApp({mocks: {canvas: {} as any}}).canvas);
     });
     it('allows a view child to be destroyed', () => {
-        const {defineEntity, entityStore} = createEntitySuite(createMockPixiApp());
+        const {EntityStore, defineEntity} = defineEntitySuite();
+        const entityStore = new EntityStore(createMockPixiApp(), undefined);
 
         let updateCount = 0;
 
@@ -47,5 +48,24 @@ describe(createMockPixiApp.name, () => {
         assert.strictEquals(updateCount, 2);
 
         instance.destroy();
+    });
+});
+
+describe(createPixiApp.name, () => {
+    it('creates a real pixi app', async () => {
+        const dimensions = {
+            width: 100,
+            height: 100,
+        };
+        const pixi = await createPixiApp(dimensions);
+        assert.instanceOf(pixi, Application);
+        assert.instanceOf(pixi.canvas, HTMLCanvasElement);
+        assert.deepEquals(
+            {
+                width: pixi.canvas.width,
+                height: pixi.canvas.height,
+            },
+            dimensions,
+        );
     });
 });

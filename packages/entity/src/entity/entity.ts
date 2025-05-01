@@ -42,49 +42,6 @@ export class EntityStore<Context> {
     /**
      * Run `.update()` on all current entities. If any entity's get marked as destroyed during their
      * update, then they will be removed from the set of entities.
-     *
-     * @example
-     *
-     * ```ts
-     * import {createEntitySuite, createPixiApp} from '@game-vir/entity';
-     *
-     * const {defineEntity, entityStore, pixiApp} = createEntitySuite(
-     *     await createPixiApp({
-     *         background: 'black',
-     *         height: 500,
-     *         width: 500,
-     *     }),
-     *     {
-     *         movementSpeed: 6,
-     *     },
-     * );
-     *
-     * class Block extends defineEntity({
-     *     key: 'Block',
-     *     serializationShape: entityPositionParamsShape,
-     * }) {
-     *     public override update(): void {
-     *         this.view.x += this.context.movementSpeed;
-     *         this.view.y += this.context.movementSpeed;
-     *     }
-     *
-     *     public override createView(): ViewContainer {
-     *         const graphic = new Graphics().rect(0, 0, 100, 100).fill('red');
-     *
-     *         graphic.x = this.params.x;
-     *         graphic.y = this.params.y;
-     *
-     *         return graphic;
-     *     }
-     * }
-     *
-     * entityStore.addEntity(Block, {x: 15, y: 20});
-     *
-     * pixiApp.ticker.add(() => {
-     *     // update all entities
-     *     entityStore.updateAllEntities();
-     * });
-     * ```
      */
     public updateAllEntities() {
         if (this.isDestroyed) {
@@ -98,52 +55,7 @@ export class EntityStore<Context> {
         });
     }
 
-    /**
-     * Add a new entity to this entity store.
-     *
-     * @example
-     *
-     * ```ts
-     * import {createEntitySuite, createPixiApp} from '@game-vir/entity';
-     *
-     * const {defineEntity, entityStore, pixiApp} = createEntitySuite(
-     *     await createPixiApp({
-     *         background: 'black',
-     *         height: 500,
-     *         width: 500,
-     *     }),
-     *     {
-     *         movementSpeed: 6,
-     *     },
-     * );
-     *
-     * class Block extends defineEntity({
-     *     key: 'Block',
-     *     serializationShape: entityPositionParamsShape,
-     * }) {
-     *     public override update(): void {
-     *         this.view.x += this.context.movementSpeed;
-     *         this.view.y += this.context.movementSpeed;
-     *     }
-     *
-     *     public override createView(): ViewContainer {
-     *         const graphic = new Graphics().rect(0, 0, 100, 100).fill('red');
-     *
-     *         graphic.x = this.params.x;
-     *         graphic.y = this.params.y;
-     *
-     *         return graphic;
-     *     }
-     * }
-     *
-     * // add an entity
-     * entityStore.addEntity(Block, {x: 15, y: 20});
-     *
-     * pixiApp.ticker.add(() => {
-     *     entityStore.updateAllEntities();
-     * });
-     * ```
-     */
+    /** Add a new entity to this entity store. */
     public addEntity<const EntityConstructor extends Constructor<BaseEntity>>(
         entityClass: EntityConstructor,
         ...params: AddEntityParams<EntityConstructor>

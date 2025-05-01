@@ -3,20 +3,19 @@ import {SeededRandom} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {Graphics} from 'pixi.js';
 import {createMockPixiApp} from '../pixi.js';
-import {createEntitySuite, type DefineViewEntity} from './entity-suite.js';
+import {defineEntitySuite, type DefineViewEntity} from './entity-suite.js';
 import {entityPositionParamsShape, type EntityPositionParams, type EntityStore} from './entity.js';
 
-describe(createEntitySuite.name, () => {
+describe(defineEntitySuite.name, () => {
     it('infers defined context type', () => {
         const context = {
             digits: 4,
             random: SeededRandom.fromSeed('test seed'),
         };
 
-        const {defineEntity, entityStore} = createEntitySuite(createMockPixiApp(), context);
+        const {defineEntity, EntityStore} = defineEntitySuite<typeof context>();
 
         assert.tsType(defineEntity).equals<DefineViewEntity<typeof context>>();
-        assert.tsType(entityStore).equals<EntityStore<typeof context>>();
 
         class MyEntity extends defineEntity({
             key: 'MyEntity',
@@ -41,12 +40,14 @@ describe(createEntitySuite.name, () => {
 
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
+
+        const entityStore = new EntityStore(createMockPixiApp(), context);
+        assert.tsType(entityStore).equals<EntityStore<typeof context>>();
     });
     it('defaults to undefined context', () => {
-        const {defineEntity, entityStore} = createEntitySuite(createMockPixiApp());
+        const {defineEntity, EntityStore} = defineEntitySuite();
 
         assert.tsType(defineEntity).equals<DefineViewEntity<undefined>>();
-        assert.tsType(entityStore).equals<EntityStore<undefined>>();
 
         class MyEntity extends defineEntity({
             key: 'MyEntity',
@@ -71,9 +72,12 @@ describe(createEntitySuite.name, () => {
 
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
+
+        const entityStore = new EntityStore(createMockPixiApp(), undefined);
+        assert.tsType(entityStore).equals<EntityStore<undefined>>();
     });
     it('allows logic entity definition', () => {
-        const {defineLogicEntity} = createEntitySuite(createMockPixiApp());
+        const {defineLogicEntity} = defineEntitySuite();
 
         class MyLogicEntity extends defineLogicEntity({
             key: 'MyLogicEntity',
