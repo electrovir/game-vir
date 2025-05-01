@@ -35,8 +35,8 @@
         "test": "exit 0"
     },
     "dependencies": {
-        "@augment-vir/assert": "^31.14.1",
-        "@augment-vir/common": "^31.14.1",
+        "@augment-vir/assert": "^31.16.0",
+        "@augment-vir/common": "^31.16.0",
         "@game-vir/multiplayer": "^11.1.2",
         "@game-vir/multiplayer-server": "^11.1.2",
         "@rest-vir/define-service": "^0.15.0",
@@ -48,7 +48,7 @@
     },
     "devDependencies": {
         "typescript": "^5.8.3",
-        "vite": "^6.3.2"
+        "vite": "^6.3.4"
     },
     "engines": {
         "node": ">=22"

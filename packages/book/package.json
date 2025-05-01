@@ -23,7 +23,7 @@
         "test": "npm run build"
     },
     "dependencies": {
-        "@augment-vir/common": "^31.14.1",
+        "@augment-vir/common": "^31.16.0",
         "@game-vir/handle-input": "^11.1.2",
         "@game-vir/render": "^11.1.2",
         "element-book": "^25.3.0",
@@ -34,9 +34,9 @@
         "vira": "^25.3.0"
     },
     "devDependencies": {
-        "esbuild": "^0.25.2",
+        "esbuild": "^0.25.3",
         "typescript": "^5.8.3",
-        "vite": "^6.3.2",
+        "vite": "^6.3.4",
         "vite-tsconfig-paths": "^5.1.4"
     },
     "engines": {
