@@ -41,12 +41,12 @@ Use [`createEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
     }
     ```
 
--   `entityStore` is primarily interacted with via the [`addEntity`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#addentity) and [`updateAllEntities`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#updateAllEntities) methods.
+-   `entityStore` is primarily interacted with via the [`addEntity`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#addentity) and [`updateAllEntities`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#updateallentities) methods.
     -   [`addEntity`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#addentity): construct a new instance of the given entity class and add it to the entity store. This should be called to construct new entities.
         ```ts
         entityStore.addEntity(Block, {x: 15, y: 20});
         ```
-    -   [`updateAllEntities`](https://electrovir.github.io/game-vir/entity/classes/EntityStore): update all entities. This should be called on every game tick or animation frame.
+    -   [`updateAllEntities`](https://electrovir.github.io/game-vir/entity/classes/EntityStore.html#updateallentities): update all entities. This should be called on every game tick or animation frame.
         ```ts
         pixiApp.ticker.add(() => {
             entityStore.updateAllEntities();
