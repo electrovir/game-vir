@@ -15,6 +15,7 @@ const packageNames = [
     'multiplayer',
     'render',
     'scripts',
+    'entity',
 ] as const;
 
 export const packageDirs = packageNames.reduce(

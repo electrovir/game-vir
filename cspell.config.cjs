@@ -11,5 +11,7 @@ module.exports = {
         'stunprotocol',
         'singleplayer',
         'wasd',
+        'pixi',
+        'pixijs',
     ],
 };
