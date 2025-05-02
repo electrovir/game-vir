@@ -237,6 +237,14 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
         delete (this as Writable<Partial<BaseEntity>>).context;
         delete (this as Writable<Partial<BaseEntity>>).params;
     }
+
+    /**
+     * Serialize the entity for sharing across the network (for multiplayer play). You will need to
+     * override this if your view is the position source of truth.
+     */
+    public serialize() {
+        return this.params;
+    }
 }
 
 /**
