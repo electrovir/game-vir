@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 
-import {getOrSetFromMap, type AnyObject} from '@augment-vir/common';
-import {type AbstractConstructor, type Constructor} from 'type-fest';
+import {getOrSetFromMap, makeWritable, type AnyObject} from '@augment-vir/common';
+import {type AbstractConstructor, type Constructor, type Writable} from 'type-fest';
 
 /**
  * Map all ancestor constructors of an object to the objects.
@@ -10,7 +10,8 @@ import {type AbstractConstructor, type Constructor} from 'type-fest';
  */
 export class ConstructorMap {
     /** A map of constructors to their added instances. */
-    public map = new Map<Function, Set<AnyObject>>();
+    public readonly map = new Map<Function, Set<AnyObject>>();
+    public readonly isDestroyed: boolean = false;
 
     constructor(protected readonly topMostConstructor: Function | undefined = undefined) {}
 
@@ -19,16 +20,25 @@ export class ConstructorMap {
      * {@link ConstructorMap.map}.
      */
     public add(instance: AnyObject) {
+        if (this.isDestroyed) {
+            throw new Error('Cannot operate on destroyed ConstructorMap.');
+        }
         this.traverseConstructors(instance, Object.getPrototypeOf(instance), 'add');
     }
 
     /** Gets all added instances of the given constructor. */
     public getInstances<T>(constructor: AbstractConstructor<T> | Constructor<T>): Set<T> {
-        return this.map.get(constructor) || new Set();
+        if (this.isDestroyed) {
+            throw new Error('Cannot operate on destroyed ConstructorMap.');
+        }
+        return getOrSetFromMap(this.map, constructor, () => new Set());
     }
 
     /** Remove a new instance, removing it from all mappings inside {@link ConstructorMap.map}. */
     public remove(instance: AnyObject) {
+        if (this.isDestroyed) {
+            throw new Error('Cannot operate on destroyed ConstructorMap.');
+        }
         this.traverseConstructors(instance, Object.getPrototypeOf(instance), 'remove');
     }
 
@@ -56,9 +66,6 @@ export class ConstructorMap {
             const set = this.map.get(constructor);
             if (set) {
                 set.delete(instance);
-                if (!set.size) {
-                    this.map.delete(constructor);
-                }
             }
         }
         this.traverseConstructors(instance, Object.getPrototypeOf(prototype), operation);
@@ -66,6 +73,11 @@ export class ConstructorMap {
 
     /** Clean up the internal map. */
     public destroy() {
+        if (this.isDestroyed) {
+            return;
+        }
+        makeWritable(this).isDestroyed = true;
         this.map.clear();
+        delete (this as Writable<Partial<ConstructorMap>>).map;
     }
 }

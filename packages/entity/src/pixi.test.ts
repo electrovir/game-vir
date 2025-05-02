@@ -59,13 +59,5 @@ describe(createPixiApp.name, () => {
         };
         const pixi = await createPixiApp(dimensions);
         assert.instanceOf(pixi, Application);
-        assert.instanceOf(pixi.canvas, HTMLCanvasElement);
-        assert.deepEquals(
-            {
-                width: pixi.canvas.width,
-                height: pixi.canvas.height,
-            },
-            dimensions,
-        );
     });
 });

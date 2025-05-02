@@ -20,7 +20,8 @@ describe(ConstructorMap.name, () => {
 
         constructorMap.remove(instance);
 
-        assert.isLengthExactly(Array.from(constructorMap.map.keys()), 0);
+        assert.isLengthExactly(Array.from(constructorMap.map.keys()), 1);
+        assert.isEmpty(constructorMap.getInstances(RegExp));
     });
     it('adds and removes multiple instances', () => {
         const constructorMap = new ConstructorMap();
@@ -39,7 +40,11 @@ describe(ConstructorMap.name, () => {
         ]);
 
         constructorMap.destroy();
-        assert.isLengthExactly(Array.from(constructorMap.map.keys()), 0);
+        constructorMap.destroy();
+        assert.throws(() => constructorMap.add(instance));
+        assert.throws(() => constructorMap.getInstances(RegExp));
+        assert.throws(() => constructorMap.remove(instance));
+        assert.isUndefined(constructorMap.map);
     });
     it('adds an instance with multiple inheritance', () => {
         class Parent extends RegExp {}
