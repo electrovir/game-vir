@@ -31,7 +31,7 @@ describe(createMockPixiApp.name, () => {
 
         class MyEntity extends defineEntity({
             key: 'MyEntity',
-            serializationShape: undefined,
+            paramsShape: undefined,
         }) {
             public override update(): void {
                 updateCount++;

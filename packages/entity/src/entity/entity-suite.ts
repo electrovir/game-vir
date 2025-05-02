@@ -16,7 +16,7 @@ export type DefinedViewEntity<
     Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
 > & {
     entityKey: EntityKey;
-    serializationShape: Shape;
+    paramsShape: Shape;
 };
 
 /**
@@ -29,7 +29,7 @@ export type DefineViewEntity<Context> = <
     const Shape extends ShapeDefinition<any, any> | undefined,
 >({
     key,
-    serializationShape,
+    paramsShape,
 }: {
     /**
      * This key is used for deserialization of entities to track which class needs to be
@@ -44,7 +44,7 @@ export type DefineViewEntity<Context> = <
      * Make sure to include {@link entityPositionParamsShape} if you want to include the base entity
      * position parameters.
      */
-    serializationShape: Shape;
+    paramsShape: Shape;
 }) => DefinedViewEntity<EntityKey, Context, Shape>;
 
 /**
@@ -61,7 +61,7 @@ export type DefinedLogicEntity<
     Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
 > & {
     entityKey: EntityKey;
-    serializationShape: Shape;
+    paramsShape: Shape;
 };
 
 /**
@@ -74,7 +74,7 @@ export type DefineLogicEntity<Context> = <
     const Shape extends ShapeDefinition<any, any> | undefined,
 >({
     key,
-    serializationShape,
+    paramsShape,
 }: {
     /**
      * This key is used for deserialization of entities to track which class needs to be
@@ -89,7 +89,7 @@ export type DefineLogicEntity<Context> = <
      * Make sure to include {@link entityPositionParamsShape} if you want to include the base entity
      * position parameters.
      */
-    serializationShape: Shape;
+    paramsShape: Shape;
 }) => DefinedLogicEntity<EntityKey, Context, Shape>;
 
 /**
@@ -124,13 +124,13 @@ export type EntitySuite<Context> = {
  * @category Main
  */
 export function defineEntitySuite<Context = undefined>(): EntitySuite<Context> {
-    function defineEntity({key, serializationShape}: Parameters<DefineViewEntity<Context>>[0]) {
+    function defineEntity({key, paramsShape}: Parameters<DefineViewEntity<Context>>[0]) {
         const classWrapper = {
             // @ts-expect-error: abstract methods are intentionally not implemented here
             [key]: class extends ViewEntity<Context, Shape['runtimeType']> {
                 public static override readonly entityKey = key;
-                public static override readonly serializationShape =
-                    serializationShape || entityPositionParamsShape;
+                public static override readonly paramsShape =
+                    paramsShape || entityPositionParamsShape;
             },
         };
 
@@ -138,14 +138,14 @@ export function defineEntitySuite<Context = undefined>(): EntitySuite<Context> {
     }
     function defineLogicEntity({
         key,
-        serializationShape,
+        paramsShape: paramsShape,
     }: Parameters<DefineViewEntity<Context>>[0]) {
         const classWrapper = {
             // @ts-expect-error: abstract methods are intentionally not implemented here
             [key]: class extends BaseEntity<Context, Shape['runtimeType']> {
                 public static override readonly entityKey = key;
-                public static override readonly serializationShape =
-                    serializationShape || entityPositionParamsShape;
+                public static override readonly paramsShape =
+                    paramsShape || entityPositionParamsShape;
             },
         };
 

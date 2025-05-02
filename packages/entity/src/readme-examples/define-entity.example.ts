@@ -5,7 +5,7 @@ const {defineEntity} = defineEntitySuite<{movementSpeed: number}>();
 
 export class Block extends defineEntity({
     key: 'Block',
-    serializationShape: entityPositionParamsShape,
+    paramsShape: entityPositionParamsShape,
 }) {
     public override update(): void {
         this.view.x += this.context.movementSpeed;

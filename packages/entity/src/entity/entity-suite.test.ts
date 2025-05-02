@@ -19,7 +19,7 @@ describe(defineEntitySuite.name, () => {
 
         class MyEntity extends defineEntity({
             key: 'MyEntity',
-            serializationShape: entityPositionParamsShape,
+            paramsShape: entityPositionParamsShape,
         }) {
             public update(): void {
                 assert.strictEquals(this.context, context);
@@ -51,7 +51,7 @@ describe(defineEntitySuite.name, () => {
 
         class MyEntity extends defineEntity({
             key: 'MyEntity',
-            serializationShape: entityPositionParamsShape,
+            paramsShape: entityPositionParamsShape,
         }) {
             public update(): void {
                 assert.isUndefined(this.context);
@@ -74,14 +74,14 @@ describe(defineEntitySuite.name, () => {
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
         const entityStore = new EntityStore(createMockPixiApp(), undefined);
-        assert.tsType(entityStore).equals<EntityStore<undefined>>();
+        assert.tsType(entityStore).equals<EntityStore>();
     });
     it('allows logic entity definition', () => {
         const {defineLogicEntity} = defineEntitySuite();
 
         class MyLogicEntity extends defineLogicEntity({
             key: 'MyLogicEntity',
-            serializationShape: undefined,
+            paramsShape: undefined,
         }) {
             public override update(): void {
                 // do nothing

@@ -2,7 +2,8 @@ import {assert} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
 import {Graphics, type ViewContainer} from 'pixi.js';
 import {createMockPixiApp} from '../pixi.js';
-import {EntityStore, ViewEntity} from './entity.js';
+import {defineEntitySuite} from './entity-suite.js';
+import {BaseEntity, entityPositionParamsShape, EntityStore, ViewEntity} from './entity.js';
 
 describe(ViewEntity.name, () => {
     it("can detect if it's in screen bounds", () => {
@@ -63,7 +64,7 @@ describe(ViewEntity.name, () => {
 
         assert.strictEquals(store.entities.size, 2);
     });
-    it('cannot add an entity through a destroyed entity', () => {
+    it('cannot operate on a destroyed view entity', () => {
         class MyViewEntity extends ViewEntity<any, undefined> {
             public override createView(): ViewContainer {
                 return new Graphics().rect(0, 0, 10, 10).fill('red');
@@ -83,6 +84,7 @@ describe(ViewEntity.name, () => {
 
         instance.destroy();
         assert.throws(() => instance.addEntity(MyViewEntity));
+        assert.throws(() => instance.isInBounds());
     });
 });
 
@@ -130,5 +132,45 @@ describe(EntityStore.name, () => {
         store.destroy();
         assert.strictEquals(store.entities.size, 0);
         assert.isTrue(instance.isDestroyed);
+    });
+    it('gets entities by their constructor', () => {
+        const {EntityStore, defineEntity} = defineEntitySuite();
+
+        class MyEntity extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: entityPositionParamsShape,
+        }) {
+            public override createView(): ViewContainer {
+                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            }
+
+            public override update(): void {
+                // do nothing
+            }
+        }
+
+        const entityStore = new EntityStore(createMockPixiApp(), undefined);
+        const instance = entityStore.addEntity(MyEntity, {x: 1, y: 1});
+
+        const myEntityInstances = entityStore.getEntities(MyEntity);
+        assert.tsType(myEntityInstances).equals<Set<MyEntity>>();
+        assert.tsType(myEntityInstances).notEquals<Set<BaseEntity>>();
+        const baseEntityInstances = entityStore.getEntities(BaseEntity);
+        assert.tsType(baseEntityInstances).notEquals<Set<MyEntity>>();
+        assert.tsType(baseEntityInstances).matches<Set<BaseEntity>>();
+
+        const myEntityArray = Array.from(myEntityInstances.values());
+        const baseEntityArray = Array.from(baseEntityInstances.values());
+
+        assert.isEmpty(entityStore.getEntities(RegExp));
+
+        ((values: MyEntity[]) => {})(myEntityArray);
+        ((values: BaseEntity[]) => {})(myEntityArray);
+        // @ts-expect-error: cannot assign super class to sub class
+        ((values: MyEntity[]) => {})(baseEntityArray);
+        ((values: BaseEntity[]) => {})(baseEntityArray);
+
+        assert.deepEquals(myEntityArray, [instance]);
+        assert.deepEquals(baseEntityArray, [instance]);
     });
 });

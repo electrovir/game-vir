@@ -2,11 +2,11 @@ import {
     makeWritable,
     type JsonCompatibleValue,
     type PartialWithUndefined,
-    type RemoveFirstTupleEntry,
 } from '@augment-vir/common';
 import {defineShape, type ShapeDefinition} from 'object-shape-tester';
 import {type Application, type ViewContainer} from 'pixi.js';
-import {type Constructor} from 'type-fest';
+import {type AbstractConstructor, type Constructor, type Writable} from 'type-fest';
+import {ConstructorMap} from '../constructor-map.js';
 
 /**
  * Parameters for {@link EntityStore.addEntity}. Flattens itself to an empty array if there are no
@@ -15,24 +15,30 @@ import {type Constructor} from 'type-fest';
  * @category Internal
  */
 export type AddEntityParams<EntityConstructor extends Constructor<BaseEntity>> =
-    RemoveFirstTupleEntry<
-        RemoveFirstTupleEntry<RemoveFirstTupleEntry<ConstructorParameters<EntityConstructor>>>
-    > extends [undefined]
-        ? []
-        : RemoveFirstTupleEntry<
-              RemoveFirstTupleEntry<RemoveFirstTupleEntry<ConstructorParameters<EntityConstructor>>>
-          >;
+    EntityConstructor extends typeof BaseEntity<any, infer Params extends JsonCompatibleValue>
+        ? Params extends undefined
+            ? []
+            : [Params]
+        : [];
 
 /**
  * The top level storage class of all entities. Add entities with {@link EntityStore.addEntity}.
  *
  * @category Internal
  */
-export class EntityStore<Context> {
-    /** All current child entities. */
+export class EntityStore<Context = undefined> {
+    /**
+     * All current child entities.
+     *
+     * Instead of modifying this set, use {@link EntityStore.addEntity} or
+     * {@link EntityStore.removeEntity}. If you must manually modify this set directly, you'll also
+     * need to modify {@link EntityStore.entityMap}.
+     */
     public readonly entities = new Set<BaseEntity>();
     /** If true, this entity store should no longer be used or operated upon. */
     public readonly isDestroyed: boolean = false;
+    /** An internal mapping of all entity constructors to their instances. */
+    public readonly entityMap = new ConstructorMap();
 
     constructor(
         public readonly pixiApp: Application,
@@ -50,9 +56,20 @@ export class EntityStore<Context> {
         this.entities.forEach((entity) => {
             entity.update();
             if (entity.isDestroyed) {
-                this.entities.delete(entity);
+                this.removeEntity(entity);
             }
         });
+    }
+
+    /** Get all current instances of the given entity class constructor. */
+    public getEntities<T>(entityClassConstructor: AbstractConstructor<T> | Constructor<T>): Set<T> {
+        return this.entityMap.getInstances(entityClassConstructor);
+    }
+
+    /** Remove an entity from the store. */
+    public removeEntity(entity: BaseEntity) {
+        this.entities.delete(entity);
+        this.entityMap.remove(entity);
     }
 
     /** Add a new entity to this entity store. */
@@ -65,6 +82,7 @@ export class EntityStore<Context> {
         }
         const child = new entityClass(this, this.pixiApp, this.context, ...params);
         this.entities.add(child);
+        this.entityMap.add(child);
         return child as InstanceType<EntityConstructor>;
     }
 
@@ -76,6 +94,9 @@ export class EntityStore<Context> {
         makeWritable(this).isDestroyed = true;
         this.entities.forEach((entity) => entity.destroy());
         this.entities.clear();
+        this.entityMap.destroy();
+        delete (this as Writable<Partial<EntityStore>>).pixiApp;
+        delete (this as Writable<Partial<EntityStore>>).context;
     }
 }
 
@@ -122,13 +143,11 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
      */
     public static readonly entityKey: string = 'BaseEntity';
     /** Shape definition of this entity's parameters. */
-    public static readonly serializationShape: ShapeDefinition<any, any> | undefined =
+    public static readonly paramsShape: ShapeDefinition<any, any> | undefined =
         entityPositionParamsShape;
 
     /** If true, this entity should no longer be used or operated upon. */
-    public get isDestroyed() {
-        return !this.entityStore.entities.has(this);
-    }
+    public readonly isDestroyed: boolean = false;
 
     constructor(
         public readonly entityStore: EntityStore<Context>,
@@ -151,14 +170,17 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
         if (this.isDestroyed) {
             throw new Error('Cannot add entity through destroyed entity.');
         }
-        const child = new entityClass(this.entityStore, this.pixiApp, this.context, ...params);
-        this.entityStore.entities.add(child);
-        return child as InstanceType<EntityConstructor>;
+        return this.entityStore.addEntity(entityClass, ...params);
     }
 
     /** Destroy the current entity, stop its updates, and remove it from the view. */
     public destroy() {
-        this.entityStore.entities.delete(this);
+        makeWritable(this).isDestroyed = true;
+        this.entityStore.removeEntity(this);
+        delete (this as Writable<Partial<BaseEntity>>).entityStore;
+        delete (this as Writable<Partial<BaseEntity>>).pixiApp;
+        delete (this as Writable<Partial<BaseEntity>>).context;
+        delete (this as Writable<Partial<BaseEntity>>).params;
     }
 }
 
@@ -203,7 +225,9 @@ export abstract class ViewEntity<
             entirely?: boolean;
         }> = {},
     ): boolean {
-        if (options.entirely) {
+        if (this.isDestroyed) {
+            throw new Error('Cannot check bounds on destroyed entity.');
+        } else if (options.entirely) {
             return this.pixiApp.screen.containsRect(this.view.getBounds().rectangle);
         } else {
             return this.pixiApp.screen.intersects(this.view.getBounds().rectangle);
@@ -212,7 +236,8 @@ export abstract class ViewEntity<
 
     /** Destroy the current entity, stop its updates, and remove it from the view. */
     public override destroy() {
-        super.destroy();
         this.view.destroy({children: true});
+        super.destroy();
+        delete (this as Writable<Partial<ViewEntity>>).view;
     }
 }

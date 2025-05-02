@@ -26,7 +26,7 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
 
     export class Block extends defineEntity({
         key: 'Block',
-        serializationShape: entityPositionParamsShape,
+        paramsShape: entityPositionParamsShape,
     }) {
         public override update(): void {
             this.view.x += this.context.movementSpeed;
@@ -107,7 +107,7 @@ const {defineEntity, defineLogicEntity, EntityStore} = defineEntitySuite<{moveme
 /** Define a standard entity (with a view) that bounces back and forth. */
 class Block extends defineEntity({
     key: 'Block',
-    serializationShape: defineShape(
+    paramsShape: defineShape(
         and(entityPositionParamsShape, {
             direction: 1,
         }),
@@ -160,7 +160,7 @@ class Block extends defineEntity({
 /** Define a standard entity (with a view) that emits from Block when it bounces. */
 class BlockBonk extends defineEntity({
     key: 'BlockBonk',
-    serializationShape: defineShape(
+    paramsShape: defineShape(
         and(entityPositionParamsShape, {
             move: {
                 x: -1,
@@ -204,7 +204,7 @@ class BlockBonk extends defineEntity({
 /** Define a logic entity which doesn't have a Pixi.js view. */
 class Fps extends defineLogicEntity({
     key: 'Fps',
-    serializationShape: undefined,
+    paramsShape: undefined,
 }) {
     protected fpsCounts: number[] = [];
 
