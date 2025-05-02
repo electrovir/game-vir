@@ -133,16 +133,16 @@ class Fps extends defineLogicEntity({
 
 /** Create the view */
 
-const entityStore = new EntityStore(
-    await createPixiApp({
+const entityStore = new EntityStore({
+    pixiApp: await createPixiApp({
         background: 'black',
         height: 500,
         width: 500,
     }),
-    {
+    context: {
         movementSpeed: 6,
     },
-);
+});
 document.body.append(entityStore.pixiApp.canvas);
 
 /** Add entities to the view. */

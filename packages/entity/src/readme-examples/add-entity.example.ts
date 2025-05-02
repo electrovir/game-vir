@@ -3,6 +3,9 @@ import {Block} from './define-entity.example.js';
 
 const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
-const entityStore = new EntityStore(await createPixiApp(), {movementSpeed: 6});
+const entityStore = new EntityStore({
+    pixiApp: await createPixiApp(),
+    context: {movementSpeed: 6},
+});
 
 entityStore.addEntity(Block, {x: 15, y: 20});

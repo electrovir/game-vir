@@ -55,7 +55,10 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
 
         const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
-        const entityStore = new EntityStore(await createPixiApp(), {movementSpeed: 6});
+        const entityStore = new EntityStore({
+            pixiApp: await createPixiApp(),
+            context: {movementSpeed: 6},
+        });
 
         entityStore.addEntity(Block, {x: 15, y: 20});
         ```
@@ -68,7 +71,10 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
 
         const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
-        const entityStore = new EntityStore(await createPixiApp(), {movementSpeed: 6});
+        const entityStore = new EntityStore({
+            pixiApp: await createPixiApp(),
+            context: {movementSpeed: 6},
+        });
 
         entityStore.pixiApp.ticker.add(() => {
             entityStore.updateAllEntities();
@@ -223,16 +229,16 @@ class Fps extends defineLogicEntity({
 
 /** Create the view */
 
-const entityStore = new EntityStore(
-    await createPixiApp({
+const entityStore = new EntityStore({
+    pixiApp: await createPixiApp({
         background: 'black',
         height: 500,
         width: 500,
     }),
-    {
+    context: {
         movementSpeed: 6,
     },
-);
+});
 document.body.append(entityStore.pixiApp.canvas);
 
 /** Add entities to the view. */

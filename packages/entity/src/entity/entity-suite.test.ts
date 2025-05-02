@@ -41,7 +41,7 @@ describe(defineEntitySuite.name, () => {
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
-        const entityStore = new EntityStore(createMockPixiApp(), context);
+        const entityStore = new EntityStore({pixiApp: createMockPixiApp(), context});
         assert.tsType(entityStore).equals<EntityStore<typeof context>>();
     });
     it('defaults to undefined context', () => {
@@ -73,7 +73,7 @@ describe(defineEntitySuite.name, () => {
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
-        const entityStore = new EntityStore(createMockPixiApp(), undefined);
+        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
         assert.tsType(entityStore).equals<EntityStore>();
     });
     it('allows logic entity definition', () => {

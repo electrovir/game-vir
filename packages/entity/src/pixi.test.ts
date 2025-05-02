@@ -25,7 +25,7 @@ describe(createMockPixiApp.name, () => {
     });
     it('allows a view child to be destroyed', () => {
         const {EntityStore, defineEntity} = defineEntitySuite();
-        const entityStore = new EntityStore(createMockPixiApp(), undefined);
+        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
 
         let updateCount = 0;
 
@@ -57,7 +57,18 @@ describe(createPixiApp.name, () => {
             width: 100,
             height: 100,
         };
-        const pixi = await createPixiApp(dimensions);
+        const pixi = await createPixiApp({
+            ...dimensions,
+            preference: 'webgpu',
+        });
         assert.instanceOf(pixi, Application);
+        assert.instanceOf(pixi.canvas, HTMLCanvasElement);
+        assert.deepEquals(
+            {
+                width: pixi.canvas.width,
+                height: pixi.canvas.height,
+            },
+            dimensions,
+        );
     });
 });

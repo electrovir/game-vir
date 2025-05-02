@@ -13,5 +13,6 @@ module.exports = {
         'wasd',
         'pixi',
         'pixijs',
+        'webgpu',
     ],
 };

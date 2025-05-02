@@ -5,7 +5,13 @@ import {
 } from '@augment-vir/common';
 import {defineShape, type ShapeDefinition} from 'object-shape-tester';
 import {type Application, type ViewContainer} from 'pixi.js';
-import {type AbstractConstructor, type Constructor, type Writable} from 'type-fest';
+import {
+    type AbstractConstructor,
+    type Constructor,
+    type IsNever,
+    type UnknownArray,
+    type Writable,
+} from 'type-fest';
 import {ConstructorMap} from '../constructor-map.js';
 
 /**
@@ -20,6 +26,23 @@ export type AddEntityParams<EntityConstructor extends Constructor<BaseEntity>> =
             ? []
             : [Params]
         : [];
+
+/**
+ * Parameters for the constructor of {@link EntityStore}.
+ *
+ * @category Internal
+ */
+export type EntityStoreConstructorParams<Context> = (IsNever<
+    Extract<Context, undefined | null>
+> extends true
+    ? {
+          context: Context;
+      }
+    : {
+          context?: Context;
+      }) & {
+    pixiApp: Application;
+};
 
 /**
  * The top level storage class of all entities. Add entities with {@link EntityStore.addEntity}.
@@ -39,11 +62,15 @@ export class EntityStore<Context = undefined> {
     public readonly isDestroyed: boolean = false;
     /** An internal mapping of all entity constructors to their instances. */
     public readonly entityMap = new ConstructorMap();
+    /** Original pixi app. */
+    public readonly pixiApp: Application;
+    /** Context given to all entities. This can be undefined. */
+    public readonly context: Context;
 
-    constructor(
-        public readonly pixiApp: Application,
-        public readonly context: Context,
-    ) {}
+    constructor(args: Readonly<EntityStoreConstructorParams<Context>>) {
+        this.pixiApp = args.pixiApp;
+        this.context = args.context as Context;
+    }
 
     /**
      * Run `.update()` on all current entities. If any entity's get marked as destroyed during their
@@ -80,7 +107,12 @@ export class EntityStore<Context = undefined> {
         if (this.isDestroyed) {
             throw new Error('Cannot operate on destroyed entity store.');
         }
-        const child = new entityClass(this, this.pixiApp, this.context, ...params);
+        const child = new entityClass({
+            entityStore: this,
+            pixiApp: this.pixiApp,
+            context: this.context,
+            params: (params as UnknownArray)[0],
+        } satisfies EntityConstructorParams<any, any>);
         this.entities.add(child);
         this.entityMap.add(child);
         return child as InstanceType<EntityConstructor>;
@@ -120,14 +152,27 @@ export type EntityPositionParams = typeof entityPositionParamsShape.runtimeType;
 /**
  * Parameters for an entity's constructor.
  *
- * @category Util
+ * @category Internal
  */
-export type EntityConstructorParams<Serialized, Context> = [
-    entityStore: EntityStore<Context>,
-    pixiApp: Application,
-    context: Context,
-    params: Serialized,
-];
+export type EntityConstructorParams<Params, Context> = (IsNever<
+    Extract<Context, undefined | null>
+> extends true
+    ? {
+          context: Context;
+      }
+    : {
+          context?: Context;
+      }) &
+    (IsNever<Extract<Params, undefined | null>> extends true
+        ? {
+              params: Params;
+          }
+        : {
+              params?: Params;
+          }) & {
+        entityStore: EntityStore<Context>;
+        pixiApp: Application;
+    };
 
 /**
  * Base entity class, types, and functionality.
@@ -149,12 +194,20 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
     /** If true, this entity should no longer be used or operated upon. */
     public readonly isDestroyed: boolean = false;
 
-    constructor(
-        public readonly entityStore: EntityStore<Context>,
-        public readonly pixiApp: Application,
-        public readonly context: Context,
-        public params: Params,
-    ) {}
+    /** The entity store to add all entities to. */
+    public readonly entityStore: EntityStore<Context>;
+    public readonly context: Context;
+    /** Writable entity params. These should be serializable. */
+    public params: Params;
+    /** Original pixi app. */
+    public readonly pixiApp: Application;
+
+    constructor(args: Readonly<EntityConstructorParams<Params, Context>>) {
+        this.entityStore = args.entityStore;
+        this.context = args.context as Context;
+        this.params = args.params as Params;
+        this.pixiApp = args.pixiApp;
+    }
 
     /**
      * Called every game tick. Run all entity updates in here. This should be overridden in all
@@ -178,7 +231,6 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
         makeWritable(this).isDestroyed = true;
         this.entityStore.removeEntity(this);
         delete (this as Writable<Partial<BaseEntity>>).entityStore;
-        delete (this as Writable<Partial<BaseEntity>>).pixiApp;
         delete (this as Writable<Partial<BaseEntity>>).context;
         delete (this as Writable<Partial<BaseEntity>>).params;
     }
@@ -196,15 +248,10 @@ export abstract class ViewEntity<
     /** The entity's PixiJS view. */
     public view: ViewContainer;
 
-    constructor(
-        entityStore: EntityStore<Context>,
-        pixiApp: Application,
-        context: Context,
-        params: Params,
-    ) {
-        super(entityStore, pixiApp, context, params);
+    constructor(args: Readonly<EntityConstructorParams<Params, Context>>) {
+        super(args);
         this.view = this.createView();
-        pixiApp.stage.addChild(this.view);
+        this.pixiApp.stage.addChild(this.view);
     }
 
     /**
