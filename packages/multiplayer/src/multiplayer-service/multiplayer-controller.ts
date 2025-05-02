@@ -11,7 +11,6 @@ import {type RequireExactlyOne} from 'type-fest';
 import {
     type MultiplayerConnectionUpdate,
     type RoomInput,
-    type ShouldAllowConnectionCheck,
     WebrtcMultiplayerConnectionUpdateEvent,
 } from '../webrtc/webrtc-multiplayer-controller.js';
 import {RoomRejectionError} from './errors.js';
@@ -60,13 +59,19 @@ export type MultiplayerControllerParams<Action extends JsonCompatibleValue> = {
     /** Listen to multiplayer events. */
     listeners: {
         /** This is fired whenever a new frame is received from the host client. */
-        frame: (actions: ReadonlyArray<Action>) => MaybePromise<void>;
+        frame: (
+            actions: ReadonlyArray<Action>,
+            controller: MultiplayerController<Action>,
+        ) => MaybePromise<void>;
         /**
          * This is called whenever the room list updates, even if there were no changes to the room
          * list. Note that room list updates are paused while the controller is connected to an
          * actual room.
          */
-        roomListUpdate?: (rooms: Readonly<MultiplayerClientRooms>) => MaybePromise<void>;
+        roomListUpdate?: (
+            rooms: Readonly<MultiplayerClientRooms>,
+            controller: MultiplayerController<Action>,
+        ) => MaybePromise<void>;
         /**
          * This is fired in the following situations:
          *
@@ -75,9 +80,15 @@ export type MultiplayerControllerParams<Action extends JsonCompatibleValue> = {
          * - A new room client was added (only fired on the host client)
          * - A room client was lost (only fired on the host client)
          */
-        clientUpdate?: (update: Readonly<MultiplayerConnectionUpdate>) => MaybePromise<void>;
+        clientUpdate?: (
+            update: Readonly<MultiplayerConnectionUpdate>,
+            controller: MultiplayerController<Action>,
+        ) => MaybePromise<void>;
         /** Fires when the controller's connection state is updated. */
-        connectionUpdate?: (state: ServiceAndRoomConnectionState) => MaybePromise<void>;
+        connectionUpdate?: (
+            state: ServiceAndRoomConnectionState,
+            controller: MultiplayerController<Action>,
+        ) => MaybePromise<void>;
         /**
          * This is fired when a WebRTC peer attempts to connect to the host client (this will only
          * be fired if your client is the host). Return `true` to accept the connection. Return
@@ -85,7 +96,10 @@ export type MultiplayerControllerParams<Action extends JsonCompatibleValue> = {
          *
          * @default accept all connections
          */
-        acceptConnection?: ShouldAllowConnectionCheck<MultiplayerController<Action>>;
+        acceptConnection?: (
+            connectingClientId: Uuid,
+            controller: MultiplayerController<Action>,
+        ) => MaybePromise<boolean>;
     };
 
     /**
@@ -264,7 +278,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
             () => false,
         );
         this.currentConnection.listen(LockStepFrameEvent, async (event) => {
-            await this.params.listeners.frame(event.detail);
+            await this.params.listeners.frame(event.detail, this);
         });
         this.currentConnection.startSingleplayer();
 
@@ -325,19 +339,16 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
             this.params.frameDuration || {milliseconds: 10},
             acceptConnectionListener
                 ? (data) => {
-                      return acceptConnectionListener({
-                          ...data,
-                          controller: this,
-                      });
+                      return acceptConnectionListener(data.connectingClientId, this);
                   }
                 : undefined,
         );
         this.currentConnection.listen(LockStepFrameEvent, async (event) => {
-            await this.params.listeners.frame(event.detail);
+            await this.params.listeners.frame(event.detail, this);
         });
         if (this.params.listeners.clientUpdate) {
             this.currentConnection.listen(WebrtcMultiplayerConnectionUpdateEvent, async (event) => {
-                await this.params.listeners.clientUpdate?.(event.detail);
+                await this.params.listeners.clientUpdate?.(event.detail, this);
             });
         }
 
@@ -382,10 +393,13 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
         if (state.room) {
             makeWritable(this).roomConnectionState = state.room;
         }
-        void this.params.listeners.connectionUpdate?.({
-            room: this.roomConnectionState,
-            service: this.serviceConnectionState,
-        });
+        void this.params.listeners.connectionUpdate?.(
+            {
+                room: this.roomConnectionState,
+                service: this.serviceConnectionState,
+            },
+            this,
+        );
     }
 
     /** Starts polling the multiplayer server for room updates and fires listeners. */
@@ -402,7 +416,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
                 }
                 const output = await (await this.multiplayerApi).endpoints['/rooms'].fetch();
                 if (output.ok) {
-                    await this.params.listeners.roomListUpdate?.(output.data);
+                    await this.params.listeners.roomListUpdate?.(output.data, this);
                 }
             }, roomUpdateMs);
         }

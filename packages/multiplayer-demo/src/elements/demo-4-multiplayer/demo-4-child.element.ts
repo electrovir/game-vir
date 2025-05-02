@@ -103,7 +103,7 @@ export const Demo4Child = defineElementNoInputs({
                             connectionState: state,
                         });
                     },
-                    acceptConnection({controller}) {
+                    acceptConnection(clientId, controller) {
                         return controller.getAllClientIds().length < 16;
                     },
                 },
