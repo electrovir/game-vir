@@ -3,10 +3,18 @@
 import {assert} from '@augment-vir/assert';
 import {type AnyObject} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
+import {and, defineShape} from 'object-shape-tester';
 import {Graphics, type ViewContainer} from 'pixi.js';
+import {type SetOptional} from 'type-fest';
 import {createMockPixiApp} from '../pixi.js';
 import {defineEntitySuite} from './entity-suite.js';
-import {BaseEntity, entityPositionParamsShape, EntityStore, ViewEntity} from './entity.js';
+import {
+    BaseEntity,
+    type EntityConstructorParams,
+    entityPositionParamsShape,
+    EntityStore,
+    ViewEntity,
+} from './entity.js';
 
 describe(ViewEntity.name, () => {
     it("can detect if it's in screen bounds", () => {
@@ -42,6 +50,103 @@ describe(ViewEntity.name, () => {
             instance.isInBounds({entirely: true}),
             'should now be entirely within bounds',
         );
+    });
+    it('respected constructor param overrides', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        const enemyBulletParamsShape = defineShape(
+            and(entityPositionParamsShape, {
+                move: {
+                    x: -1,
+                    y: -1,
+                },
+            }),
+        );
+
+        class EnemyBullet extends defineEntity({
+            key: 'EnemyBullet',
+            paramsShape: enemyBulletParamsShape,
+        }) {
+            public static readonly moveSpeed = 5;
+            public static readonly size = 2;
+
+            constructor(
+                args: EntityConstructorParams<
+                    SetOptional<typeof enemyBulletParamsShape.runtimeType, 'move'>
+                >,
+            ) {
+                super({
+                    ...args,
+                    params: {
+                        ...args.params,
+                        move: {
+                            x: 0,
+                            y: 0,
+                        },
+                    },
+                });
+            }
+
+            public override createView(): ViewContainer {
+                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            }
+
+            public override update() {
+                // do nothing
+            }
+        }
+
+        const enemyParamsShape = defineShape(
+            and(entityPositionParamsShape, {
+                ticksSinceShoot: -1,
+                move: {
+                    x: -1,
+                    y: -1,
+                },
+            }),
+        );
+
+        class EnemyEntity extends defineEntity({
+            key: 'EnemyEntity',
+            paramsShape: enemyParamsShape,
+        }) {
+            public static readonly size = 72;
+            public static readonly moveSpeed = 3.5;
+            public static readonly ticksBetweenShots = 100;
+
+            constructor(
+                args: EntityConstructorParams<
+                    SetOptional<typeof enemyParamsShape.runtimeType, 'move' | 'ticksSinceShoot'>
+                >,
+            ) {
+                super({
+                    ...args,
+                    params: {
+                        ...args.params,
+                        move: {
+                            x: 0,
+                            y: 0,
+                        },
+                        ticksSinceShoot: 0,
+                    },
+                });
+            }
+
+            public override createView(): ViewContainer {
+                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            }
+
+            public override update() {
+                this.addEntity(EnemyBullet, {
+                    x: this.view.x + this.view.width / 2,
+                    y: this.view.y + this.view.height,
+                });
+            }
+        }
+
+        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
+
+        entityStore.addEntity(EnemyEntity, {x: 0, y: 0});
     });
     it('requires context and params when defined', () => {
         class WithNothing extends ViewEntity<undefined, undefined> {
@@ -230,6 +335,7 @@ describe(EntityStore.name, () => {
         store.destroy();
 
         assert.throws(() => store.updateAllEntities());
+        // @ts-expect-error: intentionally not giving a valid entity constructor
         assert.throws(() => store.addEntity({} as any));
         assert.throws(() => store.destroy());
     });
@@ -256,6 +362,7 @@ describe(EntityStore.name, () => {
 
         const store = new EntityStore({} as any);
         assert.strictEquals(store.entities.size, 0 as number);
+        // @ts-expect-error: intentionally not giving a valid entity constructor
         const instance = store.addEntity(Dummy as any) as Dummy;
         assert.strictEquals(store.entities.size, 1 as number);
         store.updateAllEntities();
@@ -276,6 +383,7 @@ describe(EntityStore.name, () => {
 
         const store = new EntityStore({} as any);
         assert.strictEquals(store.entities.size, 0 as number);
+        // @ts-expect-error: intentionally not giving a valid entity constructor
         const instance = store.addEntity(Dummy as any);
         assert.strictEquals(store.entities.size, 1 as number);
         store.destroy();

@@ -21,11 +21,14 @@ import {ConstructorMap} from '../constructor-map.js';
  * @category Internal
  */
 export type AddEntityParams<EntityConstructor extends Constructor<BaseEntity>> =
-    EntityConstructor extends typeof BaseEntity<any, infer Params extends JsonCompatibleValue>
-        ? Params extends undefined
+    ConstructorParameters<EntityConstructor>[0] extends infer Args extends EntityConstructorParams<
+        any,
+        any
+    >
+        ? Args['params'] extends undefined
             ? []
-            : [Params]
-        : [];
+            : [Args['params']]
+        : ['no'];
 
 /**
  * Parameters for the constructor of {@link EntityStore}.
@@ -154,7 +157,7 @@ export type EntityPositionParams = typeof entityPositionParamsShape.runtimeType;
  *
  * @category Internal
  */
-export type EntityConstructorParams<Params, Context> = (IsNever<
+export type EntityConstructorParams<Params = undefined, Context = undefined> = (IsNever<
     Extract<Context, undefined | null>
 > extends true
     ? {
@@ -202,7 +205,7 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
     /** Original pixi app. */
     public readonly pixiApp: Application;
 
-    constructor(args: Readonly<EntityConstructorParams<Params, Context>>) {
+    constructor(args: Readonly<EntityConstructorParams<NoInfer<Params>, NoInfer<Context>>>) {
         this.entityStore = args.entityStore;
         this.context = args.context as Context;
         this.params = args.params as Params;
@@ -248,7 +251,7 @@ export abstract class ViewEntity<
     /** The entity's PixiJS view. */
     public view: ViewContainer;
 
-    constructor(args: Readonly<EntityConstructorParams<Params, Context>>) {
+    constructor(args: Readonly<EntityConstructorParams<NoInfer<Params>, NoInfer<Context>>>) {
         super(args);
         this.view = this.createView();
         this.pixiApp.stage.addChild(this.view);
