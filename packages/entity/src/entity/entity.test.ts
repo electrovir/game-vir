@@ -11,6 +11,7 @@ import {defineEntitySuite} from './entity-suite.js';
 import {
     BaseEntity,
     type EntityConstructorParams,
+    EntityDestroyEvent,
     entityPositionParamsShape,
     EntityStore,
     ViewEntity,
@@ -322,7 +323,15 @@ describe(ViewEntity.name, () => {
 
         assert.strictEquals(store.entities.size, 1 as number);
 
+        const events: Event[] = [];
+
+        instance.events.listen(EntityDestroyEvent, (event, removeSelf) => {
+            events.push(event);
+            removeSelf();
+        });
         instance.destroy();
+        assert.isLengthExactly(events, 1);
+        assert.instanceOf(events[0], EntityDestroyEvent);
         assert.throws(() => instance.addEntity(MyViewEntity));
         assert.throws(() => instance.isInBounds());
     });

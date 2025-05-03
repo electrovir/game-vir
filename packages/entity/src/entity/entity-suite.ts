@@ -1,6 +1,13 @@
 import {type ShapeDefinition} from 'object-shape-tester';
 import {type Constructor} from 'type-fest';
-import {BaseEntity, entityPositionParamsShape, EntityStore, ViewEntity} from './entity.js';
+import {type ListenTarget} from 'typed-event-target';
+import {
+    BaseEntity,
+    type EntityDestroyEvent,
+    entityPositionParamsShape,
+    EntityStore,
+    ViewEntity,
+} from './entity.js';
 
 /**
  * Output of {@link DefineViewEntity}.
@@ -11,9 +18,20 @@ export type DefinedViewEntity<
     EntityKey,
     Context,
     Shape extends ShapeDefinition<any, any> | undefined,
-> = typeof ViewEntity<
-    Context,
-    Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
+    Events extends Readonly<Event>,
+> = Constructor<
+    ViewEntity<
+        Context,
+        Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
+    > & {
+        events: ListenTarget<Events>;
+    },
+    ConstructorParameters<
+        typeof ViewEntity<
+            Context,
+            Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
+        >
+    >
 > & {
     entityKey: EntityKey;
     paramsShape: Shape;
@@ -27,6 +45,7 @@ export type DefinedViewEntity<
 export type DefineViewEntity<Context> = <
     const EntityKey extends string,
     const Shape extends ShapeDefinition<any, any> | undefined,
+    const Events extends Readonly<Event> = EntityDestroyEvent,
 >({
     key,
     paramsShape,
@@ -45,7 +64,8 @@ export type DefineViewEntity<Context> = <
      * position parameters.
      */
     paramsShape: Shape;
-}) => DefinedViewEntity<EntityKey, Context, Shape>;
+    events?: Constructor<Events>[];
+}) => DefinedViewEntity<EntityKey, Context, Shape, Events>;
 
 /**
  * Output of {@link DefineLogicEntity}.
@@ -56,9 +76,20 @@ export type DefinedLogicEntity<
     EntityKey,
     Context,
     Shape extends ShapeDefinition<any, any> | undefined,
-> = typeof BaseEntity<
-    Context,
-    Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
+    Events extends Readonly<Event>,
+> = Constructor<
+    BaseEntity<
+        Context,
+        Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
+    > & {
+        events: ListenTarget<Events>;
+    },
+    ConstructorParameters<
+        typeof BaseEntity<
+            Context,
+            Shape extends ShapeDefinition<any, any> ? Shape['runtimeType'] : undefined
+        >
+    >
 > & {
     entityKey: EntityKey;
     paramsShape: Shape;
@@ -72,6 +103,7 @@ export type DefinedLogicEntity<
 export type DefineLogicEntity<Context> = <
     const EntityKey extends string,
     const Shape extends ShapeDefinition<any, any> | undefined,
+    const Events extends Readonly<Event> = EntityDestroyEvent,
 >({
     key,
     paramsShape,
@@ -90,7 +122,7 @@ export type DefineLogicEntity<Context> = <
      * position parameters.
      */
     paramsShape: Shape;
-}) => DefinedLogicEntity<EntityKey, Context, Shape>;
+}) => DefinedLogicEntity<EntityKey, Context, Shape, Events>;
 
 /**
  * Output of {@link defineEntitySuite}, used to defining and creating entities.
@@ -127,7 +159,7 @@ export function defineEntitySuite<Context = undefined>(): EntitySuite<Context> {
     function defineEntity({key, paramsShape}: Parameters<DefineViewEntity<Context>>[0]) {
         const classWrapper = {
             // @ts-expect-error: abstract methods are intentionally not implemented here
-            [key]: class extends ViewEntity<Context, Shape['runtimeType']> {
+            [key]: class extends ViewEntity {
                 public static override readonly entityKey = key;
                 public static override readonly paramsShape =
                     paramsShape || entityPositionParamsShape;
@@ -142,7 +174,7 @@ export function defineEntitySuite<Context = undefined>(): EntitySuite<Context> {
     }: Parameters<DefineViewEntity<Context>>[0]) {
         const classWrapper = {
             // @ts-expect-error: abstract methods are intentionally not implemented here
-            [key]: class extends BaseEntity<Context, Shape['runtimeType']> {
+            [key]: class extends BaseEntity {
                 public static override readonly entityKey = key;
                 public static override readonly paramsShape =
                     paramsShape || entityPositionParamsShape;

@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/entity",
-    "version": "14.1.0",
+    "version": "14.2.0",
     "description": "Entity system for game development.",
     "keywords": [
         "entity",
@@ -40,7 +40,8 @@
         "@rollup/plugin-commonjs": "^28.0.3",
         "@rollup/plugin-node-resolve": "^16.0.1",
         "object-shape-tester": "^5.1.5",
-        "type-fest": "^4.40.1"
+        "type-fest": "^4.40.1",
+        "typed-event-target": "^4.0.4"
     },
     "devDependencies": {
         "@augment-vir/test": "^31.16.0",

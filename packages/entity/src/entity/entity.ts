@@ -12,6 +12,7 @@ import {
     type UnknownArray,
     type Writable,
 } from 'type-fest';
+import {defineTypedEvent, ListenTarget} from 'typed-event-target';
 import {ConstructorMap} from '../constructor-map.js';
 
 /**
@@ -178,6 +179,13 @@ export type EntityConstructorParams<Params = undefined, Context = undefined> = (
     };
 
 /**
+ * Event emitted by all entities when they are destroyed.
+ *
+ * @category Internal
+ */
+export class EntityDestroyEvent extends defineTypedEvent('entity-destroy-event') {}
+
+/**
  * Base entity class, types, and functionality.
  *
  * @category Internal
@@ -196,6 +204,7 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
 
     /** If true, this entity should no longer be used or operated upon. */
     public readonly isDestroyed: boolean = false;
+    public readonly events = new ListenTarget<EntityDestroyEvent>();
 
     /** The entity store to add all entities to. */
     public readonly entityStore: EntityStore<Context>;
@@ -236,6 +245,8 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
         delete (this as Writable<Partial<BaseEntity>>).entityStore;
         delete (this as Writable<Partial<BaseEntity>>).context;
         delete (this as Writable<Partial<BaseEntity>>).params;
+        this.events.dispatch(new EntityDestroyEvent());
+        this.events.destroy();
     }
 
     /**

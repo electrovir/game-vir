@@ -1,10 +1,16 @@
 import {assert} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
-import {Graphics} from 'pixi.js';
+import {Graphics, type ViewContainer} from 'pixi.js';
+import {defineTypedCustomEvent} from 'typed-event-target';
 import {createMockPixiApp} from '../pixi.js';
 import {defineEntitySuite, type DefineViewEntity} from './entity-suite.js';
-import {entityPositionParamsShape, type EntityPositionParams, type EntityStore} from './entity.js';
+import {
+    EntityDestroyEvent,
+    entityPositionParamsShape,
+    type EntityPositionParams,
+    type EntityStore,
+} from './entity.js';
 
 describe(defineEntitySuite.name, () => {
     it('infers defined context type', () => {
@@ -75,6 +81,73 @@ describe(defineEntitySuite.name, () => {
 
         const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
         assert.tsType(entityStore).equals<EntityStore>();
+    });
+    it('assigns the events type parameter', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class MyEvent extends defineTypedCustomEvent<{value: number}>()('my-event') {}
+
+        class MyEntity extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: undefined,
+            events: [MyEvent],
+        }) {
+            public override update(): void {
+                // do nothing
+            }
+            public override createView(): ViewContainer {
+                this.events.dispatch(
+                    new MyEvent({
+                        detail: {
+                            value: 5,
+                        },
+                    }),
+                );
+                return new Graphics().rect(0, 0, 20, 20).fill('magenta');
+            }
+        }
+        class MyEntity2 extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: undefined,
+        }) {
+            public override update(): void {
+                // do nothing
+            }
+            public override createView(): ViewContainer {
+                this.events.dispatch(
+                    // @ts-expect-error: this event is not part of this entity
+                    new MyEvent({
+                        detail: {
+                            value: 5,
+                        },
+                    }),
+                );
+                return new Graphics().rect(0, 0, 20, 20).fill('red');
+            }
+        }
+        const entityStore = new EntityStore({
+            pixiApp: createMockPixiApp(),
+        });
+
+        const instance = entityStore.addEntity(MyEntity);
+
+        instance.events.listen(EntityDestroyEvent, () => {});
+        instance.events.listen(MyEvent, (event) => {
+            assert.tsType(event.detail).equals<{value: number}>();
+        });
+        // @ts-expect-error: invalid event to listen to
+        instance.events.listen(Error, () => {});
+
+        const instance2 = entityStore.addEntity(MyEntity2);
+
+        instance2.events.listen(EntityDestroyEvent, () => {});
+        // @ts-expect-error: invalid event to listen to
+        instance2.events.listen(MyEvent, (event) => {
+            // @ts-expect-error: invalid event to listen to
+            assert.tsType(event.detail).equals<{value: number}>();
+        });
+        // @ts-expect-error: invalid event to listen to
+        instance2.events.listen(Error, () => {});
     });
     it('allows logic entity definition', () => {
         const {defineLogicEntity} = defineEntitySuite();
