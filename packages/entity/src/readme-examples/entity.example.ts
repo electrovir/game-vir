@@ -1,13 +1,7 @@
 import {assertWrap} from '@augment-vir/assert';
 import {and, defineShape} from 'object-shape-tester';
-import {Graphics, GraphicsContext, type ViewContainer} from 'pixi.js';
-import {
-    Angle,
-    createPixiApp,
-    defineEntitySuite,
-    entityPositionParamsShape,
-    Vector,
-} from '../index.js';
+import {Graphics, GraphicsContext} from 'pixi.js';
+import {Angle, createPixi, defineEntitySuite, entityPositionParamsShape, Vector} from '../index.js';
 
 /** Create an entity suite. */
 const {defineEntity, defineLogicEntity, EntityStore} = defineEntitySuite<{movementSpeed: number}>();
@@ -29,8 +23,8 @@ class Block extends defineEntity({
         .fill('magenta');
 
     public override update(): void {
-        this.view.x += this.context.movementSpeed * this.params.direction;
-        this.view.y += this.context.movementSpeed * this.params.direction;
+        this.params.x += this.context.movementSpeed * this.params.direction;
+        this.params.y += this.context.movementSpeed * this.params.direction;
 
         if (!this.isInBounds({entirely: true})) {
             this.params.direction = -1 * this.params.direction;
@@ -57,13 +51,15 @@ class Block extends defineEntity({
         }
     }
 
-    public override createView(): ViewContainer {
+    public override createView() {
         const graphic = new Graphics(Block.graphicContext);
 
         graphic.x = this.params.x;
         graphic.y = this.params.y;
 
-        return graphic;
+        return {
+            view: graphic,
+        };
     }
 }
 
@@ -97,17 +93,19 @@ class BlockBonk extends defineEntity({
             (BlockBonk.maxLife + 3 - this.params.ticksSinceCreation) / BlockBonk.maxLife,
         );
 
-        this.view.x += this.params.move.x;
-        this.view.y += this.params.move.y;
+        this.params.x += this.params.move.x;
+        this.params.y += this.params.move.y;
     }
 
-    public override createView(): ViewContainer {
+    public override createView() {
         const graphic = new Graphics(BlockBonk.graphicContext);
 
         graphic.x = this.params.x;
         graphic.y = this.params.y;
 
-        return graphic;
+        return {
+            view: graphic,
+        };
     }
 }
 
@@ -119,7 +117,7 @@ class Fps extends defineLogicEntity({
     protected fpsCounts: number[] = [];
 
     public override update(): void {
-        this.fpsCounts.push(this.pixiApp.ticker.FPS);
+        this.fpsCounts.push(this.pixi.ticker.FPS);
         if (this.fpsCounts.length > 100) {
             const averageFps = Math.round(
                 this.fpsCounts.reduce((a, b) => a + b) / this.fpsCounts.length,
@@ -134,7 +132,7 @@ class Fps extends defineLogicEntity({
 /** Create the view */
 
 const entityStore = new EntityStore({
-    pixiApp: await createPixiApp({
+    pixi: await createPixi({
         background: 'black',
         height: 500,
         width: 500,
@@ -143,7 +141,7 @@ const entityStore = new EntityStore({
         movementSpeed: 6,
     },
 });
-document.body.append(entityStore.pixiApp.canvas);
+document.body.append(entityStore.pixi.canvas);
 
 /** Add entities to the view. */
 entityStore.addEntity(Block, {direction: 1, x: 0, y: 0});
@@ -152,6 +150,6 @@ entityStore.addEntity(Block, {direction: 1, x: 0, y: 250});
 entityStore.addEntity(Fps);
 
 /** Start updates. */
-entityStore.pixiApp.ticker.add(() => {
+entityStore.pixi.ticker.add(() => {
     entityStore.updateAllEntities();
 });

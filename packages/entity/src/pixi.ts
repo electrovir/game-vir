@@ -8,7 +8,7 @@ import {Application, Container, Rectangle, Ticker, type ApplicationOptions} from
  *
  * @category Mock
  */
-export function createMockPixiApp({
+export function createMockPixi({
     mocks,
     options,
 }: PartialWithUndefined<{
@@ -53,7 +53,7 @@ export class MockPixiApp {
  *
  * @category Util
  */
-export async function createPixiApp(options?: Partial<ApplicationOptions>) {
+export async function createPixi(options?: Partial<ApplicationOptions>) {
     const instance = new Application();
     await instance.init(options);
 

@@ -19,7 +19,7 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
     <!-- example-link: src/readme-examples/define-entity.example.ts -->
 
     ```TypeScript
-    import {Graphics, type ViewContainer} from 'pixi.js';
+    import {Graphics} from 'pixi.js';
     import {defineEntitySuite, entityPositionParamsShape} from '@game-vir/entity';
 
     const {defineEntity} = defineEntitySuite<{movementSpeed: number}>();
@@ -33,13 +33,15 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
             this.view.y += this.context.movementSpeed;
         }
 
-        public override createView(): ViewContainer {
+        public override createView() {
             const graphic = new Graphics().rect(0, 0, 100, 100).fill('red');
 
             graphic.x = this.params.x;
             graphic.y = this.params.y;
 
-            return graphic;
+            return {
+                view: graphic,
+            };
         }
     }
     ```
@@ -50,13 +52,13 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
         <!-- example-link: src/readme-examples/add-entity.example.ts -->
 
         ```TypeScript
-        import {createPixiApp, defineEntitySuite} from '@game-vir/entity';
+        import {createPixi, defineEntitySuite} from '@game-vir/entity';
         import {Block} from './define-entity.example.js';
 
         const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
         const entityStore = new EntityStore({
-            pixiApp: await createPixiApp(),
+            pixi: await createPixi(),
             context: {movementSpeed: 6},
         });
 
@@ -67,16 +69,16 @@ Use [`defineEntitySuite`](https://electrovir.github.io/game-vir/entity/functions
         <!-- example-link: src/readme-examples/update-entities.example.ts -->
 
         ```TypeScript
-        import {createPixiApp, defineEntitySuite} from '@game-vir/entity';
+        import {createPixi, defineEntitySuite} from '@game-vir/entity';
 
         const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
         const entityStore = new EntityStore({
-            pixiApp: await createPixiApp(),
+            pixi: await createPixi(),
             context: {movementSpeed: 6},
         });
 
-        entityStore.pixiApp.ticker.add(() => {
+        entityStore.pixi.ticker.add(() => {
             entityStore.updateAllEntities();
         });
         ```
@@ -96,14 +98,8 @@ Here's a full usage example. This can be seen in action through the following st
 ```TypeScript
 import {assertWrap} from '@augment-vir/assert';
 import {and, defineShape} from 'object-shape-tester';
-import {Graphics, GraphicsContext, type ViewContainer} from 'pixi.js';
-import {
-    Angle,
-    createPixiApp,
-    defineEntitySuite,
-    entityPositionParamsShape,
-    Vector,
-} from '@game-vir/entity';
+import {Graphics, GraphicsContext} from 'pixi.js';
+import {Angle, createPixi, defineEntitySuite, entityPositionParamsShape, Vector} from '@game-vir/entity';
 
 /** Create an entity suite. */
 const {defineEntity, defineLogicEntity, EntityStore} = defineEntitySuite<{movementSpeed: number}>();
@@ -153,13 +149,15 @@ class Block extends defineEntity({
         }
     }
 
-    public override createView(): ViewContainer {
+    public override createView() {
         const graphic = new Graphics(Block.graphicContext);
 
         graphic.x = this.params.x;
         graphic.y = this.params.y;
 
-        return graphic;
+        return {
+            view: graphic,
+        };
     }
 }
 
@@ -197,13 +195,15 @@ class BlockBonk extends defineEntity({
         this.view.y += this.params.move.y;
     }
 
-    public override createView(): ViewContainer {
+    public override createView() {
         const graphic = new Graphics(BlockBonk.graphicContext);
 
         graphic.x = this.params.x;
         graphic.y = this.params.y;
 
-        return graphic;
+        return {
+            view: graphic,
+        };
     }
 }
 
@@ -215,7 +215,7 @@ class Fps extends defineLogicEntity({
     protected fpsCounts: number[] = [];
 
     public override update(): void {
-        this.fpsCounts.push(this.pixiApp.ticker.FPS);
+        this.fpsCounts.push(this.pixi.ticker.FPS);
         if (this.fpsCounts.length > 100) {
             const averageFps = Math.round(
                 this.fpsCounts.reduce((a, b) => a + b) / this.fpsCounts.length,
@@ -230,7 +230,7 @@ class Fps extends defineLogicEntity({
 /** Create the view */
 
 const entityStore = new EntityStore({
-    pixiApp: await createPixiApp({
+    pixi: await createPixi({
         background: 'black',
         height: 500,
         width: 500,
@@ -239,7 +239,7 @@ const entityStore = new EntityStore({
         movementSpeed: 6,
     },
 });
-document.body.append(entityStore.pixiApp.canvas);
+document.body.append(entityStore.pixi.canvas);
 
 /** Add entities to the view. */
 entityStore.addEntity(Block, {direction: 1, x: 0, y: 0});
@@ -248,7 +248,12 @@ entityStore.addEntity(Block, {direction: 1, x: 0, y: 250});
 entityStore.addEntity(Fps);
 
 /** Start updates. */
-entityStore.pixiApp.ticker.add(() => {
+entityStore.pixi.ticker.add(() => {
     entityStore.updateAllEntities();
 });
 ```
+
+## Common footguns
+
+1. When updating an entity's position, update it by modifying `this.view.x` or `this.view.y`. Do not update the position `this.hitbox` (unless you really know what you're doing and you set `preventAutomaticHitboxUpdates` to `true`).
+2. Do not set

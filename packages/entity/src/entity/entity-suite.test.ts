@@ -1,13 +1,15 @@
 import {assert} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
-import {Graphics, type ViewContainer} from 'pixi.js';
+import {Graphics} from 'pixi.js';
 import {defineTypedCustomEvent} from 'typed-event-target';
-import {createMockPixiApp} from '../pixi.js';
-import {defineEntitySuite, type DefineViewEntity} from './entity-suite.js';
+import {createMockPixi} from '../pixi.js';
+import {createMockEntitySuite, defineEntitySuite, type DefineViewEntity} from './entity-suite.js';
 import {
+    BaseEntity,
     EntityDestroyEvent,
     entityPositionParamsShape,
+    ViewEntity,
     type EntityPositionParams,
     type EntityStore,
 } from './entity.js';
@@ -40,14 +42,16 @@ describe(defineEntitySuite.name, () => {
                 const rect = new Graphics().rect(0, 0, 20, 20).fill('magenta');
                 rect.x = this.params.x;
                 rect.y = this.params.y;
-                return rect;
+                return {
+                    view: rect,
+                };
             }
         }
 
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
-        const entityStore = new EntityStore({pixiApp: createMockPixiApp(), context});
+        const entityStore = new EntityStore({pixi: createMockPixi(), context});
         assert.tsType(entityStore).equals<EntityStore<typeof context>>();
     });
     it('defaults to undefined context', () => {
@@ -72,14 +76,16 @@ describe(defineEntitySuite.name, () => {
                 const rect = new Graphics().rect(0, 0, 20, 20).fill('magenta');
                 rect.x = this.params.x;
                 rect.y = this.params.y;
-                return rect;
+                return {
+                    view: rect,
+                };
             }
         }
 
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
-        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
+        const entityStore = new EntityStore({pixi: createMockPixi()});
         assert.tsType(entityStore).equals<EntityStore>();
     });
     it('assigns the events type parameter', () => {
@@ -95,7 +101,7 @@ describe(defineEntitySuite.name, () => {
             public override update(): void {
                 // do nothing
             }
-            public override createView(): ViewContainer {
+            public override createView() {
                 this.events.dispatch(
                     new MyEvent({
                         detail: {
@@ -103,7 +109,9 @@ describe(defineEntitySuite.name, () => {
                         },
                     }),
                 );
-                return new Graphics().rect(0, 0, 20, 20).fill('magenta');
+                return {
+                    view: new Graphics().rect(0, 0, 20, 20).fill('magenta'),
+                };
             }
         }
         class MyEntity2 extends defineEntity({
@@ -113,7 +121,7 @@ describe(defineEntitySuite.name, () => {
             public override update(): void {
                 // do nothing
             }
-            public override createView(): ViewContainer {
+            public override createView() {
                 this.events.dispatch(
                     // @ts-expect-error: this event is not part of this entity
                     new MyEvent({
@@ -122,14 +130,20 @@ describe(defineEntitySuite.name, () => {
                         },
                     }),
                 );
-                return new Graphics().rect(0, 0, 20, 20).fill('red');
+                return {
+                    view: new Graphics().rect(0, 0, 20, 20).fill('red'),
+                };
             }
         }
         const entityStore = new EntityStore({
-            pixiApp: createMockPixiApp(),
+            pixi: createMockPixi(),
         });
 
         const instance = entityStore.addEntity(MyEntity);
+
+        assert.instanceOf(instance, MyEntity);
+        assert.instanceOf(instance, BaseEntity);
+        assert.instanceOf(instance, ViewEntity);
 
         instance.events.listen(EntityDestroyEvent, () => {});
         instance.events.listen(MyEvent, (event) => {
@@ -150,7 +164,7 @@ describe(defineEntitySuite.name, () => {
         instance2.events.listen(Error, () => {});
     });
     it('allows logic entity definition', () => {
-        const {defineLogicEntity} = defineEntitySuite();
+        const {defineLogicEntity, entityStore} = createMockEntitySuite();
 
         class MyLogicEntity extends defineLogicEntity({
             key: 'MyLogicEntity',
@@ -163,5 +177,9 @@ describe(defineEntitySuite.name, () => {
 
         assert.tsType(MyLogicEntity.entityKey).equals<'MyLogicEntity'>();
         assert.strictEquals(MyLogicEntity.entityKey, 'MyLogicEntity');
+        const instance = entityStore.addEntity(MyLogicEntity);
+
+        assert.instanceOf(instance, MyLogicEntity);
+        assert.instanceOf(instance, BaseEntity);
     });
 });

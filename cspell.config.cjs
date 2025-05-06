@@ -14,5 +14,7 @@ module.exports = {
         'pixi',
         'pixijs',
         'webgpu',
+        'hitbox',
+        'hitboxes',
     ],
 };

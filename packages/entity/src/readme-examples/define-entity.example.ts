@@ -1,4 +1,4 @@
-import {Graphics, type ViewContainer} from 'pixi.js';
+import {Graphics} from 'pixi.js';
 import {defineEntitySuite, entityPositionParamsShape} from '../index.js';
 
 const {defineEntity} = defineEntitySuite<{movementSpeed: number}>();
@@ -8,16 +8,19 @@ export class Block extends defineEntity({
     paramsShape: entityPositionParamsShape,
 }) {
     public override update(): void {
-        this.view.x += this.context.movementSpeed;
-        this.view.y += this.context.movementSpeed;
+        this.params.x += this.context.movementSpeed;
+        this.params.y += this.context.movementSpeed;
     }
 
-    public override createView(): ViewContainer {
-        const graphic = new Graphics().rect(0, 0, 100, 100).fill('red');
+    public override createView() {
+        /**
+         * View and hitbox position don't need to be manually set, as they will be updated to match
+         * `this.params` automatically.
+         */
 
-        graphic.x = this.params.x;
-        graphic.y = this.params.y;
-
-        return graphic;
+        return {
+            view: new Graphics().rect(0, 0, 100, 100).fill('red'),
+            hitbox: this.hitboxSystem.createBox({}, 100, 100),
+        };
     }
 }

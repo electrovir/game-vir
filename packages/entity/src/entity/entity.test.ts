@@ -1,13 +1,16 @@
 /* eslint-disable sonarjs/constructor-for-side-effects */
 
 import {assert} from '@augment-vir/assert';
-import {type AnyObject} from '@augment-vir/common';
+import {type AnyObject, type Coords} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
+import {Box} from 'detect-collisions';
 import {and, defineShape} from 'object-shape-tester';
-import {Graphics, type ViewContainer} from 'pixi.js';
+import {Graphics} from 'pixi.js';
 import {type SetOptional} from 'type-fest';
-import {createMockPixiApp} from '../pixi.js';
-import {defineEntitySuite} from './entity-suite.js';
+import {Angle} from '../math/angle.js';
+import {Vector} from '../math/vector.js';
+import {createMockPixi} from '../pixi.js';
+import {createMockEntitySuite, defineEntitySuite} from './entity-suite.js';
 import {
     BaseEntity,
     type EntityConstructorParams,
@@ -20,23 +23,26 @@ import {
 describe(ViewEntity.name, () => {
     it("can detect if it's in screen bounds", () => {
         class MyViewEntity extends ViewEntity {
-            public override createView(): ViewContainer {
+            public override createView() {
                 const rect = new Graphics().rect(0, 0, 10, 10).fill('red');
                 rect.x = -5;
                 rect.y = -5;
 
-                return rect;
+                return {
+                    view: rect,
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
 
-        const pixiApp = createMockPixiApp();
+        const entityStore = new EntityStore({pixi: createMockPixi()});
 
         const instance = new MyViewEntity({
-            entityStore: new EntityStore({pixiApp}),
-            pixiApp,
+            entityStore,
+            hitboxSystem: entityStore.hitboxSystem,
+            pixi: entityStore.pixi,
         });
 
         assert.isTrue(instance.isInBounds(), 'should be in bounds');
@@ -88,8 +94,10 @@ describe(ViewEntity.name, () => {
                 });
             }
 
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('red'),
+                };
             }
 
             public override update() {
@@ -133,60 +141,75 @@ describe(ViewEntity.name, () => {
                 });
             }
 
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('orange'),
+                };
             }
 
             public override update() {
                 this.addEntity(EnemyBullet, {
-                    x: this.view.x + this.view.width / 2,
-                    y: this.view.y + this.view.height,
+                    x: this.params.x + this.view.width / 2,
+                    y: this.params.y + this.view.height,
                 });
             }
         }
 
-        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
+        const entityStore = new EntityStore({pixi: createMockPixi()});
 
         entityStore.addEntity(EnemyEntity, {x: 0, y: 0});
     });
     it('requires context and params when defined', () => {
         class WithNothing extends ViewEntity<undefined, undefined> {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('yellow'),
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
         class WithContext extends ViewEntity<AnyObject, undefined> {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('green'),
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
         class WithParams extends ViewEntity<undefined, AnyObject> {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('blue'),
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
         class WithContextAndParams extends ViewEntity<AnyObject, AnyObject> {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('purple'),
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
 
-        const pixiApp = createMockPixiApp();
+        const entityStore = new EntityStore<any>({
+            pixi: createMockPixi(),
+        });
+
+        const pixi = createMockPixi();
         const baseArgs = {
-            entityStore: new EntityStore<any>({pixiApp}),
-            pixiApp,
+            entityStore,
+            pixi,
+            hitboxSystem: entityStore.hitboxSystem,
         };
 
         new WithNothing({
@@ -289,15 +312,17 @@ describe(ViewEntity.name, () => {
     });
     it('can add a new entity', () => {
         class MyViewEntity extends ViewEntity<any, undefined> {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('indigo'),
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
 
-        const store = new EntityStore({pixiApp: createMockPixiApp()});
+        const store = new EntityStore({pixi: createMockPixi()});
 
         const instance = store.addEntity(MyViewEntity);
 
@@ -309,15 +334,17 @@ describe(ViewEntity.name, () => {
     });
     it('cannot operate on a destroyed view entity', () => {
         class MyViewEntity extends ViewEntity<any, undefined> {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('violet'),
+                };
             }
             public override update(): void {
                 // do nothing
             }
         }
 
-        const store = new EntityStore({pixiApp: createMockPixiApp()});
+        const store = new EntityStore({pixi: createMockPixi()});
 
         const instance = store.addEntity(MyViewEntity);
 
@@ -338,6 +365,63 @@ describe(ViewEntity.name, () => {
 });
 
 describe(EntityStore.name, () => {
+    it('detects collisions', () => {
+        const {entityStore, defineEntity} = createMockEntitySuite();
+
+        class BoxEntity extends defineEntity({
+            key: 'Box',
+            paramsShape: defineShape(
+                and(entityPositionParamsShape, {
+                    angleDegrees: -1,
+                }),
+            ),
+        }) {
+            protected declare move: Coords;
+
+            public override createView() {
+                this.move = new Vector(
+                    1,
+                    new Angle(
+                        {
+                            degrees: this.params.angleDegrees,
+                        },
+                        {digits: 2},
+                    ),
+                    {digits: 2},
+                ).toComponents();
+
+                const hitbox = new Box({x: this.params.x, y: this.params.y}, 10, 10);
+
+                return {
+                    view: new Graphics({
+                        x: this.params.x,
+                        y: this.params.y,
+                    })
+                        .rect(0, 0, 10, 10)
+                        .fill('red'),
+                    hitbox,
+                };
+            }
+
+            public override update(): void {
+                this.params.x += this.move.x;
+                this.params.y += this.move.y;
+            }
+        }
+
+        entityStore.addEntity(BoxEntity, {angleDegrees: 45, x: 0, y: 0});
+        entityStore.addEntity(BoxEntity, {angleDegrees: 225, x: 13, y: 13});
+
+        const collisions = [
+            entityStore.updateAllEntities(),
+            entityStore.updateAllEntities(),
+            entityStore.updateAllEntities(),
+        ] as const;
+
+        assert.strictEquals(collisions[0].size, 0);
+        assert.strictEquals(collisions[1].size, 0);
+        assert.strictEquals(collisions[2].size, 1);
+    });
     it("can't operate on a destroyed store", () => {
         const store = new EntityStore({} as any);
 
@@ -351,15 +435,15 @@ describe(EntityStore.name, () => {
     it('requires context when defined', () => {
         // @ts-expect-error: missing context
         new EntityStore<AnyObject>({
-            pixiApp: createMockPixiApp(),
+            pixi: createMockPixi(),
         });
         // context can be omitted if it is nullable
         new EntityStore<AnyObject | undefined>({
-            pixiApp: createMockPixiApp(),
+            pixi: createMockPixi(),
         });
         // defaults to `undefined`
         new EntityStore({
-            pixiApp: createMockPixiApp(),
+            pixi: createMockPixi(),
         });
     });
     it('cleans up a destroyed entity', () => {
@@ -406,8 +490,10 @@ describe(EntityStore.name, () => {
             key: 'MyEntity',
             paramsShape: entityPositionParamsShape,
         }) {
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('lime'),
+                };
             }
 
             public override update(): void {
@@ -415,7 +501,7 @@ describe(EntityStore.name, () => {
             }
         }
 
-        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
+        const entityStore = new EntityStore({pixi: createMockPixi()});
         const instance = entityStore.addEntity(MyEntity, {x: 1, y: 1});
 
         const myEntityInstances = entityStore.getEntities(MyEntity);

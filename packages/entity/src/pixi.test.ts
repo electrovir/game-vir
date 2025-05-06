@@ -1,13 +1,13 @@
 import {assert} from '@augment-vir/assert';
 import {extractErrorMessage, log} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
-import {Application, Container, Graphics, type ViewContainer} from 'pixi.js';
+import {Application, Container, Graphics} from 'pixi.js';
 import {defineEntitySuite} from './entity/entity-suite.js';
-import {createMockPixiApp, createPixiApp} from './pixi.js';
+import {createMockPixi, createPixi} from './pixi.js';
 
-describe(createMockPixiApp.name, () => {
+describe(createMockPixi.name, () => {
     it('creates a mock', () => {
-        const mock = createMockPixiApp();
+        const mock = createMockPixi();
         const mockChild = new Container();
 
         assert.isLengthExactly(mock.stage.children, 0 as number);
@@ -16,17 +16,17 @@ describe(createMockPixiApp.name, () => {
         assert.strictEquals(mock.stage.children[0], mockChild);
     });
     it('inits a size', () => {
-        const mock = createMockPixiApp({options: {width: 100, height: 50}});
+        const mock = createMockPixi({options: {width: 100, height: 50}});
         assert.strictEquals(mock.screen.width, 100);
         assert.strictEquals(mock.screen.height, 50);
     });
     it('supports additional mocking', () => {
-        assert.isUndefined(createMockPixiApp().canvas);
-        assert.isDefined(createMockPixiApp({mocks: {canvas: {} as any}}).canvas);
+        assert.isUndefined(createMockPixi().canvas);
+        assert.isDefined(createMockPixi({mocks: {canvas: {} as any}}).canvas);
     });
     it('allows a view child to be destroyed', () => {
         const {EntityStore, defineEntity} = defineEntitySuite();
-        const entityStore = new EntityStore({pixiApp: createMockPixiApp()});
+        const entityStore = new EntityStore({pixi: createMockPixi()});
 
         let updateCount = 0;
 
@@ -37,8 +37,10 @@ describe(createMockPixiApp.name, () => {
             public override update(): void {
                 updateCount++;
             }
-            public override createView(): ViewContainer {
-                return new Graphics().rect(0, 0, 10, 10).fill('red');
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('red'),
+                };
             }
         }
 
@@ -52,14 +54,14 @@ describe(createMockPixiApp.name, () => {
     });
 });
 
-describe(createPixiApp.name, () => {
+describe(createPixi.name, () => {
     it('creates a real pixi app', async () => {
         try {
             const dimensions = {
                 width: 100,
                 height: 100,
             };
-            const pixi = await createPixiApp({
+            const pixi = await createPixi({
                 ...dimensions,
                 preference: 'webgpu',
             });

@@ -31,17 +31,17 @@
         "test:update": "npm test update"
     },
     "dependencies": {
-        "@augment-vir/assert": "^31.16.0",
-        "@augment-vir/common": "^31.16.0",
-        "@augment-vir/web": "^31.16.0",
+        "@augment-vir/assert": "^31.17.1",
+        "@augment-vir/common": "^31.17.1",
+        "@augment-vir/web": "^31.17.1",
         "date-vir": "^7.3.1",
         "element-vir": "^25.3.0",
         "gamepad-type": "^2.0.2",
-        "input-device-handler": "^9.0.0",
+        "input-device-handler": "^9.0.1",
         "vir-line": "^2.0.1"
     },
     "devDependencies": {
-        "@augment-vir/test": "^31.16.0",
+        "@augment-vir/test": "^31.17.1",
         "@web/dev-server-esbuild": "^1.0.4",
         "@web/test-runner": "^0.20.1",
         "@web/test-runner-commands": "^0.9.0",
@@ -50,7 +50,7 @@
         "concurrently": "^9.1.2",
         "istanbul-smart-text-reporter": "^1.1.5",
         "markdown-code-example-inserter": "^3.0.3",
-        "typedoc": "^0.28.3"
+        "typedoc": "^0.28.4"
     },
     "engines": {
         "node": ">=22"

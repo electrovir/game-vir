@@ -1,1 +1,3 @@
 -   write code that runs `MultiplayerController` in a worker
+-   rewrite room storage in the multiplayer server to support different games within the same server (so rooms are nested within game ids)
+-   allow view entities to select which properties they want to pass-through to the view and hitbox. (Perhaps make the `params` object a proxy?)

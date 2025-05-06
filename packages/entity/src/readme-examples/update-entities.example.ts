@@ -1,12 +1,12 @@
-import {createPixiApp, defineEntitySuite} from '../index.js';
+import {createPixi, defineEntitySuite} from '../index.js';
 
 const {EntityStore} = defineEntitySuite<{movementSpeed: number}>();
 
 const entityStore = new EntityStore({
-    pixiApp: await createPixiApp(),
+    pixi: await createPixi(),
     context: {movementSpeed: 6},
 });
 
-entityStore.pixiApp.ticker.add(() => {
+entityStore.pixi.ticker.add(() => {
     entityStore.updateAllEntities();
 });
