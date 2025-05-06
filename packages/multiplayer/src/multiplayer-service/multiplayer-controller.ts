@@ -322,7 +322,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
      */
     public async joinOrCreateRoom(room: Readonly<RoomInput>) {
         if (this.currentConnection) {
-            throw new Error(`Cannot join or create a room, `);
+            throw new Error(`Cannot join room: connection already established.`);
         } else if (!this.multiplayerApi || !this.params.multiplayer) {
             throw new Error(
                 'Cannot join room. Please construct this controller in multiplayer mode to join rooms.',
