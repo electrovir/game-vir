@@ -702,6 +702,38 @@ describe(EntityStore.name, () => {
             matchMessage: 'Cannot operate on a destroyed entity store.',
         });
     });
+    it('removes a non-destroyed child', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+        class Dummy extends defineEntity({
+            key: 'Dummy',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#195'),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+
+            public update() {}
+        }
+
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [Dummy],
+        });
+
+        const instance = entityStore.addEntity(Dummy);
+
+        assert.deepEquals(entityStore.pixi.stage.children, [instance.view]);
+        assert.deepEquals(entityStore.hitboxSystem.all(), [instance.hitbox]);
+
+        entityStore.removeEntity(instance);
+
+        assert.isEmpty(entityStore.pixi.stage.children);
+        assert.isEmpty(entityStore.hitboxSystem.all());
+        assert.isFalse(instance.isDestroyed);
+    });
     it('requires context when defined', () => {
         // @ts-expect-error: missing context
         new EntityStore<AnyObject>({

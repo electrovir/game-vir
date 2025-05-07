@@ -169,7 +169,7 @@ export class EntityStore<
         this.entityInstanceMap.remove(entity);
         if (entity instanceof ViewEntity && !entity.isDestroyed) {
             // eslint-disable-next-line unicorn/prefer-dom-node-remove
-            entity.view.removeChild(entity.view);
+            this.pixi.stage.removeChild(entity.view);
             if (entity.hitbox) {
                 this.hitboxSystem.remove(entity.hitbox);
             }
@@ -531,12 +531,16 @@ export abstract class ViewEntity<
                 if (propertyKey in params && check.hasKey(reverseParamsMap, propertyKey)) {
                     const mappings = reverseParamsMap[propertyKey];
 
-                    (mappings?.hitbox || []).forEach((mapToKey) => {
-                        (this.hitbox as AnyObject)[mapToKey] = value;
-                    });
-                    (mappings?.view || []).forEach((mapToKey) => {
-                        (this.view as AnyObject)[mapToKey] = value;
-                    });
+                    if (this.hitbox && mappings?.hitbox) {
+                        mappings.hitbox.forEach((mapToKey) => {
+                            (this.hitbox as AnyObject)[mapToKey] = value;
+                        });
+                    }
+                    if (mappings?.view) {
+                        mappings.view.forEach((mapToKey) => {
+                            (this.view as AnyObject)[mapToKey] = value;
+                        });
+                    }
                 }
 
                 return Reflect.set(target, propertyKey, value, receiver);

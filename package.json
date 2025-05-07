@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/mono-repo",
-    "version": "14.3.0",
+    "version": "14.3.1",
     "private": true,
     "homepage": "https://github.com/electrovir/game-vir",
     "bugs": {
