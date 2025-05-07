@@ -1,8 +1,10 @@
-import {assert, check} from '@augment-vir/assert';
+import {assert, assertWrap, check} from '@augment-vir/assert';
 import {
     arrayToObject,
     getObjectTypedEntries,
+    log,
     makeWritable,
+    wrapInTry,
     type AnyObject,
     type ExtractKeysWithMatchingValues,
     type PartialWithUndefined,
@@ -130,7 +132,7 @@ export class EntityStore<
      *
      * @returns All detected hitbox collisions (if any).
      */
-    public updateAllEntities(): Set<Collision> {
+    public updateAllEntities(): void {
         if (this.isDestroyed) {
             throw new Error('Cannot operate on a destroyed entity store.');
         }
@@ -141,7 +143,6 @@ export class EntityStore<
                 this.removeEntity(entity);
             }
         });
-        const allCollisions = new Set<Collision>();
 
         this.hitboxSystem.update();
         /**
@@ -149,10 +150,36 @@ export class EntityStore<
          * finish before this `updateAllEntities` method exits.
          */
         this.hitboxSystem.checkAll((response) => {
-            allCollisions.add(response);
-        });
+            try {
+                const primaryEntity = wrapInTry(
+                    () => {
+                        return assertWrap.instanceOf(response.a.userData, BaseEntity);
+                    },
+                    {
+                        fallbackValue: undefined,
+                    },
+                );
+                const secondaryEntity = wrapInTry(
+                    () => {
+                        return assertWrap.instanceOf(response.b.userData, BaseEntity);
+                    },
+                    {
+                        fallbackValue: undefined,
+                    },
+                );
 
-        return allCollisions;
+                /* node:coverage ignore next 5: these lines should not happen but due to missing type information, they might! */
+                if (!primaryEntity) {
+                    throw new Error('Unable to find primary entity for collision hitbox.');
+                } else if (!secondaryEntity) {
+                    throw new Error('Unable to find secondary entity for collision hitbox.');
+                }
+                primaryEntity.collide(secondaryEntity, response);
+                /* node:coverage ignore next 3: catch all edge cases just in case */
+            } catch (error) {
+                log.error(error);
+            }
+        });
     }
 
     /** Get all current instances of the given entity class constructor. */
@@ -456,6 +483,14 @@ export abstract class BaseEntity<
         this.events.dispatch(new EntityDestroyEvent());
         this.events.destroy();
     }
+
+    /**
+     * This method is call whenever this entity's hitbox (if it has one) collides with another
+     * hitbox. It will be called for each individual collision. Override this to do something about
+     * it.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public collide(otherEntity: BaseEntity, collision: Readonly<Collision>): void {}
 
     /**
      * Serialize the entity params for sharing across the network (for multiplayer play). By default

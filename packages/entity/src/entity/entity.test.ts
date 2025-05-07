@@ -51,6 +51,29 @@ describe(ViewEntity.name, () => {
 
         assert.isEmpty(entityStore.hitboxSystem.all());
     });
+    it('has a collide method', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class MyEntity extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: undefined,
+        }) {
+            public override update(): void {}
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#721'),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+        }
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [MyEntity],
+        });
+
+        const instance = entityStore.addEntity(MyEntity);
+        instance.collide({} as any, {} as any);
+    });
     it("can detect if it's in screen bounds", () => {
         class MyViewEntity extends ViewEntity {
             public override createView() {
@@ -612,6 +635,8 @@ describe(EntityStore.name, () => {
     it('detects collisions', () => {
         const {EntityStore, defineEntity} = defineEntitySuite();
 
+        let collisions = 0;
+
         class BoxEntity extends defineEntity({
             key: 'Box',
             paramsShape: defineShape(
@@ -657,6 +682,11 @@ describe(EntityStore.name, () => {
                 this.params.x += this.move.x;
                 this.params.y += this.move.y;
             }
+
+            public override collide(otherEntity: BaseEntity): void {
+                assert.instanceOf(otherEntity, BaseEntity);
+                collisions++;
+            }
         }
 
         const entityStore = new EntityStore({
@@ -667,15 +697,13 @@ describe(EntityStore.name, () => {
         entityStore.addEntity(BoxEntity, {angleDegrees: 45, x: 0, y: 0});
         entityStore.addEntity(BoxEntity, {angleDegrees: 225, x: 13, y: 13});
 
-        const collisions = [
-            entityStore.updateAllEntities(),
-            entityStore.updateAllEntities(),
-            entityStore.updateAllEntities(),
-        ] as const;
-
-        assert.strictEquals(collisions[0].size, 0);
-        assert.strictEquals(collisions[1].size, 0);
-        assert.strictEquals(collisions[2].size, 1);
+        entityStore.updateAllEntities();
+        assert.strictEquals(collisions, 0 as number);
+        entityStore.updateAllEntities();
+        assert.strictEquals(collisions, 0 as number);
+        entityStore.updateAllEntities();
+        /** Each entity will get the call. */
+        assert.strictEquals(collisions, 2);
     });
     it("can't operate on a destroyed store", () => {
         const store = new EntityStore({
