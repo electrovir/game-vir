@@ -16,6 +16,12 @@ class Block extends defineEntity({
             direction: 1,
         }),
     ),
+    paramsMap: {
+        view: {
+            x: true,
+            y: true,
+        },
+    },
 }) {
     public static readonly bonkCount = 20;
     public static readonly graphicContext = new GraphicsContext()
@@ -75,6 +81,12 @@ class BlockBonk extends defineEntity({
             ticksSinceCreation: -1,
         }),
     ),
+    paramsMap: {
+        view: {
+            x: true,
+            y: true,
+        },
+    },
 }) {
     public static readonly moveSpeed = 4;
     public static readonly maxLife = 20;
@@ -140,13 +152,18 @@ const entityStore = new EntityStore({
     context: {
         movementSpeed: 6,
     },
+    registeredEntities: [
+        Block,
+        Fps,
+        BlockBonk,
+    ],
 });
 document.body.append(entityStore.pixi.canvas);
 
 /** Add entities to the view. */
 entityStore.addEntity(Block, {direction: 1, x: 0, y: 0});
-entityStore.addEntity(Block, {direction: -1, x: 250, y: 0});
-entityStore.addEntity(Block, {direction: 1, x: 0, y: 250});
+entityStore.addEntity(Block, {direction: -1, x: 490, y: 240});
+entityStore.addEntity(Block, {direction: 1, x: 2, y: 252});
 entityStore.addEntity(Fps);
 
 /** Start updates. */

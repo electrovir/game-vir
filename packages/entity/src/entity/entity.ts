@@ -1,50 +1,27 @@
+import {assert, check} from '@augment-vir/assert';
 import {
+    arrayToObject,
+    getObjectTypedEntries,
     makeWritable,
-    type JsonCompatibleValue,
+    type AnyObject,
+    type ExtractKeysWithMatchingValues,
     type PartialWithUndefined,
+    type Values,
 } from '@augment-vir/common';
-import {System, type Body, type Response} from 'detect-collisions';
-import {defineShape, type ShapeDefinition} from 'object-shape-tester';
+import {System, type Response as Collision, type Body as Hitbox} from 'detect-collisions';
+import {assertValidShape, defineShape, type ShapeDefinition} from 'object-shape-tester';
 import {type Application, type ViewContainer} from 'pixi.js';
 import {
     type AbstractConstructor,
     type Constructor,
+    type IsEqual,
     type IsNever,
     type UnknownArray,
     type Writable,
+    type WritableKeysOf,
 } from 'type-fest';
 import {defineTypedEvent, ListenTarget} from 'typed-event-target';
 import {ConstructorMap} from '../constructor-map.js';
-
-/**
- * Options for an entity.
- *
- * @category Internal
- */
-export type EntityOptions = PartialWithUndefined<{
-    /**
-     * - When `false` (the default), view entities with a hitbox will automatically update their
-     *   hitbox coordinates to match their view coordinates on each entity update (inside
-     *   {@link EntityStore.updateAllEntities}).
-     * - When `true`, view entities with a hitbox will _not_ automatically update their hitbox
-     *   coordinates in each update. This will require you to provide additional code within the
-     *   entity's {@link BaseEntity.update} method to update the hitbox position.
-     *
-     * @default false
-     */
-    preventAutomaticHitboxPositionUpdates: boolean;
-    /**
-     * - When `false` (the default), view entities will automatically update their
-     *   {@link ViewEntity.view} position to match the entity's params object if it contains an `x`
-     *   or `y` property (inside {@link EntityStore.updateAllEntities}).
-     * - When `true`, view entities will _not_ automatically update their {@link ViewEntity.view}
-     *   position. This will require you to provide additional code within the entity's
-     *   {@link BaseEntity.update} method to update the view position.
-     *
-     * @default false
-     */
-    preventAutomaticViewPositionUpdates: boolean;
-}>;
 
 /**
  * Parameters for {@link EntityStore.addEntity}. Flattens itself to an empty array if there are no
@@ -53,23 +30,24 @@ export type EntityOptions = PartialWithUndefined<{
  * @category Internal
  */
 export type AddEntityParams<EntityConstructor extends Constructor<BaseEntity>> =
-    ConstructorParameters<EntityConstructor>[0] extends infer Args extends EntityConstructorParams<
-        any,
-        any
+    ConstructorParameters<EntityConstructor>[0] extends infer Args extends Pick<
+        EntityConstructorParams<any, any>,
+        'params'
     >
         ? Args['params'] extends undefined
             ? []
             : [Args['params']]
-        : ['no'];
+        : ['ERROR: invalid entity constructor'];
 
 /**
  * Parameters for the constructor of {@link EntityStore}.
  *
  * @category Internal
  */
-export type EntityStoreConstructorParams<Context> = (IsNever<
-    Extract<Context, undefined | null>
-> extends true
+export type EntityStoreConstructorParams<
+    Context,
+    RegisteredEntities extends Values<EntityStore['entityKeyConstructorMap']>,
+> = (IsNever<Extract<Context, undefined | null>> extends true
     ? {
           context: Context;
       }
@@ -84,9 +62,15 @@ export type EntityStoreConstructorParams<Context> = (IsNever<
     /**
      * A `System` instance from the
      * [`detect-collisions`](https://www.npmjs.com/package/detect-collisions) package. If this
-     * property is omitted, the EntityStore will create its own instance.
+     * property is omitted or `undefined`, the {@link EntityStore} instance will create its own.
      */
     hitboxSystem?: System | undefined;
+    /**
+     * An array of all entity constructors that will be registered with this {@link EntityStore}
+     * instance. If an entity is added to the store without it being registered here, adding it will
+     * fail.
+     */
+    registeredEntities: ReadonlyArray<RegisteredEntities>;
 };
 
 /**
@@ -94,30 +78,49 @@ export type EntityStoreConstructorParams<Context> = (IsNever<
  *
  * @category Internal
  */
-export class EntityStore<Context = undefined> {
+export class EntityStore<
+    Context = undefined,
+    const RegisteredEntities extends Values<EntityStore['entityKeyConstructorMap']> = any,
+> {
     /**
      * All current child entities.
      *
      * Instead of modifying this set, use {@link EntityStore.addEntity} or
      * {@link EntityStore.removeEntity}. If you must manually modify this set directly, you'll also
-     * need to modify {@link EntityStore.entityMap}.
+     * need to modify {@link EntityStore.entityInstanceMap}.
      */
-    public readonly entities = new Set<BaseEntity>();
+    public readonly currentEntityInstances = new Set<BaseEntity>();
     /** If true, this entity store should no longer be used or operated upon. */
     public readonly isDestroyed: boolean = false;
-    /** An internal mapping of all entity constructors to their instances. */
-    public readonly entityMap = new ConstructorMap();
+    /** An internal mapping of all entity constructors to their current instances. */
+    public readonly entityInstanceMap = new ConstructorMap();
     /** Original pixi app. */
     public readonly pixi: Application;
     /** Context given to all entities. This can be undefined. */
     public readonly context: Context;
     /** Collision detection system. */
     public readonly hitboxSystem: System;
+    /** A map of all entity keys to their registered Entity constructors. */
+    public readonly entityKeyConstructorMap: Record<
+        string,
+        Constructor<BaseEntity> & Pick<typeof BaseEntity, 'deserialize' | 'entityKey'>
+    >;
 
-    constructor(args: Readonly<EntityStoreConstructorParams<Context>>) {
+    constructor(args: Readonly<EntityStoreConstructorParams<Context, RegisteredEntities>>) {
         this.pixi = args.pixi;
         this.context = args.context as Context;
         this.hitboxSystem = args.hitboxSystem || new System();
+        this.entityKeyConstructorMap = arrayToObject(
+            args.registeredEntities,
+            (entityConstructor) => {
+                return {
+                    key: entityConstructor.entityKey,
+                    value: entityConstructor,
+                };
+            },
+        ) satisfies Partial<
+            typeof this.entityKeyConstructorMap
+        > as typeof this.entityKeyConstructorMap;
     }
 
     /**
@@ -127,33 +130,20 @@ export class EntityStore<Context = undefined> {
      *
      * @returns All detected hitbox collisions (if any).
      */
-    public updateAllEntities(): Set<Response> {
+    public updateAllEntities(): Set<Collision> {
         if (this.isDestroyed) {
-            throw new Error('Cannot operate on destroyed entity store.');
+            throw new Error('Cannot operate on a destroyed entity store.');
         }
-        this.entities.forEach((entity) => {
+        this.currentEntityInstances.forEach((entity) => {
             entity.update();
             /** Check if the entity was destroyed after the update. */
             if (entity.isDestroyed) {
                 this.removeEntity(entity);
-                return;
-            }
-            if (entity instanceof ViewEntity) {
-                if (!entity.options?.preventAutomaticViewPositionUpdates) {
-                    if ('x' in entity.params) {
-                        entity.view.x = entity.params.x;
-                    }
-                    if ('y' in entity.params) {
-                        entity.view.y = entity.params.y;
-                    }
-                }
-                if (entity.hitbox && !entity.options?.preventAutomaticHitboxPositionUpdates) {
-                    entity.hitbox.setPosition(entity.view.x, entity.view.y);
-                }
             }
         });
-        const allCollisions = new Set<Response>();
+        const allCollisions = new Set<Collision>();
 
+        this.hitboxSystem.update();
         /**
          * This `checkAll` method is synchronous, so even though its using a callback it'll still
          * finish before this `updateAllEntities` method exits.
@@ -167,23 +157,61 @@ export class EntityStore<Context = undefined> {
 
     /** Get all current instances of the given entity class constructor. */
     public getEntities<T>(entityClassConstructor: AbstractConstructor<T> | Constructor<T>): Set<T> {
-        return this.entityMap.getInstances(entityClassConstructor);
+        return this.entityInstanceMap.getInstances(entityClassConstructor);
     }
 
     /** Remove an entity from the store. */
     public removeEntity(entity: BaseEntity) {
-        this.entities.delete(entity);
-        this.entityMap.remove(entity);
+        if (this.isDestroyed) {
+            throw new Error('Cannot operate on a destroyed entity store.');
+        }
+        this.currentEntityInstances.delete(entity);
+        this.entityInstanceMap.remove(entity);
+        if (entity instanceof ViewEntity && !entity.isDestroyed) {
+            // eslint-disable-next-line unicorn/prefer-dom-node-remove
+            entity.view.removeChild(entity.view);
+            if (entity.hitbox) {
+                this.hitboxSystem.remove(entity.hitbox);
+            }
+        }
     }
 
-    /** Add a new entity to this entity store. */
-    public addEntity<const EntityConstructor extends Constructor<BaseEntity>>(
+    /**
+     * Create an entity instance by finding the registered constructor with the given `entityKey`
+     * and then deserializing and passing the given `serializedParams` to that constructor.
+     */
+    public deserializeEntity<const EntityKey extends RegisteredEntities['entityKey']>(
+        entityKey: EntityKey,
+        serializedParams: string | undefined,
+    ): InstanceType<Extract<RegisteredEntities, {entityKey: EntityKey}>> {
+        if (this.isDestroyed) {
+            throw new Error('Cannot operate on a destroyed entity store.');
+        }
+        const entityConstructor = this.entityKeyConstructorMap[entityKey];
+        if (!entityConstructor) {
+            throw new Error(`No entity registered for key '${entityKey}'`);
+        }
+
+        return this.addEntity(
+            entityConstructor as any,
+            entityConstructor.deserialize(serializedParams) as any,
+        );
+    }
+
+    /** Create a new instance of the given entity class and add it to this entity store. */
+    public addEntity<const EntityConstructor extends RegisteredEntities>(
         entityClass: EntityConstructor,
         ...params: AddEntityParams<EntityConstructor>
     ): InstanceType<EntityConstructor> {
         if (this.isDestroyed) {
-            throw new Error('Cannot operate on destroyed entity store.');
+            throw new Error('Cannot operate on a destroyed entity store.');
         }
+
+        const entityConstructor = this.entityKeyConstructorMap[entityClass.entityKey];
+        if (!entityConstructor) {
+            throw new Error(`No entity registered for key '${entityClass.entityKey}'`);
+        }
+
         const child = new entityClass({
             entityStore: this,
             pixi: this.pixi,
@@ -191,8 +219,8 @@ export class EntityStore<Context = undefined> {
             params: (params as UnknownArray)[0],
             hitboxSystem: this.hitboxSystem,
         } satisfies EntityConstructorParams<any, any>);
-        this.entities.add(child);
-        this.entityMap.add(child);
+        this.currentEntityInstances.add(child);
+        this.entityInstanceMap.add(child);
         return child as InstanceType<EntityConstructor>;
     }
 
@@ -201,10 +229,10 @@ export class EntityStore<Context = undefined> {
         if (this.isDestroyed) {
             throw new Error('Entity store is already destroyed.');
         }
+        this.currentEntityInstances.forEach((entity) => entity.destroy());
         makeWritable(this).isDestroyed = true;
-        this.entities.forEach((entity) => entity.destroy());
-        this.entities.clear();
-        this.entityMap.destroy();
+        this.currentEntityInstances.clear();
+        this.entityInstanceMap.destroy();
         delete (this as Writable<Partial<EntityStore>>).pixi;
         delete (this as Writable<Partial<EntityStore>>).hitboxSystem;
         delete (this as Writable<Partial<EntityStore>>).context;
@@ -233,9 +261,10 @@ export type EntityPositionParams = typeof entityPositionParamsShape.runtimeType;
  *
  * @category Internal
  */
-export type EntityConstructorParams<Params = undefined, Context = undefined> = (IsNever<
-    Extract<Context, undefined | null>
-> extends true
+export type EntityConstructorParams<
+    Params extends Record<string, any> | undefined = undefined,
+    Context = undefined,
+> = (IsNever<Extract<Context, undefined | null>> extends true
     ? {
           context: Context;
       }
@@ -249,11 +278,65 @@ export type EntityConstructorParams<Params = undefined, Context = undefined> = (
         : {
               params?: Params;
           }) & {
+        paramsMap?: ParamsMap<NoInfer<Params>> | undefined;
         entityStore: EntityStore<Context>;
         pixi: Application;
         hitboxSystem: System;
-        options?: Readonly<EntityOptions> | undefined;
     };
+
+/**
+ * Finds all keys from `Params` that match the value at the given `Key` in `OriginalObject`.
+ *
+ * @category Internal
+ */
+export type MatchingKeys<
+    Key extends PropertyKey,
+    Params extends Record<string, any> | undefined,
+    OriginalObject extends AnyObject,
+> =
+    Params extends Record<string, any>
+        ? ExtractKeysWithMatchingValues<Params, Extract<OriginalObject, Record<Key, any>>[Key]>
+        : never;
+
+/**
+ * An object that controls which entity parameter projects get mapped to view and hitbox properties.
+ * Values can be:
+ *
+ * - `true`: indicates that the property is mapped directly from params to that view or hitbox object
+ * - Omitted: the property is not mapped at all
+ * - A string: specifies the params key that this view or hitbox property is mapped to
+ */
+export type ParamsMap<Params extends Record<string, any> | undefined = AnyObject> =
+    IsEqual<Params, undefined> extends true
+        ? undefined
+        : PartialWithUndefined<{
+              view: Partial<{
+                  [Key in WritableKeysOf<ViewContainer> as IsNever<
+                      MatchingKeys<Key, Params, ViewContainer>
+                  > extends true
+                      ? never
+                      : Key]:
+                      | (Key extends keyof Params
+                            ? Params[Key] extends ViewContainer[Key]
+                                ? true
+                                : never
+                            : never)
+                      | MatchingKeys<Key, Params, ViewContainer>;
+              }>;
+              hitbox: Partial<{
+                  [Key in WritableKeysOf<Hitbox> as IsNever<
+                      MatchingKeys<Key, Params, Hitbox>
+                  > extends true
+                      ? never
+                      : Key]:
+                      | (Key extends keyof Params
+                            ? Params[Key] extends Extract<Hitbox, Record<Key, any>>[Key]
+                                ? true
+                                : never
+                            : never)
+                      | MatchingKeys<Key, Params, Hitbox>;
+              }>;
+          }>;
 
 /**
  * Event emitted by all entities when they are destroyed.
@@ -263,36 +346,80 @@ export type EntityConstructorParams<Params = undefined, Context = undefined> = (
 export class EntityDestroyEvent extends defineTypedEvent('entity-destroy-event') {}
 
 /**
+ * Default value for the optional {@link ParamsMap}.
+ *
+ * @category Internal
+ */
+export const defaultParamsMap: ParamsMap = {
+    hitbox: {
+        x: true,
+        y: true,
+    },
+    view: {
+        x: true,
+        y: true,
+    },
+};
+
+/**
+ * Type for {@link BaseEntity.reverseParamsMap}.
+ *
+ * @category Internal
+ */
+export type ReverseParamsMap = Record<string, Partial<Record<'hitbox' | 'view', string[]>>>;
+
+/**
  * Base entity class, types, and functionality.
  *
  * @category Internal
  */
-export abstract class BaseEntity<Context = any, Params extends JsonCompatibleValue = any> {
+export abstract class BaseEntity<
+    Context = any,
+    Params extends Record<string, any> | undefined = any,
+> {
     /**
      * This key is used for deserialization of entities to track which class needs to be
-     * constructed.
-     *
-     * Override this with your entity's key. You cannot have duplicate keys loaded at the same time.
+     * constructed. You cannot have duplicate keys loaded at the same time.
      */
     public static readonly entityKey: string = 'BaseEntity';
     /** Shape definition of this entity's parameters. */
-    public static readonly paramsShape: ShapeDefinition<any, any> | undefined =
-        entityPositionParamsShape;
+    public static readonly paramsShape: ShapeDefinition<AnyObject, any> | undefined;
+    /**
+     * Defines which properties from {@link BaseEntity.params} will be mapped to hitbox and/or view
+     * properties.
+     */
+    public static readonly paramsMap: ParamsMap | undefined;
+    /**
+     * A mapping from params properties to hitbox or view properties, making it easy to map params
+     * values.
+     */
+    public static readonly reverseParamsMap: ReverseParamsMap | undefined;
+    /** Parses the serialized params generated by {@link BaseEntity.serialize}. */
+    public static deserialize(serialized: string | undefined): AnyObject | undefined {
+        const deserialized = serialized ? JSON.parse(serialized) : undefined;
+        if (this.paramsShape) {
+            assertValidShape(deserialized, this.paramsShape);
+        } else {
+            assert.isUndefined(deserialized);
+        }
+
+        return deserialized;
+    }
 
     /** If true, this entity should no longer be used or operated upon. */
     public readonly isDestroyed: boolean = false;
     public readonly events = new ListenTarget<EntityDestroyEvent>();
+    public hitbox: Hitbox<this> | undefined;
 
     /** The entity store to add all entities to. */
     public readonly entityStore: EntityStore<Context>;
     public readonly context: Context;
     /** Writable entity params. These should be serializable. */
-    public params: Params;
+    public readonly params: Params;
     /** Original pixi app. */
     public readonly pixi: Application;
     /** Collision detection system. */
     public readonly hitboxSystem: System;
-    public options: EntityOptions | undefined;
 
     constructor(args: Readonly<EntityConstructorParams<NoInfer<Params>, NoInfer<Context>>>) {
         this.entityStore = args.entityStore;
@@ -300,7 +427,6 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
         this.params = args.params as Params;
         this.pixi = args.pixi;
         this.hitboxSystem = args.hitboxSystem;
-        this.options = args.options;
     }
 
     /**
@@ -332,14 +458,20 @@ export abstract class BaseEntity<Context = any, Params extends JsonCompatibleVal
     }
 
     /**
-     * Serialize the entity for sharing across the network (for multiplayer play). You will need to
-     * override this if your view is the position source of truth.
+     * Serialize the entity params for sharing across the network (for multiplayer play). By default
+     * this simply calls `JSON.stringify` on `this.params`. This method must be overridden if your
+     * entity has params that are not JSON compatible.
      */
-    public serialize() {
-        return this.params;
+    public serialize(): string | undefined {
+        return this.params ? JSON.stringify(this.params) : undefined;
     }
 }
 
+/**
+ * Output of {@link ViewEntity.createView}.
+ *
+ * @category Internal
+ */
 export type ViewCreation = {
     /**
      * A view for rendering. Create with, for example, [`new
@@ -357,7 +489,7 @@ export type ViewCreation = {
      * This property optional, if a hitbox is not provided, collision detection will not be
      * calculated for this entity.
      */
-    hitbox?: Body | undefined;
+    hitbox?: Hitbox | undefined;
 };
 
 /**
@@ -367,11 +499,10 @@ export type ViewCreation = {
  */
 export abstract class ViewEntity<
     Context = any,
-    Params extends JsonCompatibleValue = any,
+    Params extends Record<string, any> | undefined = any,
 > extends BaseEntity<Context, Params> {
     /** The entity's PixiJS view. */
     public view: ViewContainer;
-    public hitbox: Body<this> | undefined;
 
     constructor(args: Readonly<EntityConstructorParams<NoInfer<Params>, NoInfer<Context>>>) {
         super(args);
@@ -383,6 +514,44 @@ export abstract class ViewEntity<
             this.hitbox.userData = this;
             this.hitboxSystem.insert(this.hitbox);
         }
+        this.wrapParamsInProxy();
+    }
+
+    private wrapParamsInProxy(): void {
+        const paramsMap = (this.constructor as typeof ViewEntity).paramsMap;
+        const reverseParamsMap = (this.constructor as typeof ViewEntity).reverseParamsMap;
+        const params = this.params;
+
+        if (!params || !paramsMap || !reverseParamsMap) {
+            return;
+        }
+
+        makeWritable(this).params = new Proxy(params, {
+            set: (target, propertyKey, value, receiver) => {
+                if (propertyKey in params && check.hasKey(reverseParamsMap, propertyKey)) {
+                    const mappings = reverseParamsMap[propertyKey];
+
+                    (mappings?.hitbox || []).forEach((mapToKey) => {
+                        (this.hitbox as AnyObject)[mapToKey] = value;
+                    });
+                    (mappings?.view || []).forEach((mapToKey) => {
+                        (this.view as AnyObject)[mapToKey] = value;
+                    });
+                }
+
+                return Reflect.set(target, propertyKey, value, receiver);
+            },
+        });
+
+        /** Propagate initial params. */
+        getObjectTypedEntries(this.params).forEach(
+            ([
+                key,
+                value,
+            ]) => {
+                (this.params as AnyObject)[key] = value;
+            },
+        );
     }
 
     /**

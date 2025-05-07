@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/constructor-for-side-effects */
 
 import {assert} from '@augment-vir/assert';
-import {type AnyObject, type Coords} from '@augment-vir/common';
+import {makeWritable, type AnyObject, type Coords} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {Box} from 'detect-collisions';
 import {and, defineShape} from 'object-shape-tester';
@@ -10,17 +10,47 @@ import {type SetOptional} from 'type-fest';
 import {Angle} from '../math/angle.js';
 import {Vector} from '../math/vector.js';
 import {createMockPixi} from '../pixi.js';
-import {createMockEntitySuite, defineEntitySuite} from './entity-suite.js';
+import {defineEntitySuite} from './entity-suite.js';
 import {
     BaseEntity,
-    type EntityConstructorParams,
     EntityDestroyEvent,
     entityPositionParamsShape,
     EntityStore,
     ViewEntity,
+    type EntityConstructorParams,
 } from './entity.js';
 
 describe(ViewEntity.name, () => {
+    it('removes hitbox on destruction', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class MyEntity extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: undefined,
+        }) {
+            public override update(): void {}
+            public override createView() {
+                return {
+                    view: new Graphics(),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+        }
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [MyEntity],
+        });
+
+        assert.isEmpty(entityStore.hitboxSystem.all());
+
+        const instance = entityStore.addEntity(MyEntity);
+
+        assert.isLengthExactly(entityStore.hitboxSystem.all(), 1);
+
+        instance.destroy();
+
+        assert.isEmpty(entityStore.hitboxSystem.all());
+    });
     it("can detect if it's in screen bounds", () => {
         class MyViewEntity extends ViewEntity {
             public override createView() {
@@ -37,7 +67,10 @@ describe(ViewEntity.name, () => {
             }
         }
 
-        const entityStore = new EntityStore({pixi: createMockPixi()});
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [],
+        });
 
         const instance = new MyViewEntity({
             entityStore,
@@ -155,7 +188,10 @@ describe(ViewEntity.name, () => {
             }
         }
 
-        const entityStore = new EntityStore({pixi: createMockPixi()});
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [EnemyEntity],
+        });
 
         entityStore.addEntity(EnemyEntity, {x: 0, y: 0});
     });
@@ -203,6 +239,7 @@ describe(ViewEntity.name, () => {
 
         const entityStore = new EntityStore<any>({
             pixi: createMockPixi(),
+            registeredEntities: [],
         });
 
         const pixi = createMockPixi();
@@ -322,15 +359,20 @@ describe(ViewEntity.name, () => {
             }
         }
 
-        const store = new EntityStore({pixi: createMockPixi()});
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [
+                MyViewEntity,
+            ],
+        });
 
         const instance = store.addEntity(MyViewEntity);
 
-        assert.strictEquals(store.entities.size, 1 as number);
+        assert.strictEquals(store.currentEntityInstances.size, 1 as number);
 
         instance.addEntity(MyViewEntity);
 
-        assert.strictEquals(store.entities.size, 2);
+        assert.strictEquals(store.currentEntityInstances.size, 2);
     });
     it('cannot operate on a destroyed view entity', () => {
         class MyViewEntity extends ViewEntity<any, undefined> {
@@ -344,11 +386,16 @@ describe(ViewEntity.name, () => {
             }
         }
 
-        const store = new EntityStore({pixi: createMockPixi()});
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [
+                MyViewEntity,
+            ],
+        });
 
         const instance = store.addEntity(MyViewEntity);
 
-        assert.strictEquals(store.entities.size, 1 as number);
+        assert.strictEquals(store.currentEntityInstances.size, 1 as number);
 
         const events: Event[] = [];
 
@@ -365,8 +412,205 @@ describe(ViewEntity.name, () => {
 });
 
 describe(EntityStore.name, () => {
+    it('fails to add an unregistered entity', () => {
+        const {EntityStore, defineEntity} = defineEntitySuite();
+
+        class UnregisteredEntity extends defineEntity({
+            key: 'unregistered-entity',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('pink'),
+                };
+            }
+            public override update(): void {}
+        }
+
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [],
+        });
+
+        assert.throws(() =>
+            // @ts-expect-error: this entity class was not registered.
+            entityStore.addEntity(UnregisteredEntity),
+        );
+    });
+    it('restricts params map type', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        const entities = [
+            class extends defineEntity({
+                key: '1',
+                paramsShape: defineShape({
+                    x: -1,
+                    sign: 'hello',
+                }),
+                paramsMap: {
+                    view: {
+                        // @ts-expect-error: `false` is not allowed
+                        _zIndex: false,
+                    },
+                    hitbox: {
+                        //@ts-expect-error: cannot map hello to x because of value mismatch
+                        x: 'hello',
+                    },
+                },
+            })
+            {
+                public override update(): void {}
+                public override createView() {
+                    return {
+                        view: new Graphics().fill('something'),
+                    };
+                }
+            },
+            class extends defineEntity({
+                key: '2',
+                paramsShape: defineShape({
+                    x: -1,
+                    sign: 'hello',
+                }),
+                paramsMap: {
+                    view: {
+                        // @ts-expect-error: cannot use `true` here because this property is not in params
+                        _didChangeId: true,
+                    },
+                    hitbox: {
+                        height: 'x',
+                    },
+                },
+            })
+            {
+                public override update(): void {}
+                public override createView() {
+                    return {
+                        view: new Graphics().fill('another'),
+                    };
+                }
+            },
+        ];
+    });
+    it('maps params', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class Mapped extends defineEntity({
+            key: 'Mapped',
+            paramsShape: defineShape({
+                x: -1,
+                top: -1,
+            }),
+            paramsMap: {
+                view: {
+                    x: true,
+                    y: 'top',
+                },
+                hitbox: {
+                    x: 'top',
+                    y: 'x',
+                },
+            },
+        }) {
+            public override update(): void {}
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#543'),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+        }
+        class NotMapped extends defineEntity({
+            key: 'NotMapped',
+            paramsShape: defineShape({
+                x: -1,
+                top: -1,
+            }),
+            paramsMap: {},
+        }) {
+            public override update(): void {}
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#123'),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+        }
+        class NotMappedToHitbox extends defineEntity({
+            key: 'NotMappedToHitbox',
+            paramsShape: defineShape({
+                x: -1,
+                top: -1,
+            }),
+            paramsMap: {
+                view: {
+                    x: true,
+                    y: 'top',
+                },
+            },
+        }) {
+            public override update(): void {}
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#987'),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+        }
+
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [
+                Mapped,
+                NotMapped,
+                NotMappedToHitbox,
+            ],
+        });
+
+        const instance = entityStore.addEntity(Mapped, {top: 10, x: -5});
+        assert.strictEquals(instance.view.x, -5 as number);
+        assert.strictEquals(instance.view.y, 10 as number);
+        assert.strictEquals(instance.hitbox?.x, 10 as number);
+        assert.strictEquals(instance.hitbox.y, -5 as number);
+
+        instance.params.x = 20;
+        instance.params.top = 100;
+
+        assert.strictEquals(instance.view.x, 20);
+        assert.strictEquals(instance.view.y, 100);
+        assert.strictEquals(instance.hitbox.x, 100);
+        assert.strictEquals(instance.hitbox.y, 20);
+
+        const instance2 = entityStore.addEntity(NotMapped, {top: 10, x: -5});
+        assert.strictEquals(instance2.view.x, 0);
+        assert.strictEquals(instance2.view.y, 0);
+        assert.strictEquals(instance2.hitbox?.x, 0);
+        assert.strictEquals(instance2.hitbox.y, 0);
+
+        instance2.params.x = 20;
+        instance2.params.top = 100;
+
+        assert.strictEquals(instance2.view.x, 0);
+        assert.strictEquals(instance2.view.y, 0);
+        assert.strictEquals(instance2.hitbox.x, 0);
+        assert.strictEquals(instance2.hitbox.y, 0);
+
+        const instance3 = entityStore.addEntity(NotMappedToHitbox, {top: 10, x: -5});
+        assert.strictEquals(instance3.view.x, -5 as number);
+        assert.strictEquals(instance3.view.y, 10 as number);
+        assert.strictEquals(instance3.hitbox?.x, 0);
+        assert.strictEquals(instance3.hitbox.y, 0);
+
+        instance3.params.x = 20;
+        instance3.params.top = 100;
+
+        assert.strictEquals(instance3.view.x, 20);
+        assert.strictEquals(instance3.view.y, 100);
+        assert.strictEquals(instance3.hitbox.x, 0);
+        assert.strictEquals(instance3.hitbox.y, 0);
+    });
     it('detects collisions', () => {
-        const {entityStore, defineEntity} = createMockEntitySuite();
+        const {EntityStore, defineEntity} = defineEntitySuite();
 
         class BoxEntity extends defineEntity({
             key: 'Box',
@@ -375,6 +619,12 @@ describe(EntityStore.name, () => {
                     angleDegrees: -1,
                 }),
             ),
+            paramsMap: {
+                hitbox: {
+                    x: true,
+                    y: true,
+                },
+            },
         }) {
             protected declare move: Coords;
 
@@ -409,6 +659,11 @@ describe(EntityStore.name, () => {
             }
         }
 
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [BoxEntity],
+        });
+
         entityStore.addEntity(BoxEntity, {angleDegrees: 45, x: 0, y: 0});
         entityStore.addEntity(BoxEntity, {angleDegrees: 225, x: 13, y: 13});
 
@@ -423,67 +678,201 @@ describe(EntityStore.name, () => {
         assert.strictEquals(collisions[2].size, 1);
     });
     it("can't operate on a destroyed store", () => {
-        const store = new EntityStore({} as any);
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [],
+        });
 
         store.destroy();
 
-        assert.throws(() => store.updateAllEntities());
+        assert.throws(() => store.updateAllEntities(), {
+            matchMessage: 'Cannot operate on a destroyed entity store.',
+        });
         // @ts-expect-error: intentionally not giving a valid entity constructor
-        assert.throws(() => store.addEntity({} as any));
-        assert.throws(() => store.destroy());
+        assert.throws(() => store.addEntity({} as any), {
+            matchMessage: 'Cannot operate on a destroyed entity store.',
+        });
+        assert.throws(() => store.destroy(), {
+            matchMessage: 'Entity store is already destroyed.',
+        });
+        assert.throws(() => store.removeEntity({} as any), {
+            matchMessage: 'Cannot operate on a destroyed entity store.',
+        });
+        assert.throws(() => store.deserializeEntity('' as any, {} as any), {
+            matchMessage: 'Cannot operate on a destroyed entity store.',
+        });
     });
     it('requires context when defined', () => {
         // @ts-expect-error: missing context
         new EntityStore<AnyObject>({
             pixi: createMockPixi(),
+            registeredEntities: [],
         });
         // context can be omitted if it is nullable
-        new EntityStore<AnyObject | undefined>({
+        new EntityStore({
             pixi: createMockPixi(),
+            registeredEntities: [],
         });
         // defaults to `undefined`
         new EntityStore({
             pixi: createMockPixi(),
+            registeredEntities: [],
         });
     });
     it('cleans up a destroyed entity', () => {
-        class Dummy {
-            public isDestroyed = false;
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class Dummy extends defineEntity({
+            key: 'Dummy',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('black'),
+                };
+            }
 
             public update() {}
         }
 
-        const store = new EntityStore({} as any);
-        assert.strictEquals(store.entities.size, 0 as number);
-        // @ts-expect-error: intentionally not giving a valid entity constructor
-        const instance = store.addEntity(Dummy as any) as Dummy;
-        assert.strictEquals(store.entities.size, 1 as number);
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [Dummy],
+        });
+        assert.strictEquals(store.currentEntityInstances.size, 0 as number);
+        const instance = store.addEntity(Dummy);
+        assert.strictEquals(store.currentEntityInstances.size, 1 as number);
         store.updateAllEntities();
-        assert.strictEquals(store.entities.size, 1 as number);
-        instance.isDestroyed = true;
-        assert.strictEquals(store.entities.size, 1 as number);
+        assert.strictEquals(store.currentEntityInstances.size, 1 as number);
+        makeWritable(instance).isDestroyed = true;
+        assert.strictEquals(store.currentEntityInstances.size, 1 as number);
         store.updateAllEntities();
-        assert.strictEquals(store.entities.size, 0);
+        assert.strictEquals(store.currentEntityInstances.size, 0);
     });
     it('destroys all children', () => {
-        class Dummy {
-            public isDestroyed = false;
+        const {defineEntity, EntityStore} = defineEntitySuite();
 
-            public destroy() {
-                this.isDestroyed = true;
+        class Dummy extends defineEntity({
+            key: 'Dummy',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('white'),
+                };
             }
+
+            public update() {}
         }
 
-        const store = new EntityStore({} as any);
-        assert.strictEquals(store.entities.size, 0 as number);
-        // @ts-expect-error: intentionally not giving a valid entity constructor
-        const instance = store.addEntity(Dummy as any);
-        assert.strictEquals(store.entities.size, 1 as number);
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [Dummy],
+        });
+        assert.strictEquals(store.currentEntityInstances.size, 0 as number);
+        const instance = store.addEntity(Dummy);
+        assert.strictEquals(store.currentEntityInstances.size, 1 as number);
         store.destroy();
-        assert.strictEquals(store.entities.size, 0);
+        assert.strictEquals(store.currentEntityInstances.size, 0);
         assert.isTrue(instance.isDestroyed);
     });
-    it('gets entities by their constructor', () => {
+    it('supports paramsMap', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class MyEntity extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: defineShape(
+                and(entityPositionParamsShape, {
+                    allowChildren: false,
+                    step: -1,
+                }),
+            ),
+            paramsMap: {
+                hitbox: {
+                    x: true,
+                    y: true,
+                    /** This is not allowed on all hitbox types, but it should still be allowed here. */
+                    step: true,
+                    // @ts-expect-error: while this is in the entity params, it is not a valid hitbox property so should be blocked here.
+                    allowChildren: true,
+                },
+                view: {
+                    x: true,
+                    y: true,
+                    allowChildren: true,
+                    // @ts-expect-error: while this is in the entity params, it is not a valid view property so should be blocked here.
+                    step: true,
+                },
+            },
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('teal'),
+                    hitbox: new Box({}, 10, 10),
+                };
+            }
+            public override update(): void {}
+        }
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [MyEntity],
+        });
+
+        const instance = entityStore.addEntity(MyEntity, {
+            allowChildren: false,
+            step: 15,
+            x: 5,
+            y: 10,
+        });
+
+        assert.isDefined(instance.hitbox);
+
+        function assertEqualProperties(prop: PropertyKey, value: unknown) {
+            assert.strictEquals(
+                (instance.hitbox as AnyObject)[prop],
+                (instance.view as AnyObject)[prop],
+                `prop '${String(prop)}' mismatch in hitbox`,
+            );
+            assert.strictEquals(
+                (instance.view as AnyObject)[prop],
+                value,
+                `prop '${String(prop)}' mismatch in view`,
+            );
+        }
+
+        assertEqualProperties('x', 5);
+        assertEqualProperties('y', 10);
+        assertEqualProperties('step', 15);
+        assertEqualProperties('allowChildren', false);
+
+        instance.params.x = 7;
+        instance.params.y = 8;
+        instance.params.step = 9;
+        instance.params.allowChildren = true;
+
+        assertEqualProperties('x', 7);
+        assertEqualProperties('y', 8);
+        assertEqualProperties('step', 9);
+        assertEqualProperties('allowChildren', true);
+    });
+    it('fails to deserialize a missing constructor', () => {
+        const {EntityStore} = defineEntitySuite();
+
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [],
+        });
+
+        assert.throws(
+            () =>
+                // @ts-expect-error: this store has no registered entities so the key is wrong
+                entityStore.deserializeEntity('', ''),
+            {
+                matchMessage: 'No entity registered for key',
+            },
+        );
+    });
+    it('serializes and deserializes', () => {
         const {EntityStore, defineEntity} = defineEntitySuite();
 
         class MyEntity extends defineEntity({
@@ -501,7 +890,73 @@ describe(EntityStore.name, () => {
             }
         }
 
-        const entityStore = new EntityStore({pixi: createMockPixi()});
+        class MyEntity2 extends defineEntity({
+            key: 'MyEntity2',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('grey'),
+                };
+            }
+
+            public override update(): void {
+                // do nothing
+            }
+        }
+
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [
+                MyEntity,
+                MyEntity2,
+            ],
+        });
+
+        const instance = entityStore.addEntity(MyEntity, {
+            x: 2,
+            y: 3,
+        });
+
+        const serialized = instance.serialize();
+        assert.strictEquals(serialized, '{"x":2,"y":3}');
+        MyEntity.entityKey;
+        const deserialized = MyEntity.deserialize('{"x":2,"y":3}');
+        assert.deepEquals(deserialized, {x: 2, y: 3});
+
+        const instance2 = entityStore.deserializeEntity(MyEntity.entityKey, serialized);
+        assert.tsType(instance2).equals<MyEntity>();
+        assert.instanceOf(instance2, MyEntity);
+        assert.strictEquals(instance2.serialize(), '{"x":2,"y":3}');
+
+        const instance3 = entityStore.deserializeEntity(MyEntity2.entityKey, undefined);
+        assert.isUndefined(instance3.serialize());
+        assert.tsType(instance3).equals<MyEntity2>();
+        assert.instanceOf(instance3, MyEntity2);
+        assert.throws(() => entityStore.deserializeEntity(MyEntity.entityKey, undefined));
+    });
+    it('gets entities by their constructor', () => {
+        const {EntityStore, defineEntity} = defineEntitySuite();
+
+        class MyEntity extends defineEntity({
+            key: 'MyEntity',
+            paramsShape: entityPositionParamsShape,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().rect(0, 0, 10, 10).fill('aquamarine'),
+                };
+            }
+
+            public override update(): void {
+                // do nothing
+            }
+        }
+
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [MyEntity],
+        });
         const instance = entityStore.addEntity(MyEntity, {x: 1, y: 1});
 
         const myEntityInstances = entityStore.getEntities(MyEntity);

@@ -26,8 +26,6 @@ describe(createMockPixi.name, () => {
     });
     it('allows a view child to be destroyed', () => {
         const {EntityStore, defineEntity} = defineEntitySuite();
-        const entityStore = new EntityStore({pixi: createMockPixi()});
-
         let updateCount = 0;
 
         class MyEntity extends defineEntity({
@@ -43,6 +41,10 @@ describe(createMockPixi.name, () => {
                 };
             }
         }
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [MyEntity],
+        });
 
         const instance = entityStore.addEntity(MyEntity);
 

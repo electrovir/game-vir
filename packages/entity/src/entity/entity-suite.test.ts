@@ -1,10 +1,10 @@
 import {assert} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
-import {describe, it} from '@augment-vir/test';
+import {describe, it, itCases} from '@augment-vir/test';
 import {Graphics} from 'pixi.js';
 import {defineTypedCustomEvent} from 'typed-event-target';
 import {createMockPixi} from '../pixi.js';
-import {createMockEntitySuite, defineEntitySuite, type DefineViewEntity} from './entity-suite.js';
+import {defineEntitySuite, reverseParamsMap, type DefineViewEntity} from './entity-suite.js';
 import {
     BaseEntity,
     EntityDestroyEvent,
@@ -12,6 +12,7 @@ import {
     ViewEntity,
     type EntityPositionParams,
     type EntityStore,
+    type ViewCreation,
 } from './entity.js';
 
 describe(defineEntitySuite.name, () => {
@@ -51,8 +52,12 @@ describe(defineEntitySuite.name, () => {
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
-        const entityStore = new EntityStore({pixi: createMockPixi(), context});
-        assert.tsType(entityStore).equals<EntityStore<typeof context>>();
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            context,
+            registeredEntities: [],
+        });
+        assert.tsType(entityStore).equals<EntityStore<typeof context, never>>();
     });
     it('defaults to undefined context', () => {
         const {defineEntity, EntityStore} = defineEntitySuite();
@@ -85,8 +90,11 @@ describe(defineEntitySuite.name, () => {
         assert.tsType(MyEntity.entityKey).equals<'MyEntity'>();
         assert.strictEquals(MyEntity.entityKey, 'MyEntity');
 
-        const entityStore = new EntityStore({pixi: createMockPixi()});
-        assert.tsType(entityStore).equals<EntityStore>();
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [],
+        });
+        assert.tsType(entityStore).equals<EntityStore<undefined, never>>();
     });
     it('assigns the events type parameter', () => {
         const {defineEntity, EntityStore} = defineEntitySuite();
@@ -115,7 +123,7 @@ describe(defineEntitySuite.name, () => {
             }
         }
         class MyEntity2 extends defineEntity({
-            key: 'MyEntity',
+            key: 'MyEntity2',
             paramsShape: undefined,
         }) {
             public override update(): void {
@@ -137,6 +145,10 @@ describe(defineEntitySuite.name, () => {
         }
         const entityStore = new EntityStore({
             pixi: createMockPixi(),
+            registeredEntities: [
+                MyEntity,
+                MyEntity2,
+            ],
         });
 
         const instance = entityStore.addEntity(MyEntity);
@@ -163,8 +175,36 @@ describe(defineEntitySuite.name, () => {
         // @ts-expect-error: invalid event to listen to
         instance2.events.listen(Error, () => {});
     });
+    it('prevents identical keys', () => {
+        const {defineEntity} = defineEntitySuite();
+
+        class One extends defineEntity({
+            key: 'key',
+            paramsShape: undefined,
+        }) {
+            public override createView(): ViewCreation {
+                return {
+                    view: new Graphics(),
+                };
+            }
+            public override update(): void {}
+        }
+        assert.throws(() => {
+            class Two extends defineEntity({
+                key: 'key',
+                paramsShape: undefined,
+            }) {
+                public override createView(): ViewCreation {
+                    return {
+                        view: new Graphics({}),
+                    };
+                }
+                public override update(): void {}
+            }
+        });
+    });
     it('allows logic entity definition', () => {
-        const {defineLogicEntity, entityStore} = createMockEntitySuite();
+        const {defineLogicEntity, EntityStore} = defineEntitySuite();
 
         class MyLogicEntity extends defineLogicEntity({
             key: 'MyLogicEntity',
@@ -175,6 +215,11 @@ describe(defineEntitySuite.name, () => {
             }
         }
 
+        const entityStore = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [MyLogicEntity],
+        });
+
         assert.tsType(MyLogicEntity.entityKey).equals<'MyLogicEntity'>();
         assert.strictEquals(MyLogicEntity.entityKey, 'MyLogicEntity');
         const instance = entityStore.addEntity(MyLogicEntity);
@@ -182,4 +227,51 @@ describe(defineEntitySuite.name, () => {
         assert.instanceOf(instance, MyLogicEntity);
         assert.instanceOf(instance, BaseEntity);
     });
+});
+
+describe(reverseParamsMap.name, () => {
+    itCases(reverseParamsMap, [
+        {
+            it: 'converts a full params map',
+            input: {
+                hitbox: {
+                    angle: true,
+                    width: 'w',
+                },
+                view: {
+                    alpha: true,
+                    width: 'w',
+                },
+            },
+            expect: {
+                angle: {
+                    hitbox: ['angle'],
+                },
+                w: {
+                    hitbox: ['width'],
+                    view: ['width'],
+                },
+                alpha: {
+                    view: ['alpha'],
+                },
+            },
+        },
+        {
+            it: 'converts a partial params map',
+            input: {
+                hitbox: {
+                    angle: true,
+                    width: 'w',
+                },
+            },
+            expect: {
+                angle: {
+                    hitbox: ['angle'],
+                },
+                w: {
+                    hitbox: ['width'],
+                },
+            },
+        },
+    ]);
 });
