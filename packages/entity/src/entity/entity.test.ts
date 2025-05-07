@@ -47,7 +47,7 @@ describe(ViewEntity.name, () => {
 
         assert.isLengthExactly(entityStore.hitboxSystem.all(), 1);
 
-        instance.destroy();
+        instance.immediatelyDestroy();
 
         assert.isEmpty(entityStore.hitboxSystem.all());
     });
@@ -426,7 +426,7 @@ describe(ViewEntity.name, () => {
             events.push(event);
             removeSelf();
         });
-        instance.destroy();
+        instance.immediatelyDestroy();
         assert.isLengthExactly(events, 1);
         assert.instanceOf(events[0], EntityDestroyEvent);
         assert.throws(() => instance.addEntity(MyViewEntity));
@@ -808,6 +808,63 @@ describe(EntityStore.name, () => {
         assert.strictEquals(store.currentEntityInstances.size, 1 as number);
         store.updateAllEntities();
         assert.strictEquals(store.currentEntityInstances.size, 0);
+    });
+    it('can be destroyed multiple times without issue', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class Dummy extends defineEntity({
+            key: 'Dummy',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#999'),
+                };
+            }
+
+            public update() {}
+        }
+
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [Dummy],
+        });
+        const instance = store.addEntity(Dummy);
+
+        instance.destroy();
+        instance.destroy();
+        instance.immediatelyDestroy();
+        instance.immediatelyDestroy();
+        instance.destroy();
+        instance.destroy();
+    });
+    it('handles a entity that destroys itself in an update', () => {
+        const {defineEntity, EntityStore} = defineEntitySuite();
+
+        class Dummy extends defineEntity({
+            key: 'Dummy',
+            paramsShape: undefined,
+        }) {
+            public override createView() {
+                return {
+                    view: new Graphics().fill('#555'),
+                };
+            }
+
+            public update() {
+                this.destroy();
+            }
+        }
+
+        const store = new EntityStore({
+            pixi: createMockPixi(),
+            registeredEntities: [Dummy],
+        });
+        const instance = store.addEntity(Dummy);
+
+        store.updateAllEntities();
+        assert.isTrue(instance.isDestroyed);
+        assert.isUndefined(instance.entityStore);
     });
     it('destroys all children', () => {
         const {defineEntity, EntityStore} = defineEntitySuite();

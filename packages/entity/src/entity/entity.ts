@@ -137,10 +137,16 @@ export class EntityStore<
             throw new Error('Cannot operate on a destroyed entity store.');
         }
         this.currentEntityInstances.forEach((entity) => {
-            entity.update();
-            /** Check if the entity was destroyed after the update. */
+            /** Check if the entity was destroyed outside of an update cycle. */
             if (entity.isDestroyed) {
-                this.removeEntity(entity);
+                entity.immediatelyDestroy();
+                return;
+            }
+            entity.update();
+            /** Check if the entity was destroyed while updating. */
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            if (entity.isDestroyed) {
+                entity.immediatelyDestroy();
             }
         });
 
@@ -473,15 +479,25 @@ export abstract class BaseEntity<
         return this.entityStore.addEntity(entityClass, ...params);
     }
 
-    /** Destroy the current entity, stop its updates, and remove it from the view. */
+    /** Marks the entity for destruction in the next entity store update. */
     public destroy() {
         makeWritable(this).isDestroyed = true;
-        this.entityStore.removeEntity(this);
-        delete (this as Writable<Partial<BaseEntity>>).entityStore;
-        delete (this as Writable<Partial<BaseEntity>>).context;
-        delete (this as Writable<Partial<BaseEntity>>).params;
+    }
+
+    /**
+     * Immediately destroy the current entity, stop its updates.
+     *
+     * This is probably not what you want to use! See {@link BaseEntity.destroy} instead.
+     */
+    public immediatelyDestroy() {
+        makeWritable(this).isDestroyed = true;
+        (this.entityStore as typeof this.entityStore | undefined)?.removeEntity(this);
         this.events.dispatch(new EntityDestroyEvent());
         this.events.destroy();
+        delete (this as Writable<Partial<BaseEntity>>).entityStore;
+        delete (this as Writable<Partial<BaseEntity>>).context;
+        delete (this as Writable<Partial<BaseEntity>>).hitboxSystem;
+        delete (this as Writable<Partial<BaseEntity>>).params;
     }
 
     /**
@@ -620,13 +636,17 @@ export abstract class ViewEntity<
         }
     }
 
-    /** Destroy the current entity, stop its updates, and remove it from the view. */
-    public override destroy() {
-        this.view.destroy({children: true});
+    /**
+     * Immediately destroy the current entity, stop its updates, and remove it from the view.
+     *
+     * This is probably not what you want to use! See {@link BaseEntity.destroy} instead.
+     */
+    public override immediatelyDestroy() {
+        (this.view as typeof this.view | undefined)?.destroy({children: true});
         if (this.hitbox) {
             this.hitboxSystem.remove(this.hitbox);
         }
-        super.destroy();
+        super.immediatelyDestroy();
         delete (this as Writable<Partial<ViewEntity>>).view;
     }
 }
