@@ -2,6 +2,7 @@ import {assert} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
 import {describe, it, itCases} from '@augment-vir/test';
 import {Graphics} from 'pixi.js';
+import {type Constructor} from 'type-fest';
 import {defineTypedCustomEvent} from 'typed-event-target';
 import {createMockPixi} from '../pixi.js';
 import {defineEntitySuite, reverseParamsMap, type DefineViewEntity} from './entity-suite.js';
@@ -100,11 +101,23 @@ describe(defineEntitySuite.name, () => {
         const {defineEntity, EntityStore} = defineEntitySuite();
 
         class MyEvent extends defineTypedCustomEvent<{value: number}>()('my-event') {}
+        class MyEvent2 extends defineTypedCustomEvent<{value: number}>()('my-event2') {}
+        assert.tsType(MyEvent).matches<Constructor<Event>>();
+        assert.tsType(MyEvent2).matches<Constructor<Event>>();
+        assert
+            .tsType([
+                MyEvent,
+                MyEvent2,
+            ])
+            .matches<ReadonlyArray<Constructor<Event>>>();
 
         class MyEntity extends defineEntity({
             key: 'MyEntity',
             paramsShape: undefined,
-            events: [MyEvent],
+            events: [
+                MyEvent,
+                MyEvent2,
+            ],
         }) {
             public override update(): void {
                 // do nothing

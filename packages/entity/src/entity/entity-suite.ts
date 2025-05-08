@@ -1,5 +1,11 @@
 import {check} from '@augment-vir/assert';
-import {type AnyObject, getObjectTypedEntries, getOrSet, type Values} from '@augment-vir/common';
+import {
+    type AnyObject,
+    type ArrayElement,
+    getObjectTypedEntries,
+    getOrSet,
+    type Values,
+} from '@augment-vir/common';
 import {type ShapeDefinition} from 'object-shape-tester';
 import {type Constructor} from 'type-fest';
 import {type ListenTarget} from 'typed-event-target';
@@ -22,7 +28,7 @@ import {
 export type DefineEntityParams<
     EntityKey extends string,
     Shape extends ShapeDefinition<AnyObject, any> | undefined,
-    Events extends Readonly<Event> = EntityDestroyEvent,
+    Events extends ReadonlyArray<Constructor<Event>> = never,
 > = {
     /**
      * This key is used for deserialization of entities to track which class needs to be
@@ -42,7 +48,7 @@ export type DefineEntityParams<
      * All events that this entity can emit, in addition to the default {@link EntityDestroyEvent}
      * event.
      */
-    events?: Constructor<Events>[] | undefined;
+    events?: Events | undefined;
     /**
      * A mapping of the entity's params object (defined by {@link DefineEntityParams.paramsShape})
      * keys to hitbox and/or view properties.
@@ -135,10 +141,15 @@ export type DefinedViewEntityConstructor<
 export type DefineViewEntity<Context> = <
     const EntityKey extends string,
     const Shape extends ShapeDefinition<AnyObject, any> | undefined,
-    const Events extends Readonly<Event> = EntityDestroyEvent,
+    const Events extends ReadonlyArray<Constructor<Event>> = never,
 >(
     params: DefineEntityParams<EntityKey, Shape, Events>,
-) => DefinedViewEntityConstructor<EntityKey, Context, Shape, Events>;
+) => DefinedViewEntityConstructor<
+    EntityKey,
+    Context,
+    Shape,
+    InstanceType<ArrayElement<NoInfer<Events>>> | EntityDestroyEvent
+>;
 
 /**
  * ========================
@@ -196,10 +207,15 @@ export type DefinedLogicEntityConstructor<
 export type DefineLogicEntity<Context> = <
     const EntityKey extends string,
     const Shape extends ShapeDefinition<AnyObject, any> | undefined,
-    const Events extends Readonly<Event> = EntityDestroyEvent,
+    const Events extends ReadonlyArray<Constructor<Event>> = never,
 >(
     params: DefineEntityParams<EntityKey, Shape, Events>,
-) => DefinedLogicEntityConstructor<EntityKey, Context, Shape, Events>;
+) => DefinedLogicEntityConstructor<
+    EntityKey,
+    Context,
+    Shape,
+    InstanceType<ArrayElement<NoInfer<Events>>> | EntityDestroyEvent
+>;
 
 /**
  * ========================

@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/multiplayer-server",
-    "version": "14.6.1",
+    "version": "14.6.2",
     "description": "A simple web socket server that facilitates automatic WebRTC connections between multiple peers.",
     "keywords": [
         "WebRTC",
@@ -38,7 +38,7 @@
         "@augment-vir/assert": "^31.17.1",
         "@augment-vir/common": "^31.17.1",
         "@augment-vir/node": "^31.17.1",
-        "@game-vir/multiplayer": "^14.6.1",
+        "@game-vir/multiplayer": "^14.6.2",
         "@rest-vir/define-service": "^0.18.1",
         "@rest-vir/implement-service": "^0.18.1",
         "@rest-vir/run-service": "^0.18.1",
