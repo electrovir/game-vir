@@ -1,5 +1,5 @@
 import {check} from '@augment-vir/assert';
-import {generateApi, mapServiceDevPort, type OriginRequirement} from '@rest-vir/define-service';
+import {generateApi, mapServiceDevPort} from '@rest-vir/define-service';
 import {defineMultiplayerService} from './multiplayer-service.js';
 
 /**
@@ -16,21 +16,16 @@ export type MultiplayerApi = Awaited<ReturnType<typeof createMultiplayerApi>>;
  */
 export async function createMultiplayerApi({
     backendOrigin,
-    frontendOrigin,
     portScanOptions,
 }: {
     backendOrigin?: string | undefined;
-    frontendOrigin?: OriginRequirement;
     /**
      * Set to `undefined` or `false` to disable port scanning. Set to `true` to enable port
      * scanning. Set to an options object to configure port scanning.
      */
     portScanOptions: undefined | Parameters<typeof mapServiceDevPort>[1] | boolean;
 }) {
-    const initialService = defineMultiplayerService({
-        backendOrigin,
-        frontendOrigin,
-    });
+    const initialService = defineMultiplayerService(backendOrigin);
 
     const service = portScanOptions
         ? await mapServiceDevPort(

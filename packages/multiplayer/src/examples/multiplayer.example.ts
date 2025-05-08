@@ -10,6 +10,7 @@ type GameAction =
       };
 
 const myController = new MultiplayerController<GameAction>({
+    gameId: 'multi',
     listeners: {
         frame(actions) {
             /** Take the list of `actions` and apply them to your game state here. */

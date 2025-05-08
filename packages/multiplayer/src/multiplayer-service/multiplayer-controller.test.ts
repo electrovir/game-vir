@@ -11,6 +11,7 @@ describe(MultiplayerController.name, () => {
 
         // eslint-disable-next-line sonarjs/constructor-for-side-effects
         new MultiplayerController({
+            gameId: 'some id',
             listeners: {
                 frame() {},
                 connectionUpdate(internalState) {
@@ -34,6 +35,7 @@ describe(MultiplayerController.name, () => {
 
         // eslint-disable-next-line sonarjs/constructor-for-side-effects
         new MultiplayerController({
+            gameId: 'some id',
             listeners: {
                 frame() {},
                 connectionUpdate(internalState) {

@@ -14,6 +14,8 @@ import {asyncProp, css, defineElementNoInputs, html, nothing, renderIf} from 'el
 import {noNativeSpacing} from 'vira';
 import {calculateMedian} from '../../augments/median.js';
 
+const demo3GameId = 'demo-3';
+
 export const Demo3Child = defineElementNoInputs({
     tagName: 'demo-3-child',
     state() {
@@ -80,7 +82,12 @@ export const Demo3Child = defineElementNoInputs({
 
                 const api = generateApi(service);
 
-                let webrtcController = new WebrtcMultiplayerController(api, [], initRoom);
+                let webrtcController = new WebrtcMultiplayerController(
+                    demo3GameId,
+                    api,
+                    [],
+                    initRoom,
+                );
 
                 startLockStep(webrtcController, (newState) => {
                     if ('lastLatency' in newState) {
@@ -94,7 +101,11 @@ export const Demo3Child = defineElementNoInputs({
                 await waitUntil.isTrue(() => webrtcController.isConnected());
 
                 const firstRoom = await waitUntil.isDefined(async () => {
-                    const {ok, data} = await api.endpoints['/rooms'].fetch();
+                    const {ok, data} = await api.endpoints['/rooms'].fetch({
+                        searchParams: {
+                            gameId: [demo3GameId],
+                        },
+                    });
                     if (!ok) {
                         throw new Error('fetch failed');
                     }
@@ -104,7 +115,7 @@ export const Demo3Child = defineElementNoInputs({
 
                 if (firstRoom.roomId !== initRoom.roomId) {
                     webrtcController.destroy();
-                    webrtcController = new WebrtcMultiplayerController(api, [], {
+                    webrtcController = new WebrtcMultiplayerController(demo3GameId, api, [], {
                         ...initRoom,
                         roomId: firstRoom.roomId,
                     });

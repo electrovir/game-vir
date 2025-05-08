@@ -1,11 +1,5 @@
-import {type PartialWithUndefined} from '@augment-vir/common';
-import {
-    AnyOrigin,
-    defineService,
-    HttpMethod,
-    type OriginRequirement,
-} from '@rest-vir/define-service';
-import {defineShape, exact, indexedKeys, or, uuidShape} from 'object-shape-tester';
+import {AnyOrigin, defineService, HttpMethod} from '@rest-vir/define-service';
+import {defineShape, exact, indexedKeys, or, tupleShape, uuidShape} from 'object-shape-tester';
 import {buildUrl} from 'url-vir';
 import {
     answerMessageShape,
@@ -78,27 +72,14 @@ export const defaultMultiplayerServiceOrigin = buildUrl('http://localhost', {
 }).origin;
 
 /**
- * Options for {@link defineMultiplayerService}.
- *
- * @category Internal
- */
-export type MultiplayerServiceOptions = PartialWithUndefined<{
-    frontendOrigin: OriginRequirement;
-    backendOrigin: string;
-}>;
-
-/**
  * The multiplayer service definition.
  *
  * @category Internal
  */
-export function defineMultiplayerService({
-    backendOrigin = defaultMultiplayerServiceOrigin,
-    frontendOrigin = AnyOrigin,
-}: MultiplayerServiceOptions = {}) {
+export function defineMultiplayerService(backendOrigin = defaultMultiplayerServiceOrigin) {
     return defineService({
         serviceName: 'multiplayer-service',
-        requiredClientOrigin: frontendOrigin,
+        requiredClientOrigin: AnyOrigin,
         serviceOrigin: backendOrigin,
         endpoints: {
             /** Same as health. */
@@ -125,6 +106,9 @@ export function defineMultiplayerService({
                 methods: {
                     [HttpMethod.Get]: true,
                 },
+                searchParamsShape: {
+                    gameId: tupleShape(''),
+                },
             },
         },
         webSockets: {
@@ -140,6 +124,9 @@ export function defineMultiplayerService({
                     offerResultShape,
                     errorMessageShape,
                 ),
+                searchParamsShape: {
+                    gameId: tupleShape(''),
+                },
             },
         },
     });

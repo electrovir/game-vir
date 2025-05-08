@@ -154,6 +154,7 @@ export class LockStepGameStateController<
      * @see {@link LockStepGameStateController.startSingleplayer} for starting the controller in singleplayer mode.
      */
     public async multiplayerConnect(
+        gameId: string,
         multiplayerApi: Readonly<MultiplayerApi>,
         /**
          * - 'stun.l.google.com:19302'
@@ -164,6 +165,7 @@ export class LockStepGameStateController<
         multiplayerRoom: Readonly<RoomInput>,
     ): Promise<boolean> {
         const webrtcController = new WebrtcMultiplayerController<LockStepMessage<Action>>(
+            gameId,
             multiplayerApi,
             stunServerUrls,
             multiplayerRoom,

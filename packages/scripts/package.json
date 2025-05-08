@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/scripts",
-    "version": "14.5.0",
+    "version": "14.6.0",
     "private": true,
     "description": "",
     "keywords": [],
@@ -32,7 +32,7 @@
     },
     "devDependencies": {
         "@augment-vir/test": "^31.17.1",
-        "@types/node": "^22.15.15",
+        "@types/node": "^22.15.17",
         "tsx": "^4.19.4"
     },
     "engines": {

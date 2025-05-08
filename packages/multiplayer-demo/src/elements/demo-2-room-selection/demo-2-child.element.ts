@@ -12,6 +12,8 @@ import {
 import {asyncProp, css, defineElementNoInputs, html, listen} from 'element-vir';
 import {noNativeSpacing} from 'vira';
 
+const demo2GameId = 'demo-2';
+
 export const Demo2Child = defineElementNoInputs({
     tagName: 'demo-2-child',
     styles: css`
@@ -69,7 +71,11 @@ export const Demo2Child = defineElementNoInputs({
                     return;
                 }
 
-                const output = await state.multiplayerApi.settledValue.endpoints['/rooms'].fetch();
+                const output = await state.multiplayerApi.settledValue.endpoints['/rooms'].fetch({
+                    searchParams: {
+                        gameId: [demo2GameId],
+                    },
+                });
                 if (output.ok) {
                     state.rooms.setValue(output.data);
                 }
@@ -91,7 +97,7 @@ export const Demo2Child = defineElementNoInputs({
     render({state, updateState}) {
         function createController(api: MultiplayerApi | undefined, room: RoomInput) {
             if (api && !state.webrtcController.value) {
-                const webrtcController = new WebrtcMultiplayerController(api, [], {
+                const webrtcController = new WebrtcMultiplayerController(demo2GameId, api, [], {
                     roomId: room.roomId,
                     roomName: room.roomName,
                     roomPassword: '',

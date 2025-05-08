@@ -133,6 +133,7 @@ export class WebrtcMultiplayerController<
     public readonly isDestroyed = false as boolean;
 
     constructor(
+        private readonly gameId: string,
         private readonly multiplayerApi: Readonly<MultiplayerApi>,
         /**
          * - 'stun.l.google.com:19302'
@@ -337,6 +338,9 @@ export class WebrtcMultiplayerController<
             return this.webSocket;
         }
         const webSocket = await this.multiplayerApi.webSockets['/connect'].connect({
+            searchParams: {
+                gameId: [this.gameId],
+            },
             listeners: {
                 message: async ({message, webSocket}) => {
                     try {

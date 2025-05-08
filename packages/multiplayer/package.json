@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/multiplayer",
-    "version": "14.5.0",
+    "version": "14.6.0",
     "description": "Client side definitions and types for @game-vir/multiplayer-server",
     "keywords": [
         "WebRTC",
@@ -38,7 +38,7 @@
     "dependencies": {
         "@augment-vir/assert": "^31.17.1",
         "@augment-vir/common": "^31.17.1",
-        "@rest-vir/define-service": "^0.15.1",
+        "@rest-vir/define-service": "^0.18.0",
         "date-vir": "^7.3.1",
         "object-shape-tester": "^5.1.5",
         "type-fest": "^4.41.0",

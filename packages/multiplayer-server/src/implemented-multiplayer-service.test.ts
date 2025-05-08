@@ -16,7 +16,7 @@ import {
     type MultiplayerClientRooms,
     type MultiplayerService,
 } from '@game-vir/multiplayer';
-import {type ClientWebSocket} from '@rest-vir/define-service';
+import {AnyOrigin, type ClientWebSocket} from '@rest-vir/define-service';
 import {testService, type FetchTestService} from '@rest-vir/run-service';
 import {type DistributedOmit} from 'type-fest';
 import {
@@ -70,6 +70,11 @@ function testMultiplayerService(
         };
 
         const {service, serverState} = implementMultiplayerService({
+            games: {
+                byId: {
+                    test: AnyOrigin,
+                },
+            },
             logger: {
                 error(error) {
                     logs.error.push(extractErrorMessage(error));
@@ -94,6 +99,9 @@ function testMultiplayerService(
             clientName: string,
         ): ReturnType<MultiplayerServiceCallbackParams['createClient']> {
             const webSocket = await connectWebSocket['/connect']({
+                searchParams: {
+                    gameId: ['test'],
+                },
                 listeners: {
                     open() {
                         webSocketMessages[clientName] = [];
@@ -170,7 +178,14 @@ function testMultiplayerService(
 
             await waitUntil.hasKeys(
                 roomIds,
-                async () => await (await fetchEndpoint['/rooms']()).json(),
+                async () =>
+                    await (
+                        await fetchEndpoint['/rooms']({
+                            searchParams: {
+                                gameId: ['test'],
+                            },
+                        })
+                    ).json(),
             );
 
             return finishedRooms as SetupRoomsOutput<Rooms>;
@@ -205,7 +220,13 @@ describe('multiplayer service', () => {
         async ({setupRooms, webSocketMessages, fetchEndpoint, closeAllWebSockets}) => {
             assert.isTrue((await fetchEndpoint['/health']()).ok, 'server health should be okay');
             assert.deepEquals(
-                await (await fetchEndpoint['/rooms']()).json(),
+                await (
+                    await fetchEndpoint['/rooms']({
+                        searchParams: {
+                            gameId: ['test'],
+                        },
+                    })
+                ).json(),
                 {},
                 'rooms should be empty on server init',
             );
@@ -282,7 +303,14 @@ describe('multiplayer service', () => {
                         hasRoomPassword: false,
                     },
                 } satisfies MultiplayerClientRooms,
-                async () => await (await fetchEndpoint['/rooms']()).json(),
+                async () =>
+                    await (
+                        await fetchEndpoint['/rooms']({
+                            searchParams: {
+                                gameId: ['test'],
+                            },
+                        })
+                    ).json(),
                 {
                     interval: {
                         seconds: 1,
@@ -297,7 +325,14 @@ describe('multiplayer service', () => {
             await closeAllWebSockets();
 
             await waitUntil.isEmpty(
-                async () => await (await fetchEndpoint['/rooms']()).json(),
+                async () =>
+                    await (
+                        await fetchEndpoint['/rooms']({
+                            searchParams: {
+                                gameId: ['test'],
+                            },
+                        })
+                    ).json(),
                 {
                     interval: {
                         seconds: 2,

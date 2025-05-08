@@ -27,7 +27,7 @@ export async function startMultiplayerServer(
     const startOutput = (await startService(service, {
         ...omitObjectKeys(options, [
             'backendOrigin',
-            'frontendOrigin',
+            'games',
         ]),
         /** This server cannot currently be distributed. */
         workerCount: 1,

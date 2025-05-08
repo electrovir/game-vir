@@ -8,6 +8,8 @@ import {
 import {generateApi, mapServiceDevPort} from '@rest-vir/define-service';
 import {asyncProp, css, defineElementNoInputs, html} from 'element-vir';
 
+const demo1GameId = 'demo-1';
+
 export const Demo1Child = defineElementNoInputs({
     tagName: 'demo-1-child',
     styles: css`
@@ -34,13 +36,22 @@ export const Demo1Child = defineElementNoInputs({
 
                 const api = generateApi(service);
 
-                let webrtcController = new WebrtcMultiplayerController(api, [], initRoom);
+                let webrtcController = new WebrtcMultiplayerController(
+                    demo1GameId,
+                    api,
+                    [],
+                    initRoom,
+                );
 
                 await webrtcController.initConnection();
                 await waitUntil.isTrue(() => webrtcController.isConnected());
 
                 const firstRoom = await waitUntil.isDefined(async () => {
-                    const {ok, data} = await api.endpoints['/rooms'].fetch();
+                    const {ok, data} = await api.endpoints['/rooms'].fetch({
+                        searchParams: {
+                            gameId: [demo1GameId],
+                        },
+                    });
                     if (!ok) {
                         throw new Error(`Fetch failed.`);
                     }
@@ -50,7 +61,7 @@ export const Demo1Child = defineElementNoInputs({
 
                 if (firstRoom.roomId !== initRoom.roomId) {
                     webrtcController.destroy();
-                    webrtcController = new WebrtcMultiplayerController(api, [], {
+                    webrtcController = new WebrtcMultiplayerController(demo1GameId, api, [], {
                         ...initRoom,
                         roomId: firstRoom.roomId,
                     });

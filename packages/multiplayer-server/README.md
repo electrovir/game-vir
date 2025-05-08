@@ -18,6 +18,11 @@ npm i @game-vir/multiplayer-server
 import {startMultiplayerServer} from '@game-vir/multiplayer-server';
 
 await startMultiplayerServer({
+    games: {
+        byId: {
+            myGame: 'https://my-frontend.example.com',
+        },
+    },
     port: 3000,
 });
 ```

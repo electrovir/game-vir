@@ -1,10 +1,13 @@
+import {check} from '@augment-vir/assert';
 import {
     callAsynchronously,
     createUuidV4,
+    getOrSet,
     mapObjectValues,
     omitObjectKeys,
     stringify,
     type ArrayElement,
+    type PartialWithUndefined,
     type Uuid,
 } from '@augment-vir/common';
 import {
@@ -14,9 +17,12 @@ import {
     type MultiplayerClientRoom,
     type MultiplayerClientRooms,
     type MultiplayerService,
-    type MultiplayerServiceOptions,
 } from '@game-vir/multiplayer';
-import {CommonWebSocketState} from '@rest-vir/define-service';
+import {
+    checkOriginRequirement,
+    CommonWebSocketState,
+    type OriginRequirement,
+} from '@rest-vir/define-service';
 import {
     defaultServiceLogger,
     HttpStatus,
@@ -26,13 +32,14 @@ import {
     type ServiceLogger,
 } from '@rest-vir/implement-service';
 import {convertDuration} from 'date-vir';
+import {type RequireAtLeastOne} from 'type-fest';
 
 /**
  * Multiplayer server options.
  *
  * @category Internal
  */
-export type MultiplayerServerOptions = {
+export type MultiplayerServerOptions = PartialWithUndefined<{
     /**
      * The Multiplayer server's logger.
      *
@@ -42,8 +49,27 @@ export type MultiplayerServerOptions = {
      * - `defaultServiceLogger`
      * - `createServiceLogger`
      */
-    logger?: ServiceLogger;
-} & MultiplayerServiceOptions;
+    logger: ServiceLogger;
+    backendOrigin: string;
+}> & {
+    games: RequireAtLeastOne<{
+        /**
+         * Allow specific games by id. If a game id is not matched, the below `default` requirement
+         * is checked. If no game id is matched and there is no specified `default` requirement, the
+         * request is blocked.
+         *
+         * If a game id's origin requirement is `undefined`, it is not considered a match.
+         */
+        byId: {
+            [GameId in string]: OriginRequirement;
+        };
+        /**
+         * The default requirement for all unmatched game ids. If this is omitted or `undefined`,
+         * all unmatched game ids are blocked.
+         */
+        default: OriginRequirement;
+    }>;
+};
 
 /**
  * An individual multiplayer client.
@@ -73,7 +99,11 @@ export type MultiplayerServerRoom = {
  *
  * @category Internal
  */
-export type MultiplayerServerRooms = Record<Uuid, MultiplayerServerRoom>;
+export type MultiplayerServerRooms = {
+    [GameId in string]: {
+        [RoomId in Uuid]: MultiplayerServerRoom;
+    };
+};
 
 /**
  * Internal state for the multiplayer server.
@@ -83,18 +113,20 @@ export type MultiplayerServerRooms = Record<Uuid, MultiplayerServerRoom>;
 export type MultiplayerServerState = {
     multiplayerRooms: MultiplayerServerRooms;
     webSocketMessageQueue: {
+        gameId: string;
         webSocket: ServerWebSocket<MultiplayerService['webSockets']['/connect']>;
         message: MultiplayerService['webSockets']['/connect']['MessageFromClientType'];
     }[];
     isProcessingQueue: boolean;
+    updateRoomsIntervalId: ReturnType<typeof setInterval> | undefined;
     /**
      * This is separate from the multiplayer rooms object because this object is directly
      * transferred to any client that hits the `/rooms` endpoint to keep CPU load minimal. This
      * object is only updated when necessary.
      */
-    roomsForFetching: MultiplayerClientRooms;
-
-    updateRoomsIntervalId: ReturnType<typeof setInterval> | undefined;
+    roomsForFetching: {
+        [GameId in string]: MultiplayerClientRooms;
+    };
 
     logger: ServiceLogger;
 };
@@ -123,7 +155,7 @@ export type ImplementedMultiplayerService = ReturnType<
  *
  * @category Internal
  */
-export function implementMultiplayerService(options: MultiplayerServerOptions = {}) {
+export function implementMultiplayerService(options: MultiplayerServerOptions) {
     const serverState: MultiplayerServerState = {
         logger: options.logger || defaultMultiplayerServiceLogger,
         multiplayerRooms: {},
@@ -133,13 +165,66 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
 
         roomsForFetching: {},
     };
+    const serviceDefinition = defineMultiplayerService(options.backendOrigin);
 
     const service = implementService({
-        service: defineMultiplayerService({
-            backendOrigin: options.backendOrigin,
-            frontendOrigin: options.frontendOrigin,
-        }),
+        service: serviceDefinition,
         logger: serverState.logger,
+        async createContext({
+            searchParams,
+            endpointDefinition,
+            webSocketDefinition,
+            requestHeaders,
+        }) {
+            const definition = endpointDefinition || webSocketDefinition;
+
+            if (!definition) {
+                return {
+                    reject: {
+                        statusCode: HttpStatus.NotFound,
+                    },
+                };
+            } else if (
+                serviceDefinition.endpoints['/'].path === definition.path ||
+                serviceDefinition.endpoints['/health'].path === definition.path
+            ) {
+                return {
+                    context: {
+                        gameId: '',
+                    },
+                };
+            }
+
+            const gameId = searchParams?.gameId[0];
+            const originRequirement =
+                check.isString(gameId) && gameId
+                    ? options.games.byId?.[gameId] || options.games.default
+                    : undefined;
+
+            if (!check.isString(gameId) || !gameId) {
+                serverState.logger.error(new TypeError(`Invalid game ID: '${gameId}'`));
+                return {
+                    reject: {
+                        statusCode: HttpStatus.Unauthorized,
+                    },
+                };
+            } else if (!(await checkOriginRequirement(requestHeaders.origin, originRequirement))) {
+                serverState.logger.error(
+                    new TypeError(`Origin check failed for game: '${gameId}'`),
+                );
+                return {
+                    reject: {
+                        statusCode: HttpStatus.Unauthorized,
+                    },
+                };
+            }
+
+            return {
+                context: {
+                    gameId,
+                },
+            };
+        },
     })({
         endpoints: {
             '/'() {
@@ -154,17 +239,21 @@ export function implementMultiplayerService(options: MultiplayerServerOptions = 
                     responseData: 'ok',
                 };
             },
-            '/rooms'() {
+            '/rooms'({context}) {
                 return {
                     statusCode: HttpStatus.Ok,
-                    responseData: serverState.roomsForFetching,
+                    responseData: serverState.roomsForFetching[context.gameId] || {},
                 };
             },
         },
         webSockets: {
             '/connect': {
-                message({message, webSocket}) {
-                    serverState.webSocketMessageQueue.push({message, webSocket});
+                message({message, webSocket, context}) {
+                    serverState.webSocketMessageQueue.push({
+                        gameId: context.gameId,
+                        message,
+                        webSocket,
+                    });
                     void callAsynchronously(() => processQueue(serverState));
                 },
             },
@@ -197,30 +286,50 @@ function updateRoomsForFetchingOnInterval(
     }
 
     serverState.updateRoomsIntervalId = setInterval(() => {
-        updateRoomsForFetching(serverState);
+        Object.keys(serverState.multiplayerRooms).forEach((gameId) =>
+            updateRoomsForFetching(gameId, serverState),
+        );
+
+        if (!Object.keys(serverState.multiplayerRooms).length) {
+            clearInterval(serverState.updateRoomsIntervalId);
+            serverState.updateRoomsIntervalId = undefined;
+        }
     }, updateRoomsForFetchingIntervalDuration.milliseconds);
 }
 
 function updateRoomsForFetching(
+    gameId: string,
     serverState: Pick<
         MultiplayerServerState,
         'roomsForFetching' | 'multiplayerRooms' | 'logger' | 'updateRoomsIntervalId'
     >,
 ) {
-    Object.values(serverState.multiplayerRooms).forEach((multiplayerRoom) => {
+    const gameRooms = serverState.multiplayerRooms[gameId];
+
+    if (!gameRooms) {
+        return;
+    }
+
+    Object.values(gameRooms).forEach((multiplayerRoom) => {
         if (
             /** Delete a room if its host is no longer active. */
             multiplayerRoom.hostClient.webSocket.readyState !== CommonWebSocketState.Open ||
             /** Delete a room if it has had no updates from the host for two cycles. */
-            multiplayerRoom.lastHostPingTimestamp <
+            multiplayerRoom.lastHostPingTimestamp <=
                 Date.now() - updateRoomsForFetchingIntervalDuration.milliseconds * 2
         ) {
-            delete serverState.multiplayerRooms[multiplayerRoom.roomId];
+            delete gameRooms[multiplayerRoom.roomId];
         }
     });
 
-    serverState.roomsForFetching = mapObjectValues(
-        serverState.multiplayerRooms,
+    if (!Object.keys(gameRooms).length) {
+        delete serverState.multiplayerRooms[gameId];
+        delete serverState.roomsForFetching[gameId];
+        return;
+    }
+
+    serverState.roomsForFetching[gameId] = mapObjectValues(
+        gameRooms,
         (roomId, multiplayerRoom): MultiplayerClientRoom => {
             return {
                 clientCount: multiplayerRoom.clientCount,
@@ -230,21 +339,16 @@ function updateRoomsForFetching(
             };
         },
     );
-
-    if (!Object.keys(serverState.roomsForFetching).length) {
-        clearInterval(serverState.updateRoomsIntervalId);
-        serverState.updateRoomsIntervalId = undefined;
-    }
 }
 
 function processQueueItem(
     serverState: MultiplayerServerState,
-    {message, webSocket}: ArrayElement<typeof serverState.webSocketMessageQueue>,
+    {message, webSocket, gameId}: ArrayElement<typeof serverState.webSocketMessageQueue>,
 ) {
     const multiplayerRoom =
-        serverState.multiplayerRooms[message.roomId]?.hostClient.webSocket.readyState ===
+        serverState.multiplayerRooms[gameId]?.[message.roomId]?.hostClient.webSocket.readyState ===
         CommonWebSocketState.Open
-            ? serverState.multiplayerRooms[message.roomId]
+            ? serverState.multiplayerRooms[gameId][message.roomId]
             : undefined;
     const currentClient: MultiplayerClient = {
         clientId: message.clientId,
@@ -298,8 +402,10 @@ function processQueueItem(
             serverState.logger.info(
                 `Creating new room '${newRoom.roomName}' with id '${newRoom.roomId}' and host '${currentClient.clientId}'`,
             );
-            serverState.multiplayerRooms[newRoom.roomId] = newRoom;
-            updateRoomsForFetching(serverState);
+            getOrSet(serverState.multiplayerRooms, gameId, () => {
+                return {};
+            })[newRoom.roomId] = newRoom;
+            updateRoomsForFetching(gameId, serverState);
             webSocket.send({
                 messageId: message.messageId,
                 type: MultiplayerWebSocketMessageType.OfferResult,
@@ -342,6 +448,8 @@ function processQueueItem(
             multiplayerRoom.roomName = message.roomName;
             multiplayerRoom.roomPassword = message.roomPassword;
             multiplayerRoom.lastHostPingTimestamp = Date.now();
+
+            updateRoomsForFetching(gameId, serverState);
         } else {
             webSocket.send({
                 messageId: message.messageId,

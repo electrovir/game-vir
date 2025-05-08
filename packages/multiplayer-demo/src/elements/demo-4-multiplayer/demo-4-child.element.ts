@@ -66,6 +66,7 @@ export const Demo4Child = defineElementNoInputs({
 
         if (!state.multiplayerController) {
             const controller = new MultiplayerController<DemoAction>({
+                gameId: 'demo-4',
                 listeners: {
                     frame(actions) {
                         const newItems = actions.map((action) => {

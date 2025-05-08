@@ -56,6 +56,11 @@ export const emptyServiceAndRoomConnectionState: Readonly<ServiceAndRoomConnecti
  * @category Internal
  */
 export type MultiplayerControllerParams<Action extends JsonCompatibleValue> = {
+    /**
+     * Unique string id that represents your game. Your backend will need to know this game id and
+     * match it to your frontend's origin.
+     */
+    gameId: string;
     /** Listen to multiplayer events. */
     listeners: {
         /** This is fired whenever a new frame is received from the host client. */
@@ -354,6 +359,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
 
         if (
             await this.currentConnection.multiplayerConnect(
+                this.params.gameId,
                 await this.multiplayerApi,
                 this.params.multiplayer.stunServerUrls || [],
                 room,
@@ -414,7 +420,13 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> {
                 if (this.currentConnection || !this.multiplayerApi) {
                     return;
                 }
-                const output = await (await this.multiplayerApi).endpoints['/rooms'].fetch();
+                const output = await (
+                    await this.multiplayerApi
+                ).endpoints['/rooms'].fetch({
+                    searchParams: {
+                        gameId: [this.params.gameId],
+                    },
+                });
                 if (output.ok) {
                     await this.params.listeners.roomListUpdate?.(output.data, this);
                 }
