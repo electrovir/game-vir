@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/entity",
-    "version": "14.6.0",
+    "version": "14.6.1",
     "description": "Entity system for game development.",
     "keywords": [
         "entity",
@@ -48,7 +48,7 @@
         "@web/test-runner-commands": "^0.9.0",
         "@web/test-runner-playwright": "^0.11.0",
         "@web/test-runner-visual-regression": "^0.10.0",
-        "detect-collisions": "^9.27.3",
+        "detect-collisions": "^9.27.5",
         "execute-in-browser": "^1.0.5",
         "istanbul-smart-text-reporter": "^1.1.5",
         "markdown-code-example-inserter": "^3.0.3",
