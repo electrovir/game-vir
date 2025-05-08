@@ -422,7 +422,7 @@ describe(ViewEntity.name, () => {
 
         const events: Event[] = [];
 
-        instance.events.listen(EntityDestroyEvent, (event, removeSelf) => {
+        store.events.listen(EntityDestroyEvent, (event, removeSelf) => {
             events.push(event);
             removeSelf();
         });

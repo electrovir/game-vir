@@ -8,7 +8,6 @@ import {
 } from '@augment-vir/common';
 import {type ShapeDefinition} from 'object-shape-tester';
 import {type Constructor} from 'type-fest';
-import {type ListenTarget} from 'typed-event-target';
 import {
     BaseEntity,
     type EntityDestroyEvent,
@@ -107,10 +106,9 @@ export type DefinedViewEntityInstance<
     Events extends Readonly<Event>,
 > = ViewEntity<
     Context,
-    Shape extends ShapeDefinition<AnyObject, any> ? Shape['runtimeType'] : undefined
-> & {
-    events: ListenTarget<Events>;
-};
+    Shape extends ShapeDefinition<AnyObject, any> ? Shape['runtimeType'] : undefined,
+    Events
+>;
 
 /**
  * Output of {@link DefineViewEntity}.
@@ -173,10 +171,9 @@ export type DefinedLogicEntityInstance<
     Events extends Readonly<Event>,
 > = BaseEntity<
     Context,
-    Shape extends ShapeDefinition<AnyObject, any> ? Shape['runtimeType'] : undefined
-> & {
-    events: ListenTarget<Events>;
-};
+    Shape extends ShapeDefinition<AnyObject, any> ? Shape['runtimeType'] : undefined,
+    Events
+>;
 
 /**
  * Output of {@link DefineLogicEntity}.

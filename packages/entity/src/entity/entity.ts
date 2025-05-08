@@ -76,6 +76,14 @@ export type EntityStoreConstructorParams<
 };
 
 /**
+ * Extract all event types from all given entity constructors (in a union).
+ *
+ * @category Internal
+ */
+export type ExtractEntityEvents<Entity extends Constructor<BaseEntity>> =
+    InstanceType<Entity> extends BaseEntity<any, any, infer Events> ? Events : never;
+
+/**
  * The top level storage class of all entities. Add entities with {@link EntityStore.addEntity}.
  *
  * @category Internal
@@ -107,6 +115,10 @@ export class EntityStore<
         string,
         Constructor<BaseEntity> & Pick<typeof BaseEntity, 'deserialize' | 'entityKey'>
     >;
+    /** Events emitted from any child entities. */
+    public events = new ListenTarget<
+        ExtractEntityEvents<RegisteredEntities> | EntityDestroyEvent
+    >();
 
     constructor(args: Readonly<EntityStoreConstructorParams<Context, RegisteredEntities>>) {
         this.pixi = args.pixi;
@@ -264,11 +276,13 @@ export class EntityStore<
         }
         this.currentEntityInstances.forEach((entity) => entity.destroy());
         makeWritable(this).isDestroyed = true;
+        this.events.destroy();
         this.currentEntityInstances.clear();
         this.entityInstanceMap.destroy();
         delete (this as Writable<Partial<EntityStore>>).pixi;
         delete (this as Writable<Partial<EntityStore>>).hitboxSystem;
         delete (this as Writable<Partial<EntityStore>>).context;
+        delete (this as Writable<Partial<EntityStore>>).events;
     }
 }
 
@@ -409,6 +423,7 @@ export type ReverseParamsMap = Record<string, Partial<Record<'hitbox' | 'view', 
 export abstract class BaseEntity<
     Context = any,
     Params extends Record<string, any> | undefined = any,
+    Events extends Readonly<Event> = never,
 > {
     /**
      * This key is used for deserialization of entities to track which class needs to be
@@ -439,9 +454,17 @@ export abstract class BaseEntity<
         return deserialized;
     }
 
+    /**
+     * Dispatch an event. This will be dispatched through this entity's entity store (so listen for
+     * the event on the store).
+     */
+    public dispatch(event: Events | EntityDestroyEvent) {
+        /** Cast to optionally undefined to account for destruction. */
+        (this.entityStore as typeof this.entityStore | undefined)?.events.dispatch(event);
+    }
+
     /** If true, this entity should no longer be used or operated upon. */
     public readonly isDestroyed: boolean = false;
-    public readonly events = new ListenTarget<EntityDestroyEvent>();
     public hitbox: Hitbox<this> | undefined;
 
     /** The entity store to add all entities to. */
@@ -492,8 +515,7 @@ export abstract class BaseEntity<
     public immediatelyDestroy() {
         makeWritable(this).isDestroyed = true;
         (this.entityStore as typeof this.entityStore | undefined)?.removeEntity(this);
-        this.events.dispatch(new EntityDestroyEvent());
-        this.events.destroy();
+        this.dispatch(new EntityDestroyEvent());
         delete (this as Writable<Partial<BaseEntity>>).entityStore;
         delete (this as Writable<Partial<BaseEntity>>).context;
         delete (this as Writable<Partial<BaseEntity>>).hitboxSystem;
@@ -551,7 +573,8 @@ export type ViewCreation = {
 export abstract class ViewEntity<
     Context = any,
     Params extends Record<string, any> | undefined = any,
-> extends BaseEntity<Context, Params> {
+    Events extends Readonly<Event> = never,
+> extends BaseEntity<Context, Params, Events> {
     /** The entity's PixiJS view. */
     public view: ViewContainer;
 

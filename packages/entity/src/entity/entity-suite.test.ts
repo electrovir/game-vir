@@ -123,7 +123,7 @@ describe(defineEntitySuite.name, () => {
                 // do nothing
             }
             public override createView() {
-                this.events.dispatch(
+                this.dispatch(
                     new MyEvent({
                         detail: {
                             value: 5,
@@ -143,7 +143,7 @@ describe(defineEntitySuite.name, () => {
                 // do nothing
             }
             public override createView() {
-                this.events.dispatch(
+                this.dispatch(
                     // @ts-expect-error: this event is not part of this entity
                     new MyEvent({
                         detail: {
@@ -165,28 +165,21 @@ describe(defineEntitySuite.name, () => {
         });
 
         const instance = entityStore.addEntity(MyEntity);
-
         assert.instanceOf(instance, MyEntity);
         assert.instanceOf(instance, BaseEntity);
         assert.instanceOf(instance, ViewEntity);
 
-        instance.events.listen(EntityDestroyEvent, () => {});
-        instance.events.listen(MyEvent, (event) => {
+        entityStore.events.listen(EntityDestroyEvent, () => {});
+        entityStore.events.listen(MyEvent, (event) => {
             assert.tsType(event.detail).equals<{value: number}>();
         });
         // @ts-expect-error: invalid event to listen to
-        instance.events.listen(Error, () => {});
+        entityStore.events.listen(Error, () => {});
 
-        const instance2 = entityStore.addEntity(MyEntity2);
-
-        instance2.events.listen(EntityDestroyEvent, () => {});
-        // @ts-expect-error: invalid event to listen to
-        instance2.events.listen(MyEvent, (event) => {
-            // @ts-expect-error: invalid event to listen to
+        entityStore.events.listen(EntityDestroyEvent, () => {});
+        entityStore.events.listen(MyEvent, (event) => {
             assert.tsType(event.detail).equals<{value: number}>();
         });
-        // @ts-expect-error: invalid event to listen to
-        instance2.events.listen(Error, () => {});
     });
     it('prevents identical keys', () => {
         const {defineEntity} = defineEntitySuite();
