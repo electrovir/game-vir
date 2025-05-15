@@ -26,13 +26,13 @@
         "test:update": "npm test update"
     },
     "dependencies": {
-        "@augment-vir/assert": "^31.17.1",
-        "@augment-vir/common": "^31.17.1",
-        "@augment-vir/node": "^31.17.1"
+        "@augment-vir/assert": "^31.19.1",
+        "@augment-vir/common": "^31.19.1",
+        "@augment-vir/node": "^31.19.1"
     },
     "devDependencies": {
-        "@augment-vir/test": "^31.17.1",
-        "@types/node": "^22.15.17",
+        "@augment-vir/test": "^31.19.1",
+        "@types/node": "^22.15.18",
         "tsx": "^4.19.4"
     },
     "engines": {

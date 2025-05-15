@@ -35,16 +35,16 @@
         "test": "exit 0"
     },
     "dependencies": {
-        "@augment-vir/assert": "^31.17.1",
-        "@augment-vir/common": "^31.17.1",
+        "@augment-vir/assert": "^31.19.1",
+        "@augment-vir/common": "^31.19.1",
         "@game-vir/multiplayer": "^14.7.0",
         "@game-vir/multiplayer-server": "^14.7.0",
         "@rest-vir/define-service": "^0.18.1",
         "date-vir": "^7.3.1",
-        "element-vir": "^25.3.0",
+        "element-vir": "^25.4.0",
         "spa-router-vir": "^5.3.1",
         "url-vir": "^2.1.3",
-        "vira": "^25.3.0"
+        "vira": "^25.4.0"
     },
     "devDependencies": {
         "typescript": "^5.8.3",

@@ -23,15 +23,15 @@
         "test": "npm run build"
     },
     "dependencies": {
-        "@augment-vir/common": "^31.17.1",
+        "@augment-vir/common": "^31.19.1",
         "@game-vir/handle-input": "^14.7.0",
         "@game-vir/render": "^14.7.0",
-        "element-book": "^25.3.0",
-        "element-vir": "^25.3.0",
+        "element-book": "^25.4.0",
+        "element-vir": "^25.4.0",
         "input-device-handler": "^9.0.1",
         "url-vir": "^2.1.3",
         "vir-line": "^2.0.1",
-        "vira": "^25.3.0"
+        "vira": "^25.4.0"
     },
     "devDependencies": {
         "esbuild": "^0.25.4",
