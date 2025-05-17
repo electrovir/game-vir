@@ -259,7 +259,7 @@ export class AudioFile extends ListenTarget<AllAudioFileEvents> {
 
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = clamp(params.volume ?? 1, {min: 0, max: 1});
-        gainNode.connect(this.audioContext.destination);
+        gainNode.connect(params.outputNode || this.audioContext.destination);
 
         this.outputNode = setupEffects(
             this.audioContext,
