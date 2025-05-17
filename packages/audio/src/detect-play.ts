@@ -5,7 +5,9 @@ import {DeferredPromise} from '@augment-vir/common';
  *
  * @category Internal
  */
-export async function isPlayingEnabled(audioContext: Readonly<BaseAudioContext>): Promise<boolean> {
+export async function isPlayingEnabled(
+    audioContext: Readonly<BaseAudioContext> = new AudioContext(),
+): Promise<boolean> {
     const source = audioContext.createBufferSource();
     source.buffer = audioContext.createBuffer(1, 1, 22_050);
     source.connect(audioContext.destination);

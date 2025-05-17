@@ -30,7 +30,7 @@ setInterval(() => playSound(), 1000);
 
 async function playSound() {
     console.info('playing');
-    await player.play('confirm');
+    await player.play.confirm();
 }
 
 function makeDistortionCurve(amount: number): Float32Array {

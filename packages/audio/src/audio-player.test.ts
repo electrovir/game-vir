@@ -1,18 +1,20 @@
 import {assert, waitUntil} from '@augment-vir/assert';
-import {describe, it, testWeb} from '@augment-vir/test';
-import {html} from 'element-vir';
+import {describe, it} from '@augment-vir/test';
 import {AudioPlayer, type AudioLoadProgressCallbackParams} from './audio-player.js';
 import {Codec} from './codecs.js';
 import {longerMp3FileUrl, shortMp3FileUrl} from './files.mock.js';
+import {makePlayable} from './make-playable.mock.js';
 
 describe(AudioPlayer.name, () => {
     it('rejects a missing file extension', async () => {
+        await makePlayable();
+
         await assert.throws(() =>
             new AudioPlayer({
                 myFile: {
                     sources: ['invalid'],
                 },
-            }).play('myFile'),
+            }).play.myFile(),
         );
     });
     it('allows a specified codec', () => {
@@ -78,10 +80,6 @@ describe(AudioPlayer.name, () => {
         await player.load('myFile');
     });
     it('sets all isPlayingEnabled', async () => {
-        const fixture = await testWeb.render(html`
-            <div></div>
-        `);
-
         const player = new AudioPlayer({
             myFile: {
                 sources: [shortMp3FileUrl],
@@ -97,16 +95,14 @@ describe(AudioPlayer.name, () => {
         assert.isDefined(audioFile);
         assert.isDefined(audioFile2);
 
-        assert.isFalse(audioFile.isAudioAllowed);
+        await player.play.myFile();
 
-        await player.play('myFile');
+        await makePlayable();
 
-        assert.isFalse(audioFile.isAudioAllowed);
-
-        await testWeb.click(fixture);
+        await player.play.myFile();
 
         await waitUntil.isTrue(async () => {
-            await player.play('myFile');
+            await player.play.myFile();
 
             return audioFile.isAudioAllowed && audioFile2.isAudioAllowed;
         });

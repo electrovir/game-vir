@@ -56,7 +56,10 @@ export type AudioLoadProgressCallback = (
  *
  * @category Internal
  */
-export type AudioPlayerOptions = Pick<AudioFileParams, 'fetch' | 'volume' | 'createEffects'>;
+export type AudioPlayerOptions = Pick<
+    AudioFileParams,
+    'fetch' | 'volume' | 'createEffects' | 'loadOnPlay'
+>;
 
 /**
  * Base type for the type parameter and main argument of {@link AudioPlayer.load} when loading
@@ -88,6 +91,9 @@ export class AudioPlayer<
      */
     public readonly isAudioAllowed = false as boolean;
 
+    /** Play a specific audio file. */
+    public play: Record<keyof Files, () => Promise<boolean>>;
+
     constructor(
         protected readonly initFiles: Readonly<Files>,
         protected readonly options: Readonly<PartialWithUndefined<AudioPlayerOptions>> = {},
@@ -102,6 +108,13 @@ export class AudioPlayer<
             gainNode,
             options.createEffects,
         ).outputNode;
+
+        this.play = mapObjectValues(this.initFiles, (playKey) => {
+            return () => {
+                const audioFile = this.setupAudioFile(playKey);
+                return audioFile.play();
+            };
+        });
     }
 
     /** Create a new {@link AudioFile} instance at the given `key` and set it up. */
@@ -115,6 +128,7 @@ export class AudioPlayer<
 
         const audioFile = new AudioFile({
             fetch: this.options.fetch,
+            loadOnPlay: this.options.loadOnPlay,
             ...params,
             audioCache: this.audioCache,
             audioContext: this.audioContext,
@@ -201,12 +215,6 @@ export class AudioPlayer<
             mapObjectValues(this.initFiles, () => true),
             progressCallback,
         );
-    }
-
-    /** Play a specific audio file. */
-    public play(playKey: keyof Files) {
-        const audioFile = this.setupAudioFile(playKey);
-        return audioFile.play();
     }
 
     /** Destroy and cleanup this {@link AudioPlayer} and all child {@link AudioFile} instances. */

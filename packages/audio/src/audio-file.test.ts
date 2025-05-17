@@ -44,6 +44,15 @@ describe(AudioFile.name, () => {
         const file = new AudioFile({sources: [shortMp3Base64]});
 
         await file.load();
+        await file.play();
+    });
+    it('fails to play an unloaded file', async () => {
+        const file = new AudioFile({sources: [shortMp3Base64]});
+
+        await assert.throws(() => file.play());
+    });
+    it('can auto load', async () => {
+        const file = new AudioFile({sources: [shortMp3Base64], loadOnPlay: true});
 
         await file.play();
     });

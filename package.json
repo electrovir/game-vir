@@ -29,7 +29,7 @@
         "script": "npm run execute --workspace @game-vir/scripts",
         "start": "npm start --workspace @game-vir/book",
         "test": "mono-vir for-each-async npm run test",
-        "test:all": "npm run compile && concurrently --colors --kill-others-on-fail -c auto --names tests,spelling,format,docs,deps,lint \"npm run test\" \"npm run test:spelling\" \"npm run test:format\" \"npm run test:docs\" \"npm run test:deps\" \"npm run test:lint\"",
+        "test:all": "npm run compile && concurrently --colors --kill-others-on-fail -c auto --names tests,spelling,format,docs,deps,lint,build \"npm run test\" \"npm run test:spelling\" \"npm run test:format\" \"npm run test:docs\" \"npm run test:deps\" \"npm run test:lint\" \"npm run build\"",
         "test:deps": "virmator deps check",
         "test:docs": "npm run --workspaces --if-present test:docs",
         "test:format": "virmator format check",

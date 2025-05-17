@@ -53,6 +53,14 @@ export type AudioFileParams = Readonly<
         audioContext: BaseAudioContext;
         audioCache: AudioFileCache;
         /**
+         * If set to `true`, audio files will be automatically loaded when played, if they haven't
+         * already been loaded. When `false` (the default), an error will be thrown if unloaded
+         * files are played.
+         *
+         * @default false
+         */
+        loadOnPlay: boolean;
+        /**
          * Any audio nodes to chain together. They will automatically be connected together in
          * sequential order.
          */
@@ -225,7 +233,7 @@ export class AudioFile extends ListenTarget<AllAudioFileEvents> {
      */
     public readonly isDestroyed = false as boolean;
 
-    constructor(params: AudioFileParams) {
+    constructor(private readonly params: AudioFileParams) {
         super();
         const chosenSource = params.sources.find((source) => {
             if (check.isString(source)) {
@@ -283,6 +291,12 @@ export class AudioFile extends ListenTarget<AllAudioFileEvents> {
      *   if audio is currently disabled.
      */
     public async play(): Promise<boolean> {
+        const audioBuffer = this.params.loadOnPlay ? await this.load() : await this.loadPromise;
+        if (!audioBuffer) {
+            const error = new Error('Attempted to play unloaded audio.');
+            this.dispatch(new AudioFileErrorEvent({detail: error}));
+            throw error;
+        }
         if (!this.isAudioAllowed) {
             makeWritable(this).isAudioAllowed = await isPlayingEnabled(this.audioContext);
             if (this.isAudioAllowed as boolean) {
@@ -295,9 +309,9 @@ export class AudioFile extends ListenTarget<AllAudioFileEvents> {
                 return false;
             }
         }
+
         const deferredPlayPromise = new DeferredPromise<boolean>();
 
-        const audioBuffer = await this.load();
         const bufferSource = this.audioContext.createBufferSource();
         bufferSource.buffer = audioBuffer;
 
