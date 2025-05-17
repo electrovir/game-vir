@@ -232,6 +232,7 @@ export class AudioFile extends ListenTarget<AllAudioFileEvents> {
      * interacted with anymore. This is set by running {@link AudioFile.destroy}.
      */
     public readonly isDestroyed = false as boolean;
+    public readonly gainNode: GainNode;
 
     constructor(private readonly params: AudioFileParams) {
         super();
@@ -257,13 +258,13 @@ export class AudioFile extends ListenTarget<AllAudioFileEvents> {
         this.audioCache = params.audioCache || {};
         this.fetch = params.fetch || globalThis.fetch.bind(globalThis);
 
-        const gainNode = this.audioContext.createGain();
-        gainNode.gain.value = clamp(params.volume ?? 1, {min: 0, max: 1});
-        gainNode.connect(params.outputNode || this.audioContext.destination);
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.gain.value = clamp(params.volume ?? 1, {min: 0, max: 1});
+        this.gainNode.connect(params.outputNode || this.audioContext.destination);
 
         this.outputNode = setupEffects(
             this.audioContext,
-            gainNode,
+            this.gainNode,
             params.createEffects,
         ).outputNode;
     }

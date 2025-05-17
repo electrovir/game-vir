@@ -90,6 +90,8 @@ export class AudioPlayer<
      * page load until the user has interacted with the page.
      */
     public readonly isAudioAllowed = false as boolean;
+    /** Controls volume for all audio files. Modify `gain.value` on this to change playback volume. */
+    public readonly gainNode: GainNode;
 
     /** Play a specific audio file. */
     public play: Record<keyof Files, () => Promise<boolean>>;
@@ -99,13 +101,13 @@ export class AudioPlayer<
         protected readonly options: Readonly<PartialWithUndefined<AudioPlayerOptions>> = {},
     ) {
         super();
-        const gainNode = this.audioContext.createGain();
-        gainNode.gain.value = clamp(options.volume ?? 1, {min: 0, max: 1});
-        gainNode.connect(this.audioContext.destination);
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.gain.value = clamp(options.volume ?? 1, {min: 0, max: 1});
+        this.gainNode.connect(this.audioContext.destination);
 
         this.outputNode = setupEffects(
             this.audioContext,
-            gainNode,
+            this.gainNode,
             options.createEffects,
         ).outputNode;
 

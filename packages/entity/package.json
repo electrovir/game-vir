@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/entity",
-    "version": "14.9.1",
+    "version": "14.10.0",
     "description": "Entity system for game development.",
     "keywords": [
         "entity",
