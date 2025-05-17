@@ -1,3 +1,61 @@
 {
-    "name": "@game-vir/audio"
+    "name": "@game-vir/audio",
+    "version": "14.8.0",
+    "description": "Utilities for playing audio.",
+    "keywords": [
+        "game",
+        "audio"
+    ],
+    "homepage": "https://github.com/electrovir/game-vir",
+    "bugs": {
+        "url": "https://github.com/electrovir/game-vir/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/electrovir/game-vir.git"
+    },
+    "license": "(MIT or CC0 1.0)",
+    "author": {
+        "name": "electrovir",
+        "url": "https://github.com/electrovir"
+    },
+    "sideEffects": false,
+    "type": "module",
+    "main": "src/index.ts",
+    "module": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "compile": "virmator compile",
+        "docs": "virmator docs",
+        "start": "virmator frontend",
+        "test": "virmator test web",
+        "test:coverage": "npm run test coverage",
+        "test:docs": "virmator docs check"
+    },
+    "dependencies": {
+        "@augment-vir/assert": "^31.19.1",
+        "@augment-vir/common": "^31.19.1",
+        "howler": "^2.2.4",
+        "typed-event-target": "^4.1.0"
+    },
+    "devDependencies": {
+        "@augment-vir/test": "^31.19.1",
+        "@web/dev-server-esbuild": "^1.0.4",
+        "@web/test-runner": "^0.20.1",
+        "@web/test-runner-commands": "^0.9.0",
+        "@web/test-runner-playwright": "^0.11.0",
+        "@web/test-runner-visual-regression": "^0.10.0",
+        "element-vir": "^25.4.0",
+        "istanbul-smart-text-reporter": "^1.1.5",
+        "markdown-code-example-inserter": "^3.0.3",
+        "typedoc": "^0.28.4",
+        "typescript": "^5.8.3",
+        "vite": "^6.3.5"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
 }

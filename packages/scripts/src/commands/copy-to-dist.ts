@@ -10,6 +10,7 @@ const packagesToCopy = [
     'multiplayer',
     'multiplayer-server',
     'entity',
+    'audio',
 ] as const satisfies (keyof typeof packageDirs)[];
 
 const packageCopyFromPaths: Readonly<Record<ArrayElement<typeof packagesToCopy>, string>> = {
@@ -19,6 +20,7 @@ const packageCopyFromPaths: Readonly<Record<ArrayElement<typeof packagesToCopy>,
     multiplayer: 'dist-docs',
     'multiplayer-server': 'dist-docs',
     entity: 'dist-docs',
+    audio: 'dist-docs',
 };
 
 export async function copyToDist() {

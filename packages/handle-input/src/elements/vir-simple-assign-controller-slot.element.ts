@@ -10,7 +10,7 @@ import {
     type PartialWithUndefined,
 } from '@augment-vir/common';
 import {waitForAnimationFrame} from '@augment-vir/web';
-import {group, nav, NavDirection, NavEnterEvent, NavPiblingEvent} from 'device-navigation';
+import {nav, NavDirection, NavEnterEvent, NavPiblingEvent} from 'device-navigation';
 import {css, defineElement, defineElementEvent, html, listen, nothing} from 'element-vir';
 import {fancyGamepadModelName, findMatchingGamepadModel} from 'gamepad-type';
 import {
@@ -315,6 +315,11 @@ export const VirSimpleAssignControllerSlot = defineElement<
         });
     },
     render({state, inputs}) {
+        const navController = state.menuNavController;
+
+        if (!navController) {
+            return '';
+        }
         const mappedKeys = filterMap(
             getEnumValues(GamepadInputDeviceKey),
             (deviceKey) => {
@@ -361,7 +366,7 @@ export const VirSimpleAssignControllerSlot = defineElement<
                     ${listen('mousedown', async () => {
                         await playRumble(originalKey);
                     })}
-                    ${nav()}
+                    ${nav(navController)}
                 >
                     <p>${mappedKey}</p>
                     <${VirDeviceChip.assign({
@@ -376,7 +381,9 @@ export const VirSimpleAssignControllerSlot = defineElement<
         });
 
         return html`
-            <div class="devices-wrapper" ${nav(group)}>${deviceTemplates}</div>
+            <div class="devices-wrapper" ${nav(navController, {group: true})}>
+                ${deviceTemplates}
+            </div>
         `;
     },
 });
@@ -391,7 +398,7 @@ async function playRumble(gamepadKey: GamepadInputDeviceKey) {
 }
 
 function getFocusedKeys(menuNavController: Readonly<MenuNavController>) {
-    const element = menuNavController.getCurrentlyFocused()?.node.element;
+    const element = menuNavController.currentNavEntry?.entry.element;
 
     if (!element) {
         return undefined;

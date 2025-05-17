@@ -1,17 +1,15 @@
 import {
     createTypedReadBindingsStage,
-    group,
     InputDirection,
     MenuNavBinding,
     MenuNavController,
-    type MenuNavState,
     nav,
     readRawInputStage,
 } from '@game-vir/handle-input';
 import {defineBookPage} from 'element-book';
 import {css, defineElementNoInputs, html} from 'element-vir';
 import {InputDeviceHandler, InputDeviceKey} from 'input-device-handler';
-import {VirLine, type VirLineWithState} from 'vir-line';
+import {VirLine} from 'vir-line';
 import {elementsPage} from '../top-level-pages.js';
 
 const VirMenuNavTest = defineElementNoInputs({
@@ -47,101 +45,92 @@ const VirMenuNavTest = defineElementNoInputs({
             justify-content: center;
         }
     `,
-    state() {
+    state({host}) {
+        const deviceHandler = new InputDeviceHandler({disableMouseMovement: true});
+        const virLine = new VirLine(
+            [
+                readRawInputStage,
+                createTypedReadBindingsStage<MenuNavBinding>(),
+            ],
+            {
+                deviceHandler,
+                playersBindings: {
+                    '1': {
+                        [MenuNavBinding.Up]: [
+                            {
+                                deviceKey: InputDeviceKey.Keyboard,
+                                direction: InputDirection.Positive,
+                                inputName: 'button-KeyW',
+                            },
+                        ],
+                        [MenuNavBinding.Down]: [
+                            {
+                                deviceKey: InputDeviceKey.Keyboard,
+                                direction: InputDirection.Positive,
+                                inputName: 'button-KeyS',
+                            },
+                        ],
+                        [MenuNavBinding.Right]: [
+                            {
+                                deviceKey: InputDeviceKey.Keyboard,
+                                direction: InputDirection.Positive,
+                                inputName: 'button-KeyD',
+                            },
+                        ],
+                        [MenuNavBinding.Left]: [
+                            {
+                                deviceKey: InputDeviceKey.Keyboard,
+                                direction: InputDirection.Positive,
+                                inputName: 'button-KeyA',
+                            },
+                        ],
+                        [MenuNavBinding.SectionNext]: [
+                            {
+                                deviceKey: InputDeviceKey.Keyboard,
+                                direction: InputDirection.Positive,
+                                inputName: 'button-KeyE',
+                            },
+                        ],
+                        [MenuNavBinding.SectionPrevious]: [
+                            {
+                                deviceKey: InputDeviceKey.Keyboard,
+                                direction: InputDirection.Positive,
+                                inputName: 'button-KeyQ',
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                init: {
+                    startUpdateLoopImmediately: true,
+                },
+            },
+        );
+
         return {
-            menuNavController: undefined as undefined | MenuNavController,
-            virLine: undefined as undefined | VirLineWithState<MenuNavState>,
-            deviceHandler: new InputDeviceHandler({disableMouseMovement: true}),
+            menuNavController: new MenuNavController(host, virLine),
+            virLine,
+            deviceHandler,
         };
     },
-    init({host, state, updateState}) {
-        const virLine =
-            state.virLine ||
-            new VirLine(
-                [
-                    readRawInputStage,
-                    createTypedReadBindingsStage<MenuNavBinding>(),
-                ],
-                {
-                    deviceHandler: state.deviceHandler,
-                    playersBindings: {
-                        '1': {
-                            [MenuNavBinding.Up]: [
-                                {
-                                    deviceKey: InputDeviceKey.Keyboard,
-                                    direction: InputDirection.Positive,
-                                    inputName: 'button-KeyW',
-                                },
-                            ],
-                            [MenuNavBinding.Down]: [
-                                {
-                                    deviceKey: InputDeviceKey.Keyboard,
-                                    direction: InputDirection.Positive,
-                                    inputName: 'button-KeyS',
-                                },
-                            ],
-                            [MenuNavBinding.Right]: [
-                                {
-                                    deviceKey: InputDeviceKey.Keyboard,
-                                    direction: InputDirection.Positive,
-                                    inputName: 'button-KeyD',
-                                },
-                            ],
-                            [MenuNavBinding.Left]: [
-                                {
-                                    deviceKey: InputDeviceKey.Keyboard,
-                                    direction: InputDirection.Positive,
-                                    inputName: 'button-KeyA',
-                                },
-                            ],
-                            [MenuNavBinding.SectionNext]: [
-                                {
-                                    deviceKey: InputDeviceKey.Keyboard,
-                                    direction: InputDirection.Positive,
-                                    inputName: 'button-KeyE',
-                                },
-                            ],
-                            [MenuNavBinding.SectionPrevious]: [
-                                {
-                                    deviceKey: InputDeviceKey.Keyboard,
-                                    direction: InputDirection.Positive,
-                                    inputName: 'button-KeyQ',
-                                },
-                            ],
-                        },
-                    },
-                },
-                {
-                    init: {
-                        startUpdateLoopImmediately: true,
-                    },
-                },
-            );
-
-        if (!state.menuNavController) {
-            updateState({
-                menuNavController: new MenuNavController(host, virLine),
-            });
-        }
+    cleanup({state}) {
+        state.menuNavController.destroy();
     },
-    cleanup({state, updateState}) {
-        state.menuNavController?.destroy();
-        updateState({menuNavController: undefined});
-    },
-    render() {
+    render({state}) {
         return html`
-            <section ${nav(group)}>
-                <div class="cell" ${nav()}>Cell</div>
-                <div class="cell" ${nav()}>Cell</div>
+            <section ${nav(state.menuNavController, {group: true})}>
+                <div class="cell" ${nav(state.menuNavController)}>Cell</div>
+                <div class="cell" ${nav(state.menuNavController)}>Cell</div>
             </section>
-            <section ${nav(group)}>
+            <section ${nav(state.menuNavController, {group: true})}>
                 <div class="row">
-                    <div class="cell" ${nav(0, 0)}>Cell</div>
-                    <div class="cell" ${nav(1, 0)}>Cell</div>
+                    <div class="cell" ${nav(state.menuNavController, {x: 0, y: 0})}>Cell</div>
+                    <div class="cell" ${nav(state.menuNavController, {x: 1, y: 0})}>Cell</div>
                 </div>
                 <div class="row">
-                    <div class="cell" ${nav(0, 1)}>Cell</div>
-                    <div class="cell" ${nav(1, 1)}>Cell</div>
+                    <div class="cell" ${nav(state.menuNavController, {x: 0, y: 1})}>Cell</div>
+                    <div class="cell" ${nav(state.menuNavController, {x: 1, y: 1})}>Cell</div>
                 </div>
             </section>
         `;

@@ -195,7 +195,7 @@ export function implementMultiplayerService(options: MultiplayerServerOptions) {
                 };
             }
 
-            const gameId = searchParams?.gameId[0];
+            const gameId = 'gameId' in searchParams ? searchParams.gameId[0] : undefined;
             const originRequirement =
                 check.isString(gameId) && gameId
                     ? options.games.byId?.[gameId] || options.games.default

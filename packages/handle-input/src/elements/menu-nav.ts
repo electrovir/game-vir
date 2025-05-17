@@ -4,11 +4,11 @@ import {
     type PartialWithUndefined,
 } from '@augment-vir/common';
 import {type AnyDuration, convertDuration} from 'date-vir';
-import {NavController, NavDirection} from 'device-navigation';
+import {NavController, type NavControllerOptions, NavDirection} from 'device-navigation';
 import {type RemoveListenerCallback, type VirLineWithState} from 'vir-line';
 import {type PlayersActiveBindingsMap} from '../stages/read-bindings.stage.js';
 
-export {group, nav, NavController, navSelector} from 'device-navigation';
+export {nav, navAttribute, NavController} from 'device-navigation';
 
 /**
  * All supported menu navigation bindings. To ignore any, simply don't allow players to bind to
@@ -79,7 +79,8 @@ export type MenuNavOptions = Readonly<
          */
         allowWrapping: boolean;
     }>
->;
+> &
+    NavControllerOptions;
 
 /**
  * Listen to active menu navigation bindings on a `VirLine` instance and perform them within the
@@ -108,10 +109,11 @@ export class MenuNavController extends NavController {
      * The current options assigned to this {@link MenuNavController} instance. Override the defaults
      * in the constructor, or mutate it at any time to affect all subsequent menu navigation.
      */
-    public options: Required<MenuNavOptions> = {
+    public override options: Required<MenuNavOptions> = {
         repeatThreshold: {milliseconds: 500},
         repeatInterval: {milliseconds: 60},
         allowWrapping: true,
+        alwaysRequireFocused: true,
     };
 
     /** Stop reacting to user inputs. */

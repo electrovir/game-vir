@@ -16,6 +16,7 @@ const packageNames = [
     'render',
     'scripts',
     'entity',
+    'audio',
 ] as const;
 
 export const packageDirs = packageNames.reduce(
