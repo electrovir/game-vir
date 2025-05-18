@@ -14,6 +14,7 @@ import {Demo2App} from './demo-2-room-selection/demo-2-app.element.js';
 import {Demo3App} from './demo-3-webrtc-speed/demo-3-app.element.js';
 import {Demo4App} from './demo-4-multiplayer/demo-4-app.element.js';
 import {Demo5App} from './demo-5-singleplayer/demo-5-app.element.js';
+import {Demo6App} from './demo-6-external-timer/demo-6-app.element.js';
 
 const demoList = (
     [
@@ -36,6 +37,10 @@ const demoList = (
         {
             name: 'Demo 5: Singleplayer',
             element: Demo5App,
+        },
+        {
+            name: 'Demo 6: External Timer',
+            element: Demo6App,
         },
     ] satisfies {name: string; element: DeclarativeElementDefinition}[]
 ).map((entry) => {

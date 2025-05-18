@@ -1,5 +1,8 @@
-import {createUuidV4, extractErrorMessage, randomInteger} from '@augment-vir/common';
+import {extractErrorMessage, randomInteger} from '@augment-vir/common';
 import {
+    ControllerConnectionEvent,
+    ControllerFrameEvent,
+    ControllerRoomListEvent,
     MultiplayerConnectionState,
     MultiplayerController,
     type ServiceAndRoomConnectionState,
@@ -63,48 +66,47 @@ export const Demo5Child = defineElementNoInputs({
         if (!state.multiplayerController) {
             const controller = new MultiplayerController<DemoAction>({
                 gameId: 'demo-5',
-                listeners: {
-                    frame(actions) {
-                        const newItems = actions.map((action) => {
-                            return {
-                                ...action,
-                                timestamp: Date.now(),
-                            };
-                        });
-                        updateState({
-                            fps: Math.round(controller.getFps()),
-                        });
-
-                        if (newItems.length) {
-                            updateState({
-                                items: [
-                                    ...state.items,
-                                    ...newItems,
-                                ],
-                            });
-                        }
-                    },
-                    async roomListUpdate(rooms) {
-                        const firstRoom = Object.values(rooms)[0];
-                        if (firstRoom) {
-                            await controller.joinOrCreateRoom({
-                                roomId: firstRoom.roomId,
-                                roomName: firstRoom.roomName,
-                                /** No passwords in the demo. */
-                                roomPassword: '',
-                            });
-                        }
-                    },
-                    connectionUpdate(state) {
-                        updateState({
-                            connectionState: state,
-                        });
-                    },
-                },
-                singleplayer: true,
-                // // use longer frame durations for debugging
-                // frameDuration: {seconds: 1},
+                // use longer frame durations for debugging
+                frameDuration: {milliseconds: 10},
             });
+            controller.listen(ControllerConnectionEvent, ({detail: state}) => {
+                updateState({
+                    connectionState: state,
+                });
+            });
+            controller.listen(ControllerRoomListEvent, async ({detail: rooms}) => {
+                const firstRoom = Object.values(rooms)[0];
+                if (firstRoom) {
+                    await controller.joinOrCreateRoom({
+                        roomId: firstRoom.roomId,
+                        roomName: firstRoom.roomName,
+                        /** No passwords in the demo. */
+                        roomPassword: '',
+                    });
+                }
+            });
+            controller.listen(ControllerFrameEvent, ({detail: actions}) => {
+                const newItems = actions.map((action) => {
+                    return {
+                        ...action,
+                        timestamp: Date.now(),
+                    };
+                });
+                updateState({
+                    fps: Math.round(controller.getFps()),
+                });
+
+                if (newItems.length) {
+                    updateState({
+                        items: [
+                            ...state.items,
+                            ...newItems,
+                        ],
+                    });
+                }
+            });
+
+            controller.startSingleplayer();
             updateState({
                 multiplayerController: controller,
             });
@@ -119,17 +121,7 @@ export const Demo5Child = defineElementNoInputs({
             `;
         } else if (!state.connectionState) {
             return html`
-                <button
-                    ${listen('click', async () => {
-                        await controller.joinOrCreateRoom({
-                            roomId: createUuidV4(),
-                            roomName: 'Demo 4 Room',
-                            roomPassword: '',
-                        });
-                    })}
-                >
-                    Create Room
-                </button>
+                Not connected to single player?
             `;
         } else if (state.connectionState.service instanceof Error) {
             return html`

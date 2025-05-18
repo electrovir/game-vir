@@ -68,8 +68,8 @@ export class LockStepGameStateController<
     private clientsResponded: Record<Uuid, boolean> = {};
     private frameActions: Action[] = [];
     private timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
-    private frameTimerReady = true;
-    private frameMs;
+    private frameTickReady = true;
+    private frameMs: number | undefined;
     private lastFpsCalculation = {
         timestamp: 0,
         frameCount: 0,
@@ -77,14 +77,16 @@ export class LockStepGameStateController<
     private singleplayer: boolean = false;
 
     constructor(
-        frameDuration: AnyDuration,
+        frameDuration: AnyDuration | undefined,
         private readonly allowMultiplayerConnectionCheck: ShouldAllowConnectionCheck<
             LockStepGameStateController<Action>
         > = () => true,
     ) {
         super();
         this.clientId = createUuidV4();
-        this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
+        if (frameDuration) {
+            this.frameMs = convertDuration(frameDuration, {milliseconds: true}).milliseconds;
+        }
     }
 
     /**
@@ -128,6 +130,26 @@ export class LockStepGameStateController<
     /** Perform an action for the current client. */
     public act(actions: ReadonlyArray<Action>) {
         this.frameActions.push(...actions);
+    }
+
+    /**
+     * Manually run the next frame.
+     *
+     * @throws Error if `frameDuration` has been set.
+     */
+    public runFrame(actions?: ReadonlyArray<Action> | undefined) {
+        if (this.frameMs != undefined) {
+            throw new Error('Cannot manually run frame when frameDuration has been set.');
+        }
+
+        if (actions) {
+            this.act(actions);
+        }
+
+        if (this.isHost()) {
+            this.frameTickReady = true;
+            this.maybeFinishFrame();
+        }
     }
 
     /** Cleanup everything. */
@@ -261,6 +283,7 @@ export class LockStepGameStateController<
             this.dispatch(new LockStepFrameEvent<Action>({detail: message.actions}));
         }
     }
+
     private finishFrame() {
         const currentFrameActions = this.frameActions;
         /**
@@ -274,13 +297,15 @@ export class LockStepGameStateController<
         });
         this.dispatch(new LockStepFrameEvent<Action>({detail: currentFrameActions}));
 
-        this.frameTimerReady = false;
+        this.frameTickReady = false;
         this.calculateFps();
 
-        this.timeoutId = globalThis.setTimeout(() => {
-            this.frameTimerReady = true;
-            this.maybeFinishFrame();
-        }, this.frameMs);
+        if (this.frameMs) {
+            this.timeoutId = globalThis.setTimeout(() => {
+                this.frameTickReady = true;
+                this.maybeFinishFrame();
+            }, this.frameMs);
+        }
     }
 
     private maybeFinishFrame() {
@@ -295,7 +320,7 @@ export class LockStepGameStateController<
             });
 
         if (
-            !this.frameTimerReady ||
+            !this.frameTickReady ||
             /** Still waiting on clients */
             !clientsReady
         ) {

@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/audio",
-    "version": "14.10.0",
+    "version": "15.0.0",
     "description": "Utilities for playing audio.",
     "keywords": [
         "game",

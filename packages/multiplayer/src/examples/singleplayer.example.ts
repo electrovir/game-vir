@@ -1,4 +1,4 @@
-import {MultiplayerController} from '../index.js';
+import {ControllerFrameEvent, MultiplayerController} from '../index.js';
 
 type GameAction =
     | {
@@ -11,19 +11,13 @@ type GameAction =
 
 const myController = new MultiplayerController<GameAction>({
     gameId: 'single',
-    listeners: {
-        frame(actions) {
-            /** Take the list of `actions` and apply them to your game state here. */
-        },
-        roomListUpdate(rooms) {
-            /**
-             * Render a list of available multiplayer rooms to your user so they can select one to
-             * join.
-             */
-        },
-    },
-    singleplayer: true,
 });
+
+myController.listen(ControllerFrameEvent, (event) => {
+    const actions = event.detail;
+    /** Take the list of `actions` and apply them to your game state here. */
+});
+myController.startSingleplayer();
 
 /** Apply actions to your local state. */
 myController.act({

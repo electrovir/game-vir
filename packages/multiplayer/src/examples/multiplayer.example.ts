@@ -1,4 +1,4 @@
-import {MultiplayerController} from '../index.js';
+import {ControllerFrameEvent, ControllerRoomListEvent, MultiplayerController} from '../index.js';
 
 type GameAction =
     | {
@@ -11,21 +11,19 @@ type GameAction =
 
 const myController = new MultiplayerController<GameAction>({
     gameId: 'multi',
-    listeners: {
-        frame(actions) {
-            /** Take the list of `actions` and apply them to your game state here. */
-        },
-        roomListUpdate(rooms) {
-            /**
-             * Render a list of available multiplayer rooms to your user so they can select one to
-             * join.
-             */
-        },
-    },
-    multiplayer: {
-        /** The origin of your multiplayer connection server. */
-        backendOrigin: 'http://localhost:3000',
-    },
+});
+
+myController.listen(ControllerFrameEvent, (event) => {
+    const actions = event.detail;
+    /** Take the list of `actions` and apply them to your game state here. */
+});
+myController.listen(ControllerRoomListEvent, (event) => {
+    const rooms = event.detail;
+    /** Render a list of available multiplayer rooms to your user so they can select one to join. */
+});
+myController.startMultiplayer({
+    /** The origin of your multiplayer connection server. */
+    backendOrigin: 'http://localhost:3000',
 });
 
 await myController.joinOrCreateRoom({

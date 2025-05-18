@@ -21,7 +21,7 @@ npm i @game-vir/multiplayer
 <!-- example-link: src/examples/multiplayer.example.ts -->
 
 ```TypeScript
-import {MultiplayerController} from '@game-vir/multiplayer';
+import {ControllerFrameEvent, ControllerRoomListEvent, MultiplayerController} from '@game-vir/multiplayer';
 
 type GameAction =
     | {
@@ -34,21 +34,19 @@ type GameAction =
 
 const myController = new MultiplayerController<GameAction>({
     gameId: 'multi',
-    listeners: {
-        frame(actions) {
-            /** Take the list of `actions` and apply them to your game state here. */
-        },
-        roomListUpdate(rooms) {
-            /**
-             * Render a list of available multiplayer rooms to your user so they can select one to
-             * join.
-             */
-        },
-    },
-    multiplayer: {
-        /** The origin of your multiplayer connection server. */
-        backendOrigin: 'http://localhost:3000',
-    },
+});
+
+myController.listen(ControllerFrameEvent, (event) => {
+    const actions = event.detail;
+    /** Take the list of `actions` and apply them to your game state here. */
+});
+myController.listen(ControllerRoomListEvent, (event) => {
+    const rooms = event.detail;
+    /** Render a list of available multiplayer rooms to your user so they can select one to join. */
+});
+myController.startMultiplayer({
+    /** The origin of your multiplayer connection server. */
+    backendOrigin: 'http://localhost:3000',
 });
 
 await myController.joinOrCreateRoom({
@@ -78,7 +76,7 @@ For single player, simply set `singleplayer` to `true`:
 <!-- example-link: src/examples/singleplayer.example.ts -->
 
 ```TypeScript
-import {MultiplayerController} from '@game-vir/multiplayer';
+import {ControllerFrameEvent, MultiplayerController} from '@game-vir/multiplayer';
 
 type GameAction =
     | {
@@ -91,19 +89,13 @@ type GameAction =
 
 const myController = new MultiplayerController<GameAction>({
     gameId: 'single',
-    listeners: {
-        frame(actions) {
-            /** Take the list of `actions` and apply them to your game state here. */
-        },
-        roomListUpdate(rooms) {
-            /**
-             * Render a list of available multiplayer rooms to your user so they can select one to
-             * join.
-             */
-        },
-    },
-    singleplayer: true,
 });
+
+myController.listen(ControllerFrameEvent, (event) => {
+    const actions = event.detail;
+    /** Take the list of `actions` and apply them to your game state here. */
+});
+myController.startSingleplayer();
 
 /** Apply actions to your local state. */
 myController.act({

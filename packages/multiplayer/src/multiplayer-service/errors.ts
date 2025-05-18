@@ -16,12 +16,3 @@ export class RoomRejectionError extends Error {
         this.room = omitObjectKeys(room, ['roomPassword']);
     }
 }
-
-/**
- * A collection of known errors related to the multiplayer service and its related controllers.
- *
- * @category Error
- */
-export const knownMultiplayerErrors = {
-    RoomRejectionError,
-};

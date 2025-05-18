@@ -7,7 +7,7 @@ import {
     MultiplayerController,
 } from '@game-vir/multiplayer';
 import {css, defineElementNoInputs, html, listen, renderIf, unsafeCSS} from 'element-vir';
-import {demoColors} from './demo-4-colors.js';
+import {demoColors} from './demo-6-colors.js';
 
 type DemoAction = {
     color: string;
@@ -15,8 +15,8 @@ type DemoAction = {
     y: number;
 };
 
-export const Demo4Child = defineElementNoInputs({
-    tagName: 'demo-4-child',
+export const Demo6Child = defineElementNoInputs({
+    tagName: 'demo-6-child',
     styles: () => css`
         :host {
             display: flex;
@@ -67,12 +67,10 @@ export const Demo4Child = defineElementNoInputs({
 
         if (!state.multiplayerController) {
             const controller = new MultiplayerController<DemoAction>({
-                gameId: 'demo-4',
+                gameId: 'demo-6',
                 acceptConnection(clientId, controller) {
                     return controller.getAllClientIds().length < 16;
                 },
-                // use longer frame durations for debugging
-                frameDuration: {milliseconds: 10},
             });
             controller.listen(controller.events.ControllerConnectionEvent, ({detail: state}) => {
                 updateState({
@@ -121,6 +119,11 @@ export const Demo4Child = defineElementNoInputs({
                 backendOrigin: defaultMultiplayerServiceOrigin,
                 roomUpdateInterval: {milliseconds: 500},
             });
+            function runFrame() {
+                controller.runFrame();
+                globalThis.requestAnimationFrame(() => runFrame);
+            }
+            runFrame();
 
             updateState({
                 multiplayerController: controller,
