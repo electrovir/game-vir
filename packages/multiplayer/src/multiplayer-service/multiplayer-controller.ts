@@ -68,10 +68,12 @@ export type MultiplayerControllerParams<Action extends JsonCompatibleValue> = {
      *
      * @default accept all connections
      */
-    acceptConnection?: (
-        connectingClientId: Uuid,
-        controller: MultiplayerController<Action>,
-    ) => MaybePromise<boolean>;
+    acceptConnection?:
+        | ((
+              connectingClientId: Uuid,
+              controller: MultiplayerController<Action>,
+          ) => MaybePromise<boolean>)
+        | undefined;
 
     /**
      * The duration between each frame. This should probably always be smaller than your supported
@@ -213,7 +215,7 @@ export class MultiplayerController<Action extends JsonCompatibleValue = any> ext
      * participants (when the host). This will only be initialized after calling
      * {@link MultiplayerController.joinOrCreateRoom}.
      */
-    protected currentConnection: LockStepGameStateController | undefined;
+    public currentConnection: LockStepGameStateController | undefined;
     /**
      * Rooms that have rejected the current player, so the player doesn't keep trying to connect to
      * them.
