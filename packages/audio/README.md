@@ -2,6 +2,8 @@
 
 A package for storing, loading, unloading, and playing audio files.
 
+API reference: https://electrovir.github.io/game-vir/audio
+
 # Install
 
 ```sh
