@@ -18,10 +18,10 @@ export {nav, navAttribute, NavController} from 'device-navigation';
  * @category Menu
  */
 export enum MenuNavBinding {
-    Up = 'up',
-    Down = 'down',
-    Left = 'left',
-    Right = 'right',
+    Up = 'menu-up',
+    Down = 'menu-down',
+    Left = 'menu-left',
+    Right = 'menu-right',
 
     /**
      * Enter into a sub-menu.
@@ -29,19 +29,19 @@ export enum MenuNavBinding {
      * For example, this is usually a click, the enter button, "A" on Xbox or Nintendo controllers,
      * or "X" on Playstation controllers.
      */
-    Enter = 'enter',
+    Enter = 'menu-enter',
     /**
      * Exit out of a sub-menu.
      *
      * For example, this is usually the Escape key, "B" on Xbox or Nintendo controllers, or "△" on
      * Playstation controllers.
      */
-    Exit = 'exit',
+    Exit = 'menu-exit',
 
     /** Navigate to the next section in a menu. */
-    SectionNext = 'section-next',
+    SectionNext = 'menu-section-next',
     /** Navigate to the previous section in a menu. */
-    SectionPrevious = 'section-previous',
+    SectionPrevious = 'menu-section-previous',
 }
 
 /**
