@@ -12,7 +12,7 @@ import {
 } from '@augment-vir/common';
 import {System, type Response as Collision, type Body as Hitbox} from 'detect-collisions';
 import {assertValidShape, defineShape, type ShapeDefinition} from 'object-shape-tester';
-import {type Application, type ViewContainer} from 'pixi.js';
+import {ParticleContainer, type Application, type ViewContainer} from 'pixi.js';
 import {
     type AbstractConstructor,
     type Constructor,
@@ -552,7 +552,7 @@ export type ViewCreation = {
      * Graphics`](https://pixijs.download/release/docs/scene.Graphics.html), etc. imported from the
      * [`pixi.js`](https://www.npmjs.com/package/pixi.js) package.
      */
-    view: ViewContainer;
+    view?: ViewContainer | undefined;
     /**
      * A Body instance for hitbox collision detection. Create one with, for example,
      * `this.hitboxSystem.createBox()` or import directly from the
@@ -581,10 +581,17 @@ export abstract class ViewEntity<
     constructor(args: Readonly<EntityConstructorParams<NoInfer<Params>, NoInfer<Context>>>) {
         super(args);
         const {view, hitbox} = this.createView();
-        this.view = view;
-        this.pixi.stage.addChild(this.view);
-        this.hitbox = hitbox;
-        if (this.hitbox) {
+
+        if (view) {
+            this.view = view;
+            this.pixi.stage.addChild(this.view);
+        } else {
+            this.view = new ParticleContainer();
+            this.view.visible = false;
+        }
+
+        if (hitbox) {
+            this.hitbox = hitbox;
             this.hitbox.userData = this;
             this.hitboxSystem.insert(this.hitbox);
         }
