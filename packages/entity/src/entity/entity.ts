@@ -186,11 +186,9 @@ export class EntityStore<
                     },
                 );
 
-                /* node:coverage ignore next 5: these lines should not happen but due to missing type information, they might! */
-                if (!primaryEntity) {
-                    throw new Error('Unable to find primary entity for collision hitbox.');
-                } else if (!secondaryEntity) {
-                    throw new Error('Unable to find secondary entity for collision hitbox.');
+                /* node:coverage ignore next 3 */
+                if (!primaryEntity || !secondaryEntity) {
+                    return;
                 }
                 primaryEntity.collide(secondaryEntity, response);
                 /* node:coverage ignore next 3: catch all edge cases just in case */

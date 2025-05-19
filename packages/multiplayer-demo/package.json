@@ -1,6 +1,6 @@
 {
     "name": "@game-vir/multiplayer-demo",
-    "version": "15.1.0",
+    "version": "15.1.1",
     "private": true,
     "description": "Demo for game-vir multiplayer packages.",
     "keywords": [
@@ -37,8 +37,8 @@
     "dependencies": {
         "@augment-vir/assert": "^31.19.1",
         "@augment-vir/common": "^31.19.1",
-        "@game-vir/multiplayer": "^15.1.0",
-        "@game-vir/multiplayer-server": "^15.1.0",
+        "@game-vir/multiplayer": "^15.1.1",
+        "@game-vir/multiplayer-server": "^15.1.1",
         "@rest-vir/define-service": "^0.19.0",
         "date-vir": "^7.3.1",
         "element-vir": "^25.4.0",
